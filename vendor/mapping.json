@@ -39,5 +39,6 @@
   "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css": "vendor/cdnjs/codemirror/5.65.16/theme/eclipse.min.css",
   "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css": "vendor/cdnjs/codemirror/5.65.16/theme/monokai.min.css",
   "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/nord.min.css": "vendor/cdnjs/codemirror/5.65.16/theme/nord.min.css",
-  "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/solarized.min.css": "vendor/cdnjs/codemirror/5.65.16/theme/solarized.min.css"
+  "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/solarized.min.css": "vendor/cdnjs/codemirror/5.65.16/theme/solarized.min.css",
+  "https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js": "vendor/cdnjs/marked/11.1.1/marked.min.js"
 }

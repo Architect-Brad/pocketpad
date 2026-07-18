@@ -15,7 +15,7 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 |------|----------------|
 | **Editor** | Multi-tab CodeMirror, 20+ languages, find/replace, word completion, themes |
 | **Files** | File tree, open folder (Chromium), save via File System Access, export ZIP |
-| **Run** | JavaScript, Python (Skulpt), HTML preview, C/C++/Rust/… via Piston |
+| **Run** | JavaScript, Python (Skulpt), HTML preview, **Markdown preview** (live), C/C++/Rust/… via Piston |
 | **GitHub** | Browse repos, open files, commit & push, simple diff |
 | **Shell** | xterm + WebSocket (Termux + `ttyd`) |
 | **Extras** | Document map, snippets, spell check |

@@ -79,6 +79,9 @@ window.__ppLoadFallback = function(el) {
 <script src="./vendor/jsdelivr/skulpt@1.2.0/dist/skulpt.min.js" data-cdn="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js" onerror="__ppLoadFallback(this)"></script>
 <script src="./vendor/jsdelivr/skulpt@1.2.0/dist/skulpt-stdlib.js" data-cdn="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js" onerror="__ppLoadFallback(this)"></script>
 
+
+<!-- Marked (Markdown renderer) -->
+<script src="./vendor/cdnjs/marked/11.1.1/marked.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js" onerror="__ppLoadFallback(this)"></script>
 <!-- Typo.js (Spell Checker) -->
 <script src="./vendor/jsdelivr/typo-js@1.2.3/typo.js" data-cdn="https://cdn.jsdelivr.net/npm/typo-js@1.2.3/typo.js" onerror="__ppLoadFallback(this)"></script>
 
@@ -1607,6 +1610,30 @@ body.theme-light #repl-prompt { color: #2d7a00; }
 }
 #editor-and-map { flex: 1; min-width: 0; }
 
+
+/* ===================== MARKDOWN PREVIEW ===================== */
+#pane-preview.md-mode #preview-iframe { background: var(--npp-bg); }
+#md-preview-toolbar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: #141414;
+  border-bottom: 1px solid #222;
+  font-size: 11px;
+  color: #666;
+  flex-shrink: 0;
+}
+#pane-preview.md-mode #md-preview-toolbar { display: flex; }
+#md-preview-toolbar .md-live-label {
+  display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;
+}
+#md-preview-toolbar .md-live-label input { accent-color: var(--npp-accent); }
+#console-body { display: flex; flex-direction: column; }
+#pane-preview { display: none; flex-direction: column; height: 100%; padding: 0; overflow: hidden; }
+#pane-preview.active { display: flex; }
+#pane-preview #preview-iframe { flex: 1; min-height: 0; }
+
 </style>
 </head>
 <body>
@@ -1728,7 +1755,12 @@ body.theme-light #repl-prompt { color: #2d7a00; }
       <div id="repl-log"></div>
     </div>
     <div class="console-pane" id="pane-preview">
-      <iframe id="preview-iframe" sandbox="allow-scripts allow-same-origin allow-modals allow-popups"></iframe>
+      <div id="md-preview-toolbar">
+        <span>Markdown preview</span>
+        <label class="md-live-label"><input type="checkbox" id="md-live-toggle" checked onchange="setMdLive(this.checked)"> Live</label>
+        <button type="button" class="console-btn" onclick="runCode()" style="margin-left:auto">Refresh</button>
+      </div>
+      <iframe id="preview-iframe" sandbox="allow-scripts allow-same-origin allow-modals allow-popups" title="Preview"></iframe>
     </div>
     <div class="console-pane" id="pane-shell">
       <div class="terminal-ws-bar" style="padding:6px 8px">
@@ -2003,6 +2035,7 @@ body.theme-light #repl-prompt { color: #2d7a00; }
         <button class="menu-item" onclick="loadTemplate('py')">Python Hello</button>
         <button class="menu-item" onclick="loadTemplate('html')">HTML Hello</button>
         <button class="menu-item" onclick="loadTemplate('c')">C Hello</button>
+        <button class="menu-item" onclick="loadTemplate('md')">Markdown</button>
         <div class="menu-divider"></div>
         <div class="menu-section">Tools</div>
         <button class="menu-item" onclick="openSheet('snippet-sheet');closeSheet('menu-sheet')">
@@ -2406,6 +2439,7 @@ function newTab(name = null, content = '', langName = 'Plain Text') {
   });
 
   cm.on('cursorActivity', updateStatus);
+  wireMdLiveOnCm(cm);
   cm.on('change', () => {
     markModified(id, true);
     updateStatus();
@@ -2455,6 +2489,10 @@ function switchTab(id) {
     updateStatus();
     updateTitleBar();
     updateLangStatus();
+    if (state.consoleOpen) {
+      updateConsoleForLang(tab.lang.name);
+      if (tab.lang.name === 'Markdown' && _mdLive) scheduleMdLivePreview();
+    }
   }
 }
 
@@ -2790,6 +2828,11 @@ function loadTemplate(kind) {
       name: 'main.c',
       lang: 'C',
       code: '#include <stdio.h>\n\nint main(void) {\n  printf("Hello\\n");\n  return 0;\n}\n'
+    },
+    md: {
+      name: 'readme.md',
+      lang: 'Markdown',
+      code: '# PocketPad\n\nMobile **markdown** preview.\n\n- Edit this file\n- Press **Run / Preview**\n- Toggle **Live** for auto-refresh\n\n```js\nconsole.log("hi");\n```\n\n> Tip: `Ctrl+Enter` previews\n'
     }
   };
   var tpl = templates[kind];
@@ -3220,6 +3263,10 @@ function setLanguage(lang) {
   tab.lang = lang;
   tab.cm.setOption('mode', lang.mode);
   updateLangStatus();
+  if (state.consoleOpen) {
+    updateConsoleForLang(lang.name);
+    if (lang.name === 'Markdown') scheduleMdLivePreview();
+  }
   showToast(`Language: ${lang.name}`);
 }
 
@@ -3552,7 +3599,7 @@ function adjustWcMinChars(delta) {
 
 // ===================== CONSOLE & RUNNER =====================
 
-const RUNNABLE_LANGS = ['JavaScript', 'TypeScript', 'HTML', 'Python'];
+const RUNNABLE_LANGS = ['JavaScript', 'TypeScript', 'HTML', 'Python', 'Markdown'];
 
 function getConsoleLang() {
   const tab = getActiveTab();
@@ -3570,8 +3617,7 @@ function toggleConsole() {
     panel.classList.add('open');
     const lang = getConsoleLang();
     updateConsoleForLang(lang);
-    if (lang === 'JavaScript' || lang === 'Python') runCode();
-    else if (lang === 'HTML') { runCode(); }
+    if (lang === 'JavaScript' || lang === 'Python' || lang === 'HTML' || lang === 'Markdown') runCode();
   }
   document.getElementById('btn-run').classList.toggle('active', state.consoleOpen);
   state.tabs.forEach(t => t.cm.refresh());
@@ -3579,8 +3625,13 @@ function toggleConsole() {
 
 function updateConsoleForLang(lang) {
   const previewTab = document.getElementById('console-tab-preview');
-  previewTab.style.display = (lang === 'HTML') ? 'flex' : 'none';
-  // Update prompt
+  const isPreview = (lang === 'HTML' || lang === 'Markdown');
+  if (previewTab) previewTab.style.display = isPreview ? 'flex' : 'none';
+  const pane = document.getElementById('pane-preview');
+  if (pane) pane.classList.toggle('md-mode', lang === 'Markdown');
+  // Run button label
+  const runBtn = document.getElementById('run-btn');
+  if (runBtn) runBtn.textContent = isPreview ? (lang === 'Markdown' ? '▶ Preview' : '▶ Preview') : '▶ Run';
   const prompt = document.getElementById('repl-prompt');
   if (prompt) prompt.textContent = (lang === 'Python') ? '>>> ' : '> ';
 }
@@ -3861,16 +3912,196 @@ async function runViaPiston(pistonKey, code) {
   }
 }
 
+
+// ---- Markdown Preview (marked.js → iframe) ----
+let _mdLive = true;
+let _mdLiveTimer = null;
+let _mdLiveHooked = false;
+
+const MD_PREVIEW_CSS = `
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 20px 22px 40px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    color: #e8e8e3;
+    background: #1e1f1b;
+  }
+  body.light {
+    color: #1a1a1a;
+    background: #fafafa;
+  }
+  h1,h2,h3,h4,h5,h6 {
+    margin: 1.4em 0 0.5em;
+    line-height: 1.25;
+    font-weight: 700;
+    color: #f8f8f2;
+  }
+  body.light h1, body.light h2, body.light h3 { color: #111; }
+  h1 { font-size: 1.75em; border-bottom: 1px solid #3a3b36; padding-bottom: 0.3em; }
+  h2 { font-size: 1.4em; border-bottom: 1px solid #333430; padding-bottom: 0.25em; }
+  h3 { font-size: 1.15em; color: #a6e22e; }
+  body.light h3 { color: #2d7a00; }
+  p, ul, ol, blockquote, pre, table { margin: 0 0 1em; }
+  a { color: #66d9e8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  body.light a { color: #0070c0; }
+  ul, ol { padding-left: 1.6em; }
+  li { margin: 0.25em 0; }
+  blockquote {
+    margin-left: 0;
+    padding: 0.4em 1em;
+    border-left: 4px solid #a6e22e;
+    background: rgba(166,226,46,0.06);
+    color: #c0c0b0;
+  }
+  code {
+    font-family: 'Courier New', ui-monospace, monospace;
+    font-size: 0.9em;
+    background: #272822;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: #e6db74;
+  }
+  body.light code { background: #eee; color: #c7254e; }
+  pre {
+    background: #12130f;
+    border: 1px solid #333430;
+    border-radius: 6px;
+    padding: 12px 14px;
+    overflow-x: auto;
+  }
+  body.light pre { background: #f5f5f5; border-color: #ddd; }
+  pre code { background: none; padding: 0; color: #f8f8f2; }
+  body.light pre code { color: #222; }
+  table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
+  th, td { border: 1px solid #454540; padding: 8px 12px; text-align: left; }
+  th { background: #272822; color: #a6e22e; }
+  body.light th { background: #eee; color: #333; }
+  body.light th, body.light td { border-color: #ccc; }
+  hr { border: none; border-top: 1px solid #454540; margin: 1.5em 0; }
+  img { max-width: 100%; height: auto; border-radius: 4px; }
+  input[type=checkbox] { margin-right: 0.4em; }
+`;
+
+function ensureMarked() {
+  if (typeof marked !== 'undefined' && marked.parse) return true;
+  return false;
+}
+
+function renderMarkdownHtml(src) {
+  if (!ensureMarked()) {
+    return '<p style="color:#f92672">Markdown engine (marked.js) failed to load.</p><pre>' +
+      escapeHtml(src).slice(0, 4000) + '</pre>';
+  }
+  try {
+    if (marked.setOptions) {
+      marked.setOptions({ gfm: true, breaks: true, headerIds: true, mangle: false });
+    }
+    var raw = marked.parse(src || '');
+    // light sanitize: drop scripts / on* handlers
+    raw = String(raw)
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replace(/javascript:/gi, '');
+    return raw;
+  } catch (e) {
+    return '<p style="color:#f92672">Render error: ' + escapeHtml(e.message) + '</p>';
+  }
+}
+
+function openPreviewPanel() {
+  const panel = document.getElementById('console-panel');
+  if (!state.consoleOpen) {
+    state.consoleOpen = true;
+    panel.classList.add('open');
+    document.getElementById('btn-run')?.classList.add('active');
+  }
+  panel.classList.add('preview-mode');
+  panel.style.height = Math.round(window.innerHeight * 0.80) + 'px';
+  switchConsolePane('preview');
+  state.tabs.forEach(t => { try { t.cm.refresh(); } catch (e) {} });
+}
+
+function runMarkdown(code) {
+  const iframe = document.getElementById('preview-iframe');
+  const light = document.body.classList.contains('theme-light');
+  const bodyClass = light ? 'light' : '';
+  const body = renderMarkdownHtml(code);
+  iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+    '<style>' + MD_PREVIEW_CSS + '</style></head>' +
+    '<body class="' + bodyClass + '">' + body + '</body></html>';
+  const pane = document.getElementById('pane-preview');
+  if (pane) pane.classList.add('md-mode');
+  openPreviewPanel();
+  appendToOutput(conLine('Markdown preview updated', 'system', 'MD'));
+  hookMdLivePreview();
+}
+
+function setMdLive(on) {
+  _mdLive = !!on;
+  try { localStorage.setItem('pp_md_live', _mdLive ? '1' : '0'); } catch (e) {}
+  if (_mdLive) scheduleMdLivePreview();
+}
+
+function scheduleMdLivePreview() {
+  if (!_mdLive) return;
+  const tab = getActiveTab();
+  if (!tab || tab.lang.name !== 'Markdown') return;
+  if (!state.consoleOpen) return;
+  clearTimeout(_mdLiveTimer);
+  _mdLiveTimer = setTimeout(() => {
+    const iframe = document.getElementById('preview-iframe');
+    if (!iframe) return;
+    const light = document.body.classList.contains('theme-light');
+    const body = renderMarkdownHtml(tab.cm.getValue());
+    iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<style>' + MD_PREVIEW_CSS + '</style></head>' +
+      '<body class="' + (light ? 'light' : '') + '">' + body + '</body></html>';
+  }, 350);
+}
+
+function hookMdLivePreview() {
+  if (_mdLiveHooked) return;
+  _mdLiveHooked = true;
+  try {
+    const pref = localStorage.getItem('pp_md_live');
+    if (pref === '0') {
+      _mdLive = false;
+      const el = document.getElementById('md-live-toggle');
+      if (el) el.checked = false;
+    }
+  } catch (e) {}
+  // attach change listeners for all current and future tabs via monkeypatch on newTab is heavy;
+  // instead listen globally by patching after each switch — use CM change on active via interval of events
+  const origNewTab = newTab;
+  // wrap markModified path: listen on document for changes via existing cm change → call schedule
+  const _origMark = markModified;
+  // Better: add to switchTab and newTab via existing cm.on('change') in newTab — patch once
+  document.addEventListener('pp-editor-change', scheduleMdLivePreview);
+}
+
+// Fire custom event from tab change handlers — patch after newTab definition is complex mid-file.
+// Instead, in runMarkdown we hook; also patch all tabs' cm change:
+function wireMdLiveOnCm(cm) {
+  cm.on('change', () => {
+    if (getActiveTab()?.lang?.name === 'Markdown') scheduleMdLivePreview();
+  });
+}
+
+
 // ---- HTML Preview — covers 80% of screen ----
 function runHTML(code) {
   const iframe = document.getElementById('preview-iframe');
   iframe.srcdoc = code;
-  const panel = document.getElementById('console-panel');
-  panel.classList.add('preview-mode');
-  // Set height to 80vh explicitly
-  panel.style.height = Math.round(window.innerHeight * 0.80) + 'px';
-  switchConsolePane('preview');
-  state.tabs.forEach(t => t.cm.refresh());
+  const pane = document.getElementById('pane-preview');
+  if (pane) pane.classList.remove('md-mode');
+  openPreviewPanel();
 }
 
 // ---- Python Runner (Skulpt) ----
@@ -3929,6 +4160,8 @@ function runCode() {
     try {
       if (lang === 'HTML') {
         runHTML(code);
+      } else if (lang === 'Markdown') {
+        runMarkdown(code);
       } else if (lang === 'Python') {
         runPython(code);
       } else if (lang === 'JavaScript' || lang === 'TypeScript') {
@@ -3936,7 +4169,7 @@ function runCode() {
       } else if (pistonKey) {
         await runViaPiston(pistonKey, code);
       } else {
-        appendToOutput(conLine(`"${lang}" has no runtime. Use the Piston-supported languages (C, C++, Assembly, Java, Rust…)`, 'info'));
+        appendToOutput(conLine(`"${lang}" has no runtime. Use Preview for Markdown/HTML, or Piston languages (C, C++, Java, Rust…)`, 'info'));
       }
     } catch(e) {
       appendToOutput(conLine(`Runner error: ${e.message}`, 'error'));
@@ -5189,6 +5422,7 @@ function rebuildTabsFromData(tabData, savedActive) {
     });
 
     cm.on('cursorActivity', updateStatus);
+  wireMdLiveOnCm(cm);
     cm.on('change', () => { markModified(td.id, true); updateStatus(); persistSession(); });
 
     hookSpellPopup(cm);
