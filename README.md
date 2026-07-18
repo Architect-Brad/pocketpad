@@ -13,7 +13,7 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 
 | Area | What you get |
 |------|----------------|
-| **Editor** | Multi-tab CodeMirror, 20+ languages, find/replace, word completion, themes |
+| **Editor** | Multi-tab CodeMirror, 20+ languages, find/replace, **hybrid autocomplete** (keywords · builtins · snippets · doc words), themes |
 | **Files** | File tree, open folder (Chromium), save via File System Access, export ZIP |
 | **Run** | Remote code execution via **Judge0 CE** (default) + **Piston API** (custom URL/token) · local JS/Python fallback · HTML & Markdown preview |
 | **GitHub** | Browse repos, open files, commit & push, simple diff |
@@ -34,6 +34,7 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 | `Ctrl/Cmd + N` | New tab |
 | `Ctrl/Cmd + \`` | Shell pane |
 | `Ctrl/Cmd + Enter` | Run |
+| `Ctrl/Cmd + Space` | Autocomplete |
 
 ---
 

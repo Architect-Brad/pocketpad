@@ -2233,8 +2233,8 @@ body.theme-light #piston-stdin { color: #222; }
       </div>
       <div class="settings-row">
         <div>
-          <div class="settings-label">Word Completion</div>
-          <div class="settings-sublabel">Auto-suggest from document words</div>
+          <div class="settings-label">Autocomplete</div>
+          <div class="settings-sublabel">Keywords, builtins, snippets &amp; words</div>
         </div>
         <label class="toggle">
           <input type="checkbox" id="toggle-wordcompletion" checked onchange="toggleWordCompletion()">
@@ -2251,6 +2251,18 @@ body.theme-light #piston-stdin { color: #222; }
           <button class="stepper-btn" onclick="adjustWcMinChars(-1)">−</button>
           <div class="stepper-val" id="wc-minchars-val">2</div>
           <button class="stepper-btn" onclick="adjustWcMinChars(1)">+</button>
+        </div>
+      </div>
+      <div class="settings-row" id="row-ac-sources">
+        <div style="width:100%">
+          <div class="settings-label" style="margin-bottom:8px">Completion sources</div>
+          <div class="ac-source-grid">
+            <label class="ac-source-item"><input type="checkbox" id="ac-src-keywords" checked onchange="toggleAcSource('acKeywords', this.checked)"> Keywords</label>
+            <label class="ac-source-item"><input type="checkbox" id="ac-src-builtins" checked onchange="toggleAcSource('acBuiltins', this.checked)"> Builtins</label>
+            <label class="ac-source-item"><input type="checkbox" id="ac-src-snippets" checked onchange="toggleAcSource('acSnippets', this.checked)"> Snippets</label>
+            <label class="ac-source-item"><input type="checkbox" id="ac-src-words" checked onchange="toggleAcSource('acWords', this.checked)"> Doc words</label>
+          </div>
+          <div class="settings-sublabel" style="margin-top:6px">Ctrl/Cmd+Space forces suggestions</div>
         </div>
       </div>
       <div class="settings-row">
@@ -2399,6 +2411,10 @@ const state = {
   findOpen: false,
   wordCompletion: true,
   wordCompletionMinChars: 2,
+  acKeywords: true,
+  acBuiltins: true,
+  acSnippets: true,
+  acWords: true,
   spellCheck: false,
   consoleOpen: false,
   consoleLang: 'js',
@@ -2514,7 +2530,8 @@ function newTab(name = null, content = '', langName = 'Plain Text') {
       'Shift-Tab': cm => cm.execCommand('indentLess'),
       'Ctrl-/': cm => cm.execCommand('toggleComment'),
       'Cmd-/': cm => cm.execCommand('toggleComment'),
-      'Ctrl-Space': cm => triggerWordCompletion(cm),
+      'Ctrl-Space': cm => triggerWordCompletion(cm, true),
+      'Cmd-Space': cm => triggerWordCompletion(cm, true),
     },
   });
 
@@ -3538,164 +3555,520 @@ window.addEventListener('resize', () => {
   state.tabs.forEach(t => t.cm.refresh());
 });
 
-// ===================== WORD COMPLETION =====================
+// ===================== HYBRID AUTOCOMPLETE =====================
+// Sources: language keywords · builtins/APIs · user snippets · document words
 
-/**
- * Custom word-completion hint function.
- * Scans every open tab's content for words, deduplicates,
- * and returns matches for the current token prefix.
- * This mirrors PocketPad's "Word Completion" (not language-aware intellisense).
- */
-function wordCompletionHint(cm) {
-  const cur    = cm.getCursor();
-  const token  = cm.getTokenAt(cur);
+const AC_KEYWORDS = {
+  JavaScript: [
+    'async','await','break','case','catch','class','const','continue','debugger','default','delete',
+    'do','else','export','extends','false','finally','for','from','function','if','import','in',
+    'instanceof','let','new','null','of','return','static','super','switch','this','throw','true',
+    'try','typeof','undefined','var','void','while','with','yield','of','get','set','constructor'
+  ],
+  TypeScript: null, // filled from JS + TS extras
+  Python: [
+    'and','as','assert','async','await','break','class','continue','def','del','elif','else','except',
+    'False','finally','for','from','global','if','import','in','is','lambda','None','nonlocal','not',
+    'or','pass','raise','return','True','try','while','with','yield','match','case','type'
+  ],
+  HTML: [
+    'html','head','body','div','span','p','a','img','ul','ol','li','table','tr','td','th','form',
+    'input','button','script','style','link','meta','title','header','footer','nav','section','article',
+    'main','aside','h1','h2','h3','h4','h5','h6','label','select','option','textarea','canvas','svg'
+  ],
+  CSS: [
+    'align-items','background','border','border-radius','box-shadow','color','display','flex','font-size',
+    'font-weight','gap','grid','height','justify-content','left','margin','opacity','overflow','padding',
+    'position','right','top','bottom','transform','transition','width','z-index','flex-direction',
+    'justify-content','align-content','object-fit','max-width','min-height','background-color'
+  ],
+  C: [
+    'auto','break','case','char','const','continue','default','do','double','else','enum','extern',
+    'float','for','goto','if','inline','int','long','register','return','short','signed','sizeof',
+    'static','struct','switch','typedef','union','unsigned','void','volatile','while','_Bool','_Complex'
+  ],
+  'C++': null,
+  'C#': [
+    'abstract','as','base','bool','break','byte','case','catch','char','checked','class','const',
+    'continue','decimal','default','delegate','do','double','else','enum','event','explicit','extern',
+    'false','finally','fixed','float','for','foreach','goto','if','implicit','in','int','interface',
+    'internal','is','lock','long','namespace','new','null','object','operator','out','override',
+    'params','private','protected','public','readonly','ref','return','sbyte','sealed','short',
+    'sizeof','stackalloc','static','string','struct','switch','this','throw','true','try','typeof',
+    'uint','ulong','unchecked','unsafe','ushort','using','virtual','void','volatile','while','var','async','await'
+  ],
+  Go: [
+    'break','case','chan','const','continue','default','defer','else','fallthrough','for','func','go',
+    'goto','if','import','interface','map','package','range','return','select','struct','switch',
+    'type','var','true','false','nil','iota','make','new','len','cap','append','copy','delete','panic','recover'
+  ],
+  Rust: [
+    'as','async','await','break','const','continue','crate','dyn','else','enum','extern','false','fn',
+    'for','if','impl','in','let','loop','match','mod','move','mut','pub','ref','return','self','Self',
+    'static','struct','super','trait','true','type','unsafe','use','where','while','async','await','dyn'
+  ],
+  Java: [
+    'abstract','assert','boolean','break','byte','case','catch','char','class','const','continue',
+    'default','do','double','else','enum','extends','final','finally','float','for','goto','if',
+    'implements','import','instanceof','int','interface','long','native','new','package','private',
+    'protected','public','return','short','static','strictfp','super','switch','synchronized','this',
+    'throw','throws','transient','try','void','volatile','while','true','false','null','var','record','sealed'
+  ],
+  Kotlin: [
+    'as','break','class','continue','do','else','false','for','fun','if','in','interface','is','null',
+    'object','package','return','super','this','throw','true','try','typealias','typeof','val','var',
+    'when','while','by','catch','constructor','delegate','dynamic','field','file','finally','get',
+    'import','init','param','property','receiver','set','setparam','where','actual','abstract','annotation',
+    'companion','const','crossinline','data','enum','expect','external','final','infix','inline','inner',
+    'internal','lateinit','noinline','open','operator','out','override','private','protected','public',
+    'reified','sealed','suspend','tailrec','vararg'
+  ],
+  Ruby: [
+    'BEGIN','END','alias','and','begin','break','case','class','def','defined?','do','else','elsif',
+    'end','ensure','false','for','if','in','module','next','nil','not','or','redo','rescue','retry',
+    'return','self','super','then','true','undef','unless','until','when','while','yield'
+  ],
+  PHP: [
+    'abstract','and','array','as','break','callable','case','catch','class','clone','const','continue',
+    'declare','default','die','do','echo','else','elseif','empty','enddeclare','endfor','endforeach',
+    'endif','endswitch','endwhile','eval','exit','extends','final','finally','fn','for','foreach',
+    'function','global','goto','if','implements','include','include_once','instanceof','insteadof',
+    'interface','isset','list','match','namespace','new','or','print','private','protected','public',
+    'readonly','require','require_once','return','static','switch','throw','trait','try','unset','use',
+    'var','while','xor','yield','true','false','null'
+  ],
+  Shell: [
+    'if','then','else','elif','fi','case','esac','for','while','until','do','done','in','function',
+    'select','time','coproc','export','readonly','local','return','exit','break','continue','shift',
+    'echo','printf','read','cd','pwd','test','true','false','set','unset','source','alias','trap'
+  ],
+  Lua: [
+    'and','break','do','else','elseif','end','false','for','function','goto','if','in','local','nil',
+    'not','or','repeat','return','then','true','until','while'
+  ],
+  SQL: [
+    'SELECT','FROM','WHERE','INSERT','INTO','VALUES','UPDATE','SET','DELETE','CREATE','TABLE','DROP',
+    'ALTER','INDEX','JOIN','LEFT','RIGHT','INNER','OUTER','ON','AS','AND','OR','NOT','NULL','ORDER',
+    'BY','GROUP','HAVING','LIMIT','OFFSET','DISTINCT','COUNT','SUM','AVG','MIN','MAX','PRIMARY','KEY',
+    'FOREIGN','REFERENCES','UNIQUE','CHECK','DEFAULT','CASCADE','UNION','ALL','EXISTS','IN','BETWEEN','LIKE'
+  ],
+  Markdown: [
+    'TODO','FIXME','NOTE','WARNING','IMPORTANT'
+  ],
+};
 
-  // Only complete identifier-like tokens
-  const prefixMatch = token.string.match(/[A-Za-z_$][A-Za-z0-9_$]*$/);
-  if (!prefixMatch) return null;
-  const prefix = prefixMatch[0];
-  if (prefix.length < 1) return null;
+// resolve aliases after object creation
+AC_KEYWORDS.TypeScript = AC_KEYWORDS.JavaScript.concat([
+  'interface','type','enum','implements','namespace','declare','readonly','private','public','protected',
+  'abstract','keyof','infer','never','unknown','any','string','number','boolean','bigint','symbol'
+]);
+AC_KEYWORDS['C++'] = AC_KEYWORDS.C.concat([
+  'class','namespace','template','typename','using','public','private','protected','virtual','friend',
+  'operator','new','delete','this','try','catch','throw','const_cast','dynamic_cast','static_cast',
+  'reinterpret_cast','constexpr','nullptr','override','final','noexcept','auto','decltype'
+]);
+AC_KEYWORDS.Rust = [
+  'as','async','await','break','const','continue','crate','dyn','else','enum','extern','false','fn',
+  'for','if','impl','in','let','loop','match','mod','move','mut','pub','ref','return','self','Self',
+  'static','struct','super','trait','true','type','unsafe','use','where','while'
+];
+AC_KEYWORDS.Scala = AC_KEYWORDS.Java.concat(['def','val','var','object','trait','match','case','yield','implicit','lazy']);
+AC_KEYWORDS.Swift = [
+  'associatedtype','class','deinit','enum','extension','fileprivate','func','import','init','inout',
+  'internal','let','open','operator','private','protocol','public','rethrows','static','struct',
+  'subscript','typealias','var','break','case','continue','default','defer','do','else','fallthrough',
+  'for','guard','if','in','repeat','return','switch','where','while','as','Any','catch','false','is',
+  'nil','super','self','Self','throw','throws','true','try','associativity','convenience','dynamic',
+  'didSet','final','get','infix','indirect','lazy','left','mutating','none','nonmutating','optional',
+  'override','postfix','precedence','prefix','Protocol','required','right','set','Type','unowned','weak','willSet'
+];
+AC_KEYWORDS.Perl = [
+  'if','elsif','else','unless','while','until','for','foreach','do','next','last','redo','goto',
+  'return','sub','package','use','require','my','our','local','state','bless','ref','defined','undef',
+  'eq','ne','lt','gt','le','ge','cmp','and','or','not','xor','print','say','printf','open','close','die','warn'
+];
+AC_KEYWORDS.Haskell = [
+  'as','case','class','data','default','deriving','do','else','hiding','if','import','in','infix',
+  'infixl','infixr','instance','let','module','newtype','of','qualified','then','type','where','foreign',
+  'forall','mdo','proc','rec'
+];
+AC_KEYWORDS.Julia = AC_KEYWORDS.Python.concat([
+  'begin','end','function','macro','quote','struct','mutable','primitive','abstract','module','baremodule',
+  'using','import','export','const','local','global','quote','do','catch','finally','try','throw'
+]);
+AC_KEYWORDS.Dart = AC_KEYWORDS.JavaScript.concat([
+  'abstract','as','covariant','deferred','dynamic','export','extension','external','factory','Function',
+  'get','implements','import','interface','library','mixin','operator','part','required','set','static',
+  'typedef','with','base','final','interface','sealed'
+]);
+AC_KEYWORDS.R = [
+  'if','else','repeat','while','function','for','in','next','break','TRUE','FALSE','NULL','Inf','NaN',
+  'NA','NA_integer_','NA_real_','NA_complex_','NA_character_','library','require','source','return'
+];
+AC_KEYWORDS.Assembly = ['mov','push','pop','call','ret','jmp','je','jne','jg','jl','add','sub','mul','div','xor','and','or','nop','lea','cmp','test','syscall'];
+AC_KEYWORDS.VHDL = ['entity','architecture','signal','begin','end','process','if','then','else','elsif','case','when','port','map','of','is','in','out','inout','buffer','library','use','all'];
+AC_KEYWORDS.Verilog = ['module','endmodule','input','output','inout','wire','reg','always','assign','begin','end','if','else','case','endcase','for','while','parameter','localparam','posedge','negedge'];
 
-  // Collect all words from every open tab (skip large tabs for performance)
+const AC_BUILTINS = {
+  JavaScript: [
+    'console','log','error','warn','info','debug','document','window','Array','Object','String','Number',
+    'Boolean','Promise','JSON','Math','Date','Map','Set','WeakMap','WeakSet','Symbol','Proxy','Reflect',
+    'Error','TypeError','parseInt','parseFloat','isNaN','isFinite','encodeURIComponent','decodeURIComponent',
+    'setTimeout','setInterval','clearTimeout','clearInterval','fetch','localStorage','sessionStorage',
+    'addEventListener','removeEventListener','querySelector','querySelectorAll','getElementById',
+    'createElement','appendChild','removeChild','classList','textContent','innerHTML','value','style',
+    'length','push','pop','shift','unshift','slice','splice','map','filter','reduce','forEach','find',
+    'includes','indexOf','join','split','trim','toLowerCase','toUpperCase','replace','match','then','catch','finally',
+    'async','await','resolve','reject','all','race','keys','values','entries','assign','freeze','seal',
+    'prototype','constructor','bind','call','apply','hasOwnProperty','toString','valueOf','require','module','exports'
+  ],
+  HTML: ['class','id','href','src','alt','type','name','value','placeholder','disabled','checked','required','action','method','target','rel','content','charset','viewport','onclick','onchange','onsubmit'],
+  CSS: ['var','calc','rgba','rgb','hsl','url','flex','grid','block','inline','none','relative','absolute','fixed','sticky','center','space-between','space-around','column','row','wrap','nowrap','auto','inherit','initial','unset'],
+  Go: ['fmt','Println','Printf','Sprintf','make','len','cap','append','copy','delete','panic','recover','nil','true','false','string','int','int64','float64','bool','error','byte','rune','map','chan','context','http','json','os','io','strings','strconv','time','log','errors'],
+  Rust: ['println','print','vec','String','str','Vec','Option','Result','Some','None','Ok','Err','unwrap','expect','clone','to_string','into','from','iter','map','filter','collect','push','pop','len','is_empty','self','Self','Box','Rc','Arc','RefCell','Mutex','HashMap','HashSet'],
+  Java: ['System','out','println','print','String','Integer','Double','Boolean','List','ArrayList','Map','HashMap','Set','HashSet','Optional','Objects','Math','Arrays','Collections','Exception','RuntimeException','Override','Deprecated','SuppressWarnings','main','args','length','equals','hashCode','toString','valueOf','parseInt'],
+  Shell: ['echo','printf','read','cd','pwd','ls','cp','mv','rm','mkdir','cat','grep','sed','awk','find','chmod','chown','export','source','alias','curl','wget','git','npm','python','node','docker'],
+  SQL: ['COUNT','SUM','AVG','MIN','MAX','COALESCE','NULLIF','CAST','CONVERT','NOW','CURRENT_DATE','CURRENT_TIMESTAMP','UPPER','LOWER','TRIM','LENGTH','SUBSTR','CONCAT','ROUND','ABS'],
+  PHP: ['echo','print','var_dump','isset','empty','array','count','strlen','substr','str_replace','explode','implode','json_encode','json_decode','file_get_contents','file_put_contents','preg_match','preg_replace','header','session_start','$_GET','$_POST','$_SERVER','$_SESSION','$_COOKIE','true','false','null'],
+  Ruby: ['puts','print','p','gets','require','require_relative','attr_reader','attr_writer','attr_accessor','each','map','select','reject','reduce','inject','length','size','empty?','nil?','to_s','to_i','to_a','to_h','class','new','self','super','yield','block_given?'],
+  Lua: ['print','pairs','ipairs','type','tostring','tonumber','require','module','table','string','math','io','os','error','assert','pcall','xpcall','select','unpack','next','rawget','rawset','setmetatable','getmetatable'],
+};
+
+AC_BUILTINS.TypeScript = AC_BUILTINS.JavaScript.concat([
+  'Partial','Required','Readonly','Record','Pick','Omit','Exclude','Extract','NonNullable','ReturnType',
+  'Parameters','InstanceType','Promise','Array','ReadonlyArray','Map','Set','Iterable','Iterator'
+]);
+AC_BUILTINS.Python = [
+  'print','len','range','str','int','float','list','dict','set','tuple','bool','type','isinstance',
+  'issubclass','open','input','sum','min','max','abs','round','sorted','reversed','enumerate','zip',
+  'map','filter','any','all','next','iter','super','property','classmethod','staticmethod',
+  'Exception','ValueError','TypeError','KeyError','IndexError','AttributeError','RuntimeError',
+  'self','cls','__init__','__name__','__main__','append','extend','pop','insert','remove','clear',
+  'keys','values','items','get','update','add','split','join','strip','replace','format',
+  'True','False','None','os','sys','json','re','math','random','datetime','pathlib','asyncio','typing'
+];
+AC_BUILTINS['C'] = ['printf','scanf','malloc','free','sizeof','NULL','stdin','stdout','stderr','memcpy','memset','strlen','strcmp','strcpy','fopen','fclose','fread','fwrite','exit','main'];
+AC_BUILTINS['C++'] = AC_BUILTINS['C'].concat(['std','cout','cin','endl','vector','string','map','set','unordered_map','unique_ptr','shared_ptr','make_unique','make_shared','move','forward']);
+AC_BUILTINS.Kotlin = ['println','print','listOf','mutableListOf','mapOf','mutableMapOf','setOf','arrayOf','emptyList','require','check','lazy','by','also','apply','let','run','with','to','Pair','Triple'];
+AC_BUILTINS.Swift = ['print','String','Int','Double','Bool','Array','Dictionary','Set','Optional','nil','self','super','guard','defer','map','filter','reduce','flatMap','compactMap'];
+AC_BUILTINS.Julia = ['println','print','length','size','push!','pop!','map','filter','reduce','sum','minimum','maximum','zeros','ones','rand','//','true','false','nothing'];
+AC_BUILTINS.Dart = ['print','List','Map','Set','String','int','double','bool','Future','async','await','null','main','runApp','Widget','StatelessWidget','StatefulWidget'];
+AC_BUILTINS.Scala = ['println','List','Map','Set','Option','Some','None','Future','implicit','case','match','yield','val','var','def'];
+AC_BUILTINS.R = ['c','list','data.frame','matrix','length','nrow','ncol','names','print','cat','paste','sprintf','sum','mean','sd','var','lm','ggplot','library','require','TRUE','FALSE','NULL','NA'];
+AC_BUILTINS.Assembly = ['rax','rbx','rcx','rdx','rsi','rdi','rsp','rbp','eax','ebx','ecx','edx','syscall'];
+AC_BUILTINS.Java = AC_BUILTINS.Java;
+
+function acLangName(cm) {
+  const tab = state.tabs.find(t => t.cm === cm) || getActiveTab();
+  return tab?.lang?.name || 'Plain Text';
+}
+
+function acRenderHint(element, self, data) {
+  const badge = document.createElement('span');
+  badge.className = 'cm-hint-badge cm-hint-badge-' + (data.acType || 'w');
+  badge.textContent = ({ k: 'K', b: 'B', s: 'S', w: 'W' })[data.acType] || 'W';
+  const label = document.createElement('span');
+  label.className = 'cm-hint-label';
+  label.textContent = data.displayText || data.text;
+  if (data.detail) {
+    const d = document.createElement('span');
+    d.className = 'cm-hint-detail';
+    d.textContent = data.detail;
+    element.appendChild(badge);
+    element.appendChild(label);
+    element.appendChild(d);
+  } else {
+    element.appendChild(badge);
+    element.appendChild(label);
+  }
+}
+
+function acMakeItem(text, type, detail, extra) {
+  const item = {
+    text,
+    displayText: text,
+    acType: type, // k | b | s | w
+    detail: detail || '',
+    render: acRenderHint,
+    ...extra,
+  };
+  if (type === 's' && extra && extra.snippetBody != null) {
+    item.hint = function(cm, data) {
+      cm.replaceRange(extra.snippetBody, data.from, data.to, 'complete');
+    };
+  }
+  return item;
+}
+
+function acCollectWords(cm, prefix) {
+  if (!state.acWords) return [];
   const wordSet = new Set();
-  const wordRe  = /[A-Za-z_$][A-Za-z0-9_$]{1,}/g;
+  const wordRe = /[A-Za-z_$][A-Za-z0-9_$]{1,}/g;
+  const pl = prefix.toLowerCase();
 
   state.tabs.forEach(t => {
     const lineCount = t.cm.lineCount();
-    // For very large files only scan visible viewport + cursor area
     let text;
-    if (lineCount > 2000) {
+    if (lineCount > 2500) {
       const vp = t.cm.getViewport();
-      const from = Math.max(0, vp.from - 50);
-      const to   = Math.min(lineCount, vp.to + 50);
+      const from = Math.max(0, vp.from - 80);
+      const to = Math.min(lineCount, vp.to + 80);
       text = t.cm.getRange({ line: from, ch: 0 }, { line: to, ch: 0 });
     } else {
       text = t.cm.getValue();
     }
     let m;
+    wordRe.lastIndex = 0;
     while ((m = wordRe.exec(text)) !== null) {
-      wordSet.add(m[0]);
+      const w = m[0];
+      if (w.length > prefix.length && w.toLowerCase().startsWith(pl)) wordSet.add(w);
     }
   });
 
-  // Filter: starts with prefix, longer than prefix, unique, sorted
-  const list = Array.from(wordSet)
-    .filter(w => w !== prefix && w.toLowerCase().startsWith(prefix.toLowerCase()))
+  return Array.from(wordSet)
     .sort((a, b) => {
-      // Prefer case-exact first
-      const aExact = a.startsWith(prefix) ? 0 : 1;
-      const bExact = b.startsWith(prefix) ? 0 : 1;
-      return aExact - bExact || a.localeCompare(b);
+      const aE = a.startsWith(prefix) ? 0 : 1;
+      const bE = b.startsWith(prefix) ? 0 : 1;
+      return aE - bE || a.length - b.length || a.localeCompare(b);
     })
-    .slice(0, 60); // cap list size
+    .slice(0, 40)
+    .map(w => acMakeItem(w, 'w', 'word'));
+}
 
-  if (!list.length) return null;
+function acCollectKeywords(lang, prefix) {
+  if (!state.acKeywords) return [];
+  const list = AC_KEYWORDS[lang] || [];
+  const pl = prefix.toLowerCase();
+  return list
+    .filter(k => k.toLowerCase().startsWith(pl) && k !== prefix)
+    .slice(0, 30)
+    .map(k => acMakeItem(k, 'k', 'keyword'));
+}
+
+function acCollectBuiltins(lang, prefix) {
+  if (!state.acBuiltins) return [];
+  const list = AC_BUILTINS[lang] || [];
+  const pl = prefix.toLowerCase();
+  return list
+    .filter(k => k.toLowerCase().startsWith(pl) && k !== prefix)
+    .slice(0, 40)
+    .map(k => acMakeItem(k, 'b', 'builtin'));
+}
+
+function acCollectSnippets(lang, prefix) {
+  if (!state.acSnippets || typeof _snippets === 'undefined') return [];
+  const pl = prefix.toLowerCase();
+  const out = [];
+  (_snippets || []).forEach(s => {
+    if (s.lang && s.lang !== lang && s.lang !== '') return;
+    const keys = [s.prefix, s.name].filter(Boolean);
+    keys.forEach(key => {
+      if (!key) return;
+      if (key.toLowerCase().startsWith(pl) || pl.length === 0) {
+        out.push(acMakeItem(key, 's', 'snippet · ' + (s.name || ''), {
+          snippetBody: s.code || '',
+          displayText: (s.prefix ? s.prefix + ' → ' : '') + (s.name || key),
+        }));
+      }
+    });
+  });
+  // de-dupe by text
+  const seen = new Set();
+  return out.filter(i => {
+    const k = i.text + '|' + (i.snippetBody || '');
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, 20);
+}
+
+function hybridCompletionHint(cm) {
+  const cur = cm.getCursor();
+  const token = cm.getTokenAt(cur);
+  // Allow completion after . for member-ish (still treat last identifier)
+  const raw = token.string || '';
+  const prefixMatch = raw.match(/[A-Za-z_$#][A-Za-z0-9_$#]*$/);
+  // Also allow empty prefix only on explicit Ctrl-Space (handled by completeSingle path via trigger)
+  let prefix = prefixMatch ? prefixMatch[0] : '';
+  // For HTML tags after <
+  if (!prefix && /<$/.test(cm.getRange({ line: cur.line, ch: Math.max(0, cur.ch - 1) }, cur))) {
+    prefix = '';
+  }
+
+  if (prefix.length < 1 && !cm.state._acExplicit) return null;
+
+  const lang = acLangName(cm);
+  const items = [];
+
+  // Priority: snippets → keywords → builtins → words
+  const snips = acCollectSnippets(lang, prefix || '');
+  const keys = acCollectKeywords(lang, prefix || '');
+  const builtins = acCollectBuiltins(lang, prefix || '');
+  const words = prefix ? acCollectWords(cm, prefix) : [];
+
+  const seen = new Set();
+  function pushAll(arr) {
+    arr.forEach(it => {
+      const key = (it.acType || '') + ':' + it.text;
+      if (seen.has(key)) return;
+      // allow same text different types once — prefer earlier
+      if (seen.has('T:' + it.text) && it.acType === 'w') return;
+      seen.add(key);
+      seen.add('T:' + it.text);
+      items.push(it);
+    });
+  }
+  pushAll(snips);
+  pushAll(keys);
+  pushAll(builtins);
+  pushAll(words);
+
+  if (!items.length) return null;
+
+  // Sort within merged list: type rank then match quality
+  const typeRank = { s: 0, k: 1, b: 2, w: 3 };
+  items.sort((a, b) => {
+    const tr = (typeRank[a.acType] ?? 9) - (typeRank[b.acType] ?? 9);
+    if (tr) return tr;
+    const aE = a.text.startsWith(prefix) ? 0 : 1;
+    const bE = b.text.startsWith(prefix) ? 0 : 1;
+    return aE - bE || a.text.length - b.text.length || a.text.localeCompare(b.text);
+  });
+
+  const fromCh = prefix
+    ? cur.ch - prefix.length
+    : cur.ch;
 
   return {
-    list,
-    from: CodeMirror.Pos(cur.line, token.start + (token.string.length - prefix.length)),
-    to:   CodeMirror.Pos(cur.line, token.end),
+    list: items.slice(0, 80),
+    from: CodeMirror.Pos(cur.line, fromCh),
+    to: CodeMirror.Pos(cur.line, cur.ch),
   };
 }
 
-function triggerWordCompletion(cm) {
+// Back-compat alias
+function wordCompletionHint(cm) { return hybridCompletionHint(cm); }
+
+function triggerWordCompletion(cm, explicit) {
   if (!state.wordCompletion) return;
-  cm.showHint({
-    hint:             wordCompletionHint,
-    completeSingle:   false,   // don't auto-insert if only 1 match
-    closeOnUnfocus:   true,
-    alignWithWord:    true,
-    extraKeys: {
-      // On mobile Tab is already taken — Enter & single-tap handle selection
-      'Tab':   (cm, handle) => handle.pick(),
-      'Enter': (cm, handle) => handle.pick(),
-    },
-  });
+  if (!cm) return;
+  cm.state._acExplicit = !!explicit;
+  try {
+    cm.showHint({
+      hint: hybridCompletionHint,
+      completeSingle: false,
+      closeOnUnfocus: true,
+      alignWithWord: true,
+      container: document.body,
+      extraKeys: {
+        'Tab': (cm, handle) => handle.pick(),
+        'Enter': (cm, handle) => handle.pick(),
+        'Esc': (cm, handle) => handle.close(),
+      },
+    });
+  } finally {
+    cm.state._acExplicit = false;
+  }
 }
 
 function toggleWordCompletion() {
   state.wordCompletion = document.getElementById('toggle-wordcompletion').checked;
   document.getElementById('row-wc-minchars').style.opacity = state.wordCompletion ? '1' : '0.4';
-  // Close any open hint popup immediately
+  document.getElementById('row-ac-sources').style.opacity = state.wordCompletion ? '1' : '0.4';
   if (!state.wordCompletion) {
     state.tabs.forEach(t => {
       if (t.cm.state.completionActive) t.cm.closeHint();
     });
   }
-  showToast(state.wordCompletion ? 'Word Completion On' : 'Word Completion Off');
+  persistSession();
+  showToast(state.wordCompletion ? 'Autocomplete on' : 'Autocomplete off');
+}
+
+function toggleAcSource(key, on) {
+  state[key] = !!on;
+  persistSession();
 }
 
 function adjustWcMinChars(delta) {
   state.wordCompletionMinChars = Math.max(1, Math.min(6, state.wordCompletionMinChars + delta));
   document.getElementById('wc-minchars-val').textContent = state.wordCompletionMinChars;
+  persistSession();
 }
 
-// Inject hint dropdown styles tuned to the NPP colour scheme
+// Inject hint dropdown styles
 (function injectHintStyles() {
+  if (document.getElementById('pp-hint-styles')) return;
   const s = document.createElement('style');
+  s.id = 'pp-hint-styles';
   s.textContent = `
-    /* ---- CodeMirror hint popup ---- */
     .CodeMirror-hints {
       position: absolute;
       z-index: 500;
-      overflow: hidden;
       list-style: none;
       margin: 0;
-      padding: 3px;
+      padding: 4px;
       background: #1e1f1b;
       border: 1px solid #5a5a52;
-      border-radius: 5px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.55);
-      min-width: 140px;
-      max-width: 280px;
-      max-height: 200px;
+      border-radius: 6px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+      min-width: 160px;
+      max-width: min(320px, 92vw);
+      max-height: min(240px, 40vh);
       overflow-y: auto;
-      font-family: 'Courier New', monospace;
+      font-family: 'Courier New', ui-monospace, monospace;
       font-size: 13px;
+      -webkit-overflow-scrolling: touch;
     }
     .CodeMirror-hint {
-      display: flex;
+      display: flex !important;
       align-items: center;
-      padding: 5px 10px;
-      border-radius: 3px;
+      padding: 7px 10px !important;
+      border-radius: 4px;
       cursor: pointer;
       color: #f8f8f2;
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
-      gap: 6px;
-    }
-    .CodeMirror-hint::before {
-      content: 'w';
-      font-size: 9px;
-      color: #a6e22e;
-      background: rgba(166,226,46,0.15);
-      border: 1px solid rgba(166,226,46,0.4);
-      border-radius: 2px;
-      padding: 0 3px;
-      line-height: 14px;
-      flex-shrink: 0;
+      gap: 8px;
+      line-height: 1.3;
     }
     .CodeMirror-hint-active {
       background: #3d3e39 !important;
       color: #a6e22e !important;
     }
-    .CodeMirror-hint-active::before {
-      background: rgba(166,226,46,0.3);
+    .cm-hint-badge {
+      font-size: 9px;
+      font-weight: 800;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      letter-spacing: 0;
     }
-    /* Scrollbar in hint list */
+    .cm-hint-badge-k { background: rgba(249,38,114,0.2); color: #f92672; border: 1px solid rgba(249,38,114,0.4); }
+    .cm-hint-badge-b { background: rgba(102,217,232,0.15); color: #66d9e8; border: 1px solid rgba(102,217,232,0.4); }
+    .cm-hint-badge-s { background: rgba(174,129,255,0.18); color: #ae81ff; border: 1px solid rgba(174,129,255,0.4); }
+    .cm-hint-badge-w { background: rgba(166,226,46,0.15); color: #a6e22e; border: 1px solid rgba(166,226,46,0.4); }
+    .cm-hint-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+    .cm-hint-detail {
+      font-size: 10px;
+      color: #75715e;
+      flex-shrink: 0;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .CodeMirror-hint-active .cm-hint-detail { color: #a0a097; }
     .CodeMirror-hints::-webkit-scrollbar { width: 5px; }
-    .CodeMirror-hints::-webkit-scrollbar-track { background: transparent; }
     .CodeMirror-hints::-webkit-scrollbar-thumb { background: #5a5a52; border-radius: 3px; }
-    /* Light theme override */
     body.theme-light .CodeMirror-hints {
-      background: #f5f5f5;
-      border-color: #bbb;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      background: #f7f7f7; border-color: #bbb; box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
     body.theme-light .CodeMirror-hint { color: #222; }
-    body.theme-light .CodeMirror-hint::before { color: #2d7a00; border-color: #2d7a00; background: rgba(45,122,0,0.1); }
-    body.theme-light .CodeMirror-hint-active { background: #e0eedb !important; color: #2d7a00 !important; }
+    body.theme-light .CodeMirror-hint-active { background: #e4f0dc !important; color: #2d7a00 !important; }
+    body.theme-light .cm-hint-detail { color: #888; }
   `;
   document.head.appendChild(s);
 })();
@@ -5618,6 +5991,10 @@ function collectSettings() {
     uiLight:               document.body.classList.contains('theme-light'),
     wordCompletion:        state.wordCompletion,
     wordCompletionMinChars: state.wordCompletionMinChars,
+        acKeywords:            state.acKeywords !== false,
+        acBuiltins:            state.acBuiltins !== false,
+        acSnippets:            state.acSnippets !== false,
+        acWords:               state.acWords !== false,
     spellCheck:            _spellEnabled,
         execEngine:            state.execEngine || 'auto',
         pistonBase:            state.pistonBase || 'https://emkc.org/api/v2/piston',
@@ -5696,6 +6073,20 @@ function applySettingsObject(s) {
   document.getElementById('toggle-wordcompletion').checked = state.wordCompletion;
   document.getElementById('wc-minchars-val').textContent   = state.wordCompletionMinChars;
   document.getElementById('row-wc-minchars').style.opacity = state.wordCompletion ? '1' : '0.4';
+  if (s.acKeywords !== undefined) state.acKeywords = s.acKeywords;
+  if (s.acBuiltins !== undefined) state.acBuiltins = s.acBuiltins;
+  if (s.acSnippets !== undefined) state.acSnippets = s.acSnippets;
+  if (s.acWords !== undefined) state.acWords = s.acWords;
+  const rk = document.getElementById('ac-src-keywords');
+  const rb = document.getElementById('ac-src-builtins');
+  const rs = document.getElementById('ac-src-snippets');
+  const rw = document.getElementById('ac-src-words');
+  if (rk) rk.checked = state.acKeywords !== false;
+  if (rb) rb.checked = state.acBuiltins !== false;
+  if (rs) rs.checked = state.acSnippets !== false;
+  if (rw) rw.checked = state.acWords !== false;
+  const rowAc = document.getElementById('row-ac-sources');
+  if (rowAc) rowAc.style.opacity = state.wordCompletion ? '1' : '0.4';
 
   if (s.spellCheck) {
     _spellEnabled = true;
@@ -5737,7 +6128,8 @@ function rebuildTabsFromData(tabData, savedActive) {
         'Shift-Tab': cm => cm.execCommand('indentLess'),
         'Ctrl-/':    cm => cm.execCommand('toggleComment'),
         'Cmd-/':     cm => cm.execCommand('toggleComment'),
-        'Ctrl-Space': cm => triggerWordCompletion(cm),
+        'Ctrl-Space': cm => triggerWordCompletion(cm, true),
+      'Cmd-Space': cm => triggerWordCompletion(cm, true),
       },
     });
 
