@@ -6,7 +6,14 @@ Open tabs, run code, talk to Termux, push to GitHub, export a ZIP. Works from an
 
 ![status](https://img.shields.io/badge/build-zero--build-brightgreen) ![pwa](https://img.shields.io/badge/PWA-ready-blue)
 
-## Run (30 seconds)
+## Live demo
+
+**https://pocketpad-gilt.vercel.app**
+
+GitHub: [Architect-Brad/pocketpad](https://github.com/Architect-Brad/pocketpad)  
+Auto-deploys to Vercel on push to `main`.
+
+## Run locally (30 seconds)
 
 ```bash
 # any static server from this folder
@@ -17,8 +24,8 @@ Open **http://localhost:8080** on desktop or phone.
 
 | Goal | How |
 |------|-----|
-| Install as app | Browser menu → **Add to Home Screen** (needs localhost or HTTPS) |
-| GitHub Pages | Push repo → Settings → Pages → deploy `/` (root). `.nojekyll` is included |
+| Production | Vercel (linked repo) — `vercel --prod` or push to `main` |
+| Install as app | Browser menu → **Add to Home Screen** (HTTPS) |
 | Offline-friendly | Libraries are in `vendor/` with CDN fallback |
 
 Refresh vendor copies anytime (optional, needs network):
