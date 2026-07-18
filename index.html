@@ -48,6 +48,12 @@ window.__ppLoadFallback = function(el) {
 <script src="./vendor/cdnjs/codemirror/5.65.16/mode/shell/shell.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js" onerror="__ppLoadFallback(this)"></script>
 <script src="./vendor/cdnjs/codemirror/5.65.16/mode/gas/gas.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/gas/gas.min.js" onerror="__ppLoadFallback(this)"></script>
 <script src="./vendor/cdnjs/codemirror/5.65.16/mode/verilog/verilog.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/verilog/verilog.min.js" onerror="__ppLoadFallback(this)"></script>
+
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/go/go.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/ruby/ruby.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/lua/lua.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/lua/lua.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/perl/perl.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/perl/perl.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/haskell/haskell.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/haskell/haskell.min.js" onerror="__ppLoadFallback(this)"></script>
 <script src="./vendor/cdnjs/codemirror/5.65.16/mode/rust/rust.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js" onerror="__ppLoadFallback(this)"></script>
 
 <!-- xterm.js (Shell Terminal) -->
@@ -1634,6 +1640,54 @@ body.theme-light #repl-prompt { color: #2d7a00; }
 #pane-preview.active { display: flex; }
 #pane-preview #preview-iframe { flex: 1; min-height: 0; }
 
+
+/* ===================== PISTON STDIN ===================== */
+#piston-stdin-wrap {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #222;
+  background: #0a0a0a;
+  padding: 4px 10px;
+  flex-shrink: 0;
+}
+#piston-stdin-wrap.open { display: flex; }
+.piston-stdin-label {
+  font-size: 10px;
+  color: #66d9e8;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+#piston-stdin {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #f8f8f2;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.piston-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(102,217,232,0.15);
+  border: 1px solid rgba(102,217,232,0.35);
+  color: #66d9e8;
+  flex-shrink: 0;
+}
+.piston-badge.local {
+  background: rgba(166,226,46,0.12);
+  border-color: rgba(166,226,46,0.35);
+  color: #a6e22e;
+}
+body.theme-light #piston-stdin-wrap { background: #ebebeb; border-top-color: #ddd; }
+body.theme-light #piston-stdin { color: #222; }
+
 </style>
 </head>
 <body>
@@ -1771,6 +1825,11 @@ body.theme-light #repl-prompt { color: #2d7a00; }
       </div>
       <div id="xterm-container" style="height:calc(100% - 40px);background:#000;padding:2px"></div>
     </div>
+  </div>
+  <div id="piston-stdin-wrap" style="display:none">
+    <span class="piston-stdin-label">stdin</span>
+    <input type="text" id="piston-stdin" placeholder="Optional stdin for Piston run…" autocomplete="off">
+    <span id="piston-engine-badge" class="piston-badge">Piston</span>
   </div>
   <div id="repl-wrap" style="display:none">
     <span id="repl-prompt">&gt;&gt;&gt;</span>
@@ -2036,6 +2095,8 @@ body.theme-light #repl-prompt { color: #2d7a00; }
         <button class="menu-item" onclick="loadTemplate('html')">HTML Hello</button>
         <button class="menu-item" onclick="loadTemplate('c')">C Hello</button>
         <button class="menu-item" onclick="loadTemplate('md')">Markdown</button>
+        <button class="menu-item" onclick="loadTemplate('go')">Go Hello</button>
+        <button class="menu-item" onclick="loadTemplate('rs')">Rust Hello</button>
         <div class="menu-divider"></div>
         <div class="menu-section">Tools</div>
         <button class="menu-item" onclick="openSheet('snippet-sheet');closeSheet('menu-sheet')">
@@ -2093,6 +2154,22 @@ body.theme-light #repl-prompt { color: #2d7a00; }
           <div class="toggle-track"></div>
           <div class="toggle-thumb"></div>
         </label>
+      </div>
+
+      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div>
+          <div class="settings-label">Code execution</div>
+          <div class="settings-sublabel">Remote runners for C, Go, Rust, Python, JS…</div>
+        </div>
+        <select id="select-exec-engine" class="snippet-select" onchange="setExecEngine(this.value)" style="width:100%">
+          <option value="auto">Auto (Judge0, then Piston)</option>
+          <option value="judge0">Judge0 CE (public)</option>
+          <option value="piston">Piston API</option>
+          <option value="local">Local only (JS/Python sandbox)</option>
+        </select>
+        <input type="url" class="snippet-form-input" id="piston-base-input" placeholder="Piston base URL (…/api/v2/piston)" onchange="savePistonSettings()">
+        <input type="password" class="snippet-form-input" id="piston-token-input" placeholder="Piston token / Authorization (optional)" onchange="savePistonSettings()" autocomplete="off">
+        <div class="settings-sublabel" id="exec-engine-hint">emkc.org Piston is whitelist-only; use your own instance or Judge0.</div>
       </div>
       <div class="settings-row">
         <div>
@@ -2324,7 +2401,11 @@ const state = {
   wordCompletionMinChars: 2,
   spellCheck: false,
   consoleOpen: false,
-  consoleLang: 'js', // current active runtime
+  consoleLang: 'js',
+  execEngine: 'auto', // auto | piston | judge0 | local
+  pistonBase: 'https://emkc.org/api/v2/piston',
+  pistonToken: '',
+  judge0Base: 'https://ce.judge0.com',
 };
 
 // ===================== LANGUAGE CONFIG =====================
@@ -2338,17 +2419,29 @@ const LANGUAGES = [
   { name: 'Python',     mode: 'python',                       ext: ['py'],                   pistonLang: 'python' },
   { name: 'C',          mode: 'text/x-csrc',                  ext: ['c'],                    pistonLang: 'c' },
   { name: 'C++',        mode: 'text/x-c++src',                ext: ['cpp', 'cc', 'cxx'],     pistonLang: 'cpp' },
+  { name: 'C#',         mode: 'text/x-csharp',                ext: ['cs'],                   pistonLang: 'csharp' },
+  { name: 'Go',         mode: 'go',                           ext: ['go'],                   pistonLang: 'go' },
+  { name: 'Rust',       mode: 'rust',                         ext: ['rs'],                   pistonLang: 'rust' },
+  { name: 'Java',       mode: 'text/x-java',                  ext: ['java'],                 pistonLang: 'java' },
+  { name: 'Kotlin',     mode: 'text/x-java',                  ext: ['kt', 'kts'],            pistonLang: 'kotlin' },
+  { name: 'Swift',      mode: 'text/x-csrc',                  ext: ['swift'],                pistonLang: 'swift' },
+  { name: 'Ruby',       mode: 'ruby',                         ext: ['rb'],                   pistonLang: 'ruby' },
+  { name: 'PHP',        mode: 'php',                          ext: ['php'],                  pistonLang: 'php' },
+  { name: 'Lua',        mode: 'lua',                          ext: ['lua'],                  pistonLang: 'lua' },
+  { name: 'Perl',       mode: 'perl',                         ext: ['pl', 'pm'],             pistonLang: 'perl' },
+  { name: 'Haskell',    mode: 'haskell',                      ext: ['hs'],                   pistonLang: 'haskell' },
+  { name: 'Julia',      mode: 'python',                       ext: ['jl'],                   pistonLang: 'julia' },
+  { name: 'Dart',       mode: 'javascript',                   ext: ['dart'],                 pistonLang: 'dart' },
+  { name: 'Scala',      mode: 'text/x-java',                  ext: ['scala'],                pistonLang: 'scala' },
+  { name: 'R',          mode: 'text/x-rsrc',                  ext: ['r', 'R'],               pistonLang: 'rscript' },
+  { name: 'SQL',        mode: 'sql',                          ext: ['sql'],                  pistonLang: 'sqlite3' },
+  { name: 'Shell',      mode: 'shell',                        ext: ['sh', 'bash'],           pistonLang: 'bash' },
   { name: 'Assembly',   mode: 'gas',                          ext: ['asm', 's', 'S'],        pistonLang: 'nasm' },
   { name: 'Verilog',    mode: 'verilog',                      ext: ['v', 'sv'],              pistonLang: 'iverilog' },
   { name: 'VHDL',       mode: 'vhdl',                         ext: ['vhd', 'vhdl'],          pistonLang: 'ghdl' },
-  { name: 'Binary',     mode: 'binary',                       ext: ['bin', 'bits'],          pistonLang: null },
   { name: 'XML',        mode: 'xml',                          ext: ['xml', 'svg'],           pistonLang: null },
   { name: 'Markdown',   mode: 'markdown',                     ext: ['md', 'markdown'],       pistonLang: null },
-  { name: 'PHP',        mode: 'php',                          ext: ['php'],                  pistonLang: 'php' },
-  { name: 'Java',       mode: 'text/x-java',                  ext: ['java'],                 pistonLang: 'java' },
-  { name: 'SQL',        mode: 'sql',                          ext: ['sql'],                  pistonLang: null },
-  { name: 'Shell',      mode: 'shell',                        ext: ['sh', 'bash'],           pistonLang: 'bash' },
-  { name: 'Rust',       mode: 'rust',                         ext: ['rs'],                   pistonLang: 'rust' },
+  { name: 'Binary',     mode: 'binary',                       ext: ['bin', 'bits'],          pistonLang: null },
 ];
 
 // Register custom Binary mode
@@ -2833,6 +2926,16 @@ function loadTemplate(kind) {
       name: 'readme.md',
       lang: 'Markdown',
       code: '# PocketPad\n\nMobile **markdown** preview.\n\n- Edit this file\n- Press **Run / Preview**\n- Toggle **Live** for auto-refresh\n\n```js\nconsole.log("hi");\n```\n\n> Tip: `Ctrl+Enter` previews\n'
+    },
+    go: {
+      name: 'main.go',
+      lang: 'Go',
+      code: 'package main\n\nimport "fmt"\n\nfunc main() {\n  fmt.Println("Hello from PocketPad + Piston")\n}\n'
+    },
+    rs: {
+      name: 'main.rs',
+      lang: 'Rust',
+      code: 'fn main() {\n  println!("Hello from PocketPad + Piston");\n}\n'
     }
   };
   var tpl = templates[kind];
@@ -3599,7 +3702,7 @@ function adjustWcMinChars(delta) {
 
 // ===================== CONSOLE & RUNNER =====================
 
-const RUNNABLE_LANGS = ['JavaScript', 'TypeScript', 'HTML', 'Python', 'Markdown'];
+const RUNNABLE_LANGS = ['JavaScript', 'TypeScript', 'HTML', 'Python', 'Markdown', 'C', 'C++', 'C#', 'Go', 'Rust', 'Java', 'Kotlin', 'Ruby', 'PHP', 'Shell', 'Lua'];
 
 function getConsoleLang() {
   const tab = getActiveTab();
@@ -3620,6 +3723,7 @@ function toggleConsole() {
     if (lang === 'JavaScript' || lang === 'Python' || lang === 'HTML' || lang === 'Markdown') runCode();
   }
   document.getElementById('btn-run').classList.toggle('active', state.consoleOpen);
+  updatePistonUi();
   state.tabs.forEach(t => t.cm.refresh());
 }
 
@@ -3629,11 +3733,15 @@ function updateConsoleForLang(lang) {
   if (previewTab) previewTab.style.display = isPreview ? 'flex' : 'none';
   const pane = document.getElementById('pane-preview');
   if (pane) pane.classList.toggle('md-mode', lang === 'Markdown');
-  // Run button label
   const runBtn = document.getElementById('run-btn');
-  if (runBtn) runBtn.textContent = isPreview ? (lang === 'Markdown' ? '▶ Preview' : '▶ Preview') : '▶ Run';
+  if (runBtn) {
+    if (isPreview) runBtn.textContent = '▶ Preview';
+    else if (usesPistonFor(lang)) runBtn.textContent = '▶ Run';
+    else runBtn.textContent = '▶ Run';
+  }
   const prompt = document.getElementById('repl-prompt');
   if (prompt) prompt.textContent = (lang === 'Python') ? '>>> ' : '> ';
+  updatePistonUi();
 }
 
 function switchConsolePane(id) {
@@ -3752,166 +3860,388 @@ function runJS(code, targetEl = null) {
   });
 }
 
-// ---- Piston API Runner (C, C++, Assembly, Verilog, Java, PHP, Rust, Bash) ----
-const PISTON_URL      = 'https://emkc.org/api/v2/piston/execute';
-const PISTON_RUNTIMES = 'https://emkc.org/api/v2/piston/runtimes';
+// ---- Remote code execution (Piston + Judge0) ----
+const PISTON_DEFAULT_BASE = 'https://emkc.org/api/v2/piston';
+const JUDGE0_DEFAULT_BASE = 'https://ce.judge0.com';
 
-// Cache of language→version discovered at runtime
 const _pistonVersionCache = {};
-let   _pistonRuntimesLoaded = false;
+let _pistonRuntimesLoaded = false;
+let _pistonRuntimesOk = false;
 
+/** Internal key → Piston language id + filename */
 const PISTON_LANG_MAP = {
-  'c':         { language: 'c',          filename: 'main.c'    },
-  'cpp':       { language: 'c++',        filename: 'main.cpp'  },
-  'nasm':      { language: 'nasm',       filename: 'main.asm'  },
-  'iverilog':  { language: 'iverilog',   filename: 'main.v'    },
-  'ghdl':      { language: 'ghdl',       filename: 'main.vhd'  },
-  'java':      { language: 'java',       filename: 'Main.java' },
-  'php':       { language: 'php',        filename: 'main.php'  },
-  'bash':      { language: 'bash',       filename: 'main.sh'   },
-  'rust':      { language: 'rust',       filename: 'main.rs'   },
-  'typescript':{ language: 'typescript', filename: 'main.ts'   },
-  'python':    { language: 'python3',    filename: 'main.py'   },
-  'javascript':{ language: 'javascript', filename: 'main.js'   },
+  javascript: { language: 'javascript', filename: 'main.js' },
+  typescript: { language: 'typescript', filename: 'main.ts' },
+  python:     { language: 'python',     filename: 'main.py' },
+  c:          { language: 'c',          filename: 'main.c' },
+  cpp:        { language: 'c++',        filename: 'main.cpp' },
+  csharp:     { language: 'csharp',     filename: 'Program.cs' },
+  go:         { language: 'go',         filename: 'main.go' },
+  rust:       { language: 'rust',       filename: 'main.rs' },
+  java:       { language: 'java',       filename: 'Main.java' },
+  kotlin:     { language: 'kotlin',     filename: 'Main.kt' },
+  swift:      { language: 'swift',      filename: 'main.swift' },
+  ruby:       { language: 'ruby',       filename: 'main.rb' },
+  php:        { language: 'php',        filename: 'main.php' },
+  lua:        { language: 'lua',        filename: 'main.lua' },
+  perl:       { language: 'perl',       filename: 'main.pl' },
+  haskell:    { language: 'haskell',    filename: 'main.hs' },
+  julia:      { language: 'julia',      filename: 'main.jl' },
+  dart:       { language: 'dart',       filename: 'main.dart' },
+  scala:      { language: 'scala',      filename: 'Main.scala' },
+  rscript:    { language: 'rscript',    filename: 'main.r' },
+  sqlite3:    { language: 'sqlite3',    filename: 'main.sql' },
+  bash:       { language: 'bash',       filename: 'main.sh' },
+  nasm:       { language: 'nasm',       filename: 'main.asm' },
+  iverilog:   { language: 'iverilog',   filename: 'main.v' },
+  ghdl:       { language: 'ghdl',       filename: 'main.vhd' },
 };
 
-// Fetch all available runtimes once and cache version strings
-async function pistonLoadRuntimes() {
-  if (_pistonRuntimesLoaded) return;
-  try {
-    const res = await fetchWithTimeout(PISTON_RUNTIMES, {}, 8000);
-    if (!res.ok) return;
-    const runtimes = await res.json();
-    runtimes.forEach(rt => {
-      _pistonVersionCache[rt.language] = rt.version;
-      // also index by alias
-      (rt.aliases || []).forEach(a => { _pistonVersionCache[a] = rt.version; });
-    });
-    _pistonRuntimesLoaded = true;
-  } catch { /* offline – will use '*' fallback */ }
+/** Judge0 CE language_id (prefer recent compilers) */
+const JUDGE0_LANG_IDS = {
+  javascript: 102, // Node 22
+  typescript: 74,  // may 404 on some CE — fallback handled
+  python:     100, // 3.12
+  c:          103, // GCC 14
+  cpp:        105,
+  csharp:     51,
+  go:         107,
+  rust:       108,
+  java:       91,
+  kotlin:     111,
+  swift:      83,
+  ruby:       72,
+  php:        98,
+  lua:        64,
+  perl:       85,
+  haskell:    61,
+  julia:      87,
+  dart:       90,
+  scala:      112,
+  rscript:    99,
+  bash:       46,
+  nasm:       45,
+  sqlite3:    82,
+};
+
+function getPistonBase() {
+  return (state.pistonBase || PISTON_DEFAULT_BASE).replace(/\/$/, '');
+}
+function getJudge0Base() {
+  return (state.judge0Base || JUDGE0_DEFAULT_BASE).replace(/\/$/, '');
 }
 
-// Fetch with timeout + abort
+function isRunnableRemote(langName) {
+  const L = LANGUAGES.find(l => l.name === langName);
+  return !!(L && L.pistonLang);
+}
+
+function wantsRemote(langName) {
+  if (!isRunnableRemote(langName)) return false;
+  if ((state.execEngine || 'auto') === 'local') {
+    return langName !== 'JavaScript' && langName !== 'TypeScript' && langName !== 'Python';
+  }
+  return true;
+}
+
+function engineLabelFor(langName) {
+  if (langName === 'HTML' || langName === 'Markdown') return 'Preview';
+  if (!wantsRemote(langName)) {
+    if (langName === 'JavaScript' || langName === 'TypeScript' || langName === 'Python') return 'Local';
+    return '—';
+  }
+  const e = state.execEngine || 'auto';
+  if (e === 'piston') return 'Piston';
+  if (e === 'judge0') return 'Judge0';
+  return 'Remote';
+}
+
+function updatePistonUi() {
+  const lang = getConsoleLang();
+  const wrap = document.getElementById('piston-stdin-wrap');
+  const badge = document.getElementById('piston-engine-badge');
+  const remote = wantsRemote(lang);
+  if (wrap) wrap.classList.toggle('open', !!remote && state.consoleOpen);
+  if (badge) {
+    badge.textContent = engineLabelFor(lang);
+    badge.classList.toggle('local', badge.textContent === 'Local' || badge.textContent === 'Preview');
+  }
+  const sel = document.getElementById('select-exec-engine');
+  if (sel && sel.value !== (state.execEngine || 'auto')) sel.value = state.execEngine || 'auto';
+  const baseIn = document.getElementById('piston-base-input');
+  if (baseIn && document.activeElement !== baseIn) baseIn.value = state.pistonBase || PISTON_DEFAULT_BASE;
+  const tokIn = document.getElementById('piston-token-input');
+  if (tokIn && document.activeElement !== tokIn && state.pistonToken) tokIn.placeholder = '(token saved)';
+}
+
+function setExecEngine(val) {
+  state.execEngine = val || 'auto';
+  updatePistonUi();
+  persistSession();
+  showToast('Execution: ' + state.execEngine, 'success');
+}
+
+function savePistonSettings() {
+  const base = document.getElementById('piston-base-input')?.value.trim();
+  const tok = document.getElementById('piston-token-input')?.value.trim();
+  if (base) state.pistonBase = base.replace(/\/$/, '');
+  if (tok) state.pistonToken = tok;
+  _pistonRuntimesLoaded = false;
+  persistSession();
+  showToast('Piston settings saved', 'success');
+}
+
+function toggleExecEngine() { /* legacy no-op if old checkbox gone */ }
+
+function getPistonStdin() {
+  return (document.getElementById('piston-stdin')?.value || '');
+}
+
 function fetchWithTimeout(url, opts = {}, ms = 15000) {
   const ctrl = new AbortController();
-  const tid   = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, { ...opts, signal: ctrl.signal })
-    .finally(() => clearTimeout(tid));
+  const tid = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(tid));
 }
 
-// Retry wrapper with exponential back-off
-async function fetchRetry(url, opts, retries = 3, baseDelay = 1200) {
+async function fetchRetry(url, opts, retries = 2, baseDelay = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await fetchWithTimeout(url, opts, 20000);
+      const res = await fetchWithTimeout(url, opts, 25000);
       if (res.ok) return res;
-      // 429 rate-limit → wait and retry
-      if (res.status === 429) {
-        const wait = baseDelay * Math.pow(2, i);
-        appendToOutput(conLine(`Rate-limited by Piston. Retrying in ${(wait/1000).toFixed(1)}s… (${i+1}/${retries})`, 'warn'));
-        await new Promise(r => setTimeout(r, wait));
+      if (res.status === 429 || res.status >= 500) {
+        appendToOutput(conLine(`Server ${res.status}, retry ${i + 1}/${retries}…`, 'warn'));
+        await new Promise(r => setTimeout(r, baseDelay * Math.pow(2, i)));
         continue;
       }
-      // 503/502 → server busy, retry
-      if (res.status >= 500) {
-        const wait = baseDelay * Math.pow(2, i);
-        appendToOutput(conLine(`Piston server error ${res.status}. Retrying in ${(wait/1000).toFixed(1)}s…`, 'warn'));
-        await new Promise(r => setTimeout(r, wait));
-        continue;
-      }
-      return res; // 4xx – don't retry
+      let detail = '';
+      try {
+        const j = await res.json();
+        detail = j.message || j.error || JSON.stringify(j).slice(0, 200);
+      } catch {}
+      const err = new Error(`HTTP ${res.status}${detail ? ': ' + detail : ''}`);
+      err.status = res.status;
+      err.detail = detail;
+      throw err;
     } catch (err) {
-      const isLast = i === retries - 1;
-      if (err.name === 'AbortError') {
-        appendToOutput(conLine(`Request timed out${isLast ? ' – giving up.' : ' – retrying…'}`, 'warn'));
-      } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-        appendToOutput(conLine(`Network error${isLast ? '. Check connection.' : ' – retrying…'}`, 'warn'));
-      } else {
-        appendToOutput(conLine(`${err.message}${isLast ? '' : ' – retrying…'}`, 'warn'));
-      }
-      if (isLast) throw err;
+      if (err.status) throw err;
+      if (i === retries - 1) throw err;
+      appendToOutput(conLine(`${err.message} — retrying…`, 'warn'));
       await new Promise(r => setTimeout(r, baseDelay * Math.pow(2, i)));
     }
   }
   throw new Error('All retries failed');
 }
 
-async function runViaPiston(pistonKey, code) {
-  const cfg = PISTON_LANG_MAP[pistonKey];
-  if (!cfg) {
-    appendToOutput(conLine(`No Piston config for "${pistonKey}"`, 'warn'));
-    return;
+function pistonHeaders() {
+  const h = { 'Content-Type': 'application/json', Accept: 'application/json' };
+  if (state.pistonToken) {
+    h['Authorization'] = state.pistonToken.startsWith('Bearer ') || state.pistonToken.startsWith('Token ')
+      ? state.pistonToken
+      : 'Bearer ' + state.pistonToken;
   }
+  return h;
+}
 
-  // Try to load runtimes for accurate version
-  await pistonLoadRuntimes();
-  const version = _pistonVersionCache[cfg.language] || '*';
-
-  appendToOutput(conLine(`Compiling via Piston (${cfg.language} ${version === '*' ? 'latest' : version})…`, 'system'));
-
+async function pistonLoadRuntimes() {
+  if (_pistonRuntimesLoaded) return _pistonRuntimesOk;
   try {
-    const res = await fetchRetry(PISTON_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        language: cfg.language,
-        version,
-        files:    [{ name: cfg.filename, content: code }],
-        stdin:    '',
-        run_timeout:     10000,
-        compile_timeout: 15000,
-        run_memory_limit:    -1,
-      }),
+    const res = await fetchWithTimeout(getPistonBase() + '/runtimes', { headers: pistonHeaders() }, 10000);
+    if (!res.ok) {
+      _pistonRuntimesLoaded = true;
+      _pistonRuntimesOk = false;
+      return false;
+    }
+    const runtimes = await res.json();
+    runtimes.forEach(rt => {
+      const prev = _pistonVersionCache[rt.language];
+      if (!prev || String(rt.version) > String(prev)) {
+        _pistonVersionCache[rt.language] = rt.version;
+      }
+      (rt.aliases || []).forEach(a => { _pistonVersionCache[a] = _pistonVersionCache[rt.language]; });
     });
-
-    const data = await res.json();
-
-    const out        = data.run?.stdout     || '';
-    const runErr     = data.run?.stderr      || '';
-    const compileOut = data.compile?.stdout  || '';
-    const compileErr = data.compile?.stderr  || '';
-    const exitCode   = data.run?.code ?? (data.compile?.code ?? 0);
-
-    if (compileErr) {
-      compileErr.split('\n').filter(Boolean).forEach(l =>
-        appendToOutput(conLine(l, 'error', 'CC'))
-      );
+    if (_pistonVersionCache.python && !_pistonVersionCache.python3) {
+      _pistonVersionCache.python3 = _pistonVersionCache.python;
     }
-    if (compileOut) {
-      compileOut.split('\n').filter(Boolean).forEach(l =>
-        appendToOutput(conLine(l, 'info', 'CC'))
-      );
-    }
-    if (out) {
-      const badge = cfg.language.toUpperCase().slice(0, 3);
-      out.split('\n').filter(Boolean).forEach(l =>
-        appendToOutput(conLine(l, 'log', badge))
-      );
-    }
-    if (runErr) {
-      runErr.split('\n').filter(Boolean).forEach(l =>
-        appendToOutput(conLine(l, 'error'))
-      );
-    }
-
-    const exitType = exitCode === 0 ? 'system' : 'warn';
-    appendToOutput(conLine(`Process exited with code ${exitCode}`, exitType));
-
-  } catch (e) {
-    // Distinguish CORS / network vs logic errors
-    const msg = e.message || String(e);
-    if (msg.includes('fetch') || msg.includes('CORS') || msg.includes('Network') || msg.includes('Failed')) {
-      appendToOutput(conLine('Cannot reach Piston API. Possible causes:', 'error'));
-      appendToOutput(conLine('• Network is offline', 'info'));
-      appendToOutput(conLine('• CORS blocked (try opening directly in browser: emkc.org)', 'info'));
-      appendToOutput(conLine('• Piston server is temporarily down', 'info'));
-      appendToOutput(conLine('Fallback: Copy code and paste at godbolt.org or repl.it', 'info'));
-    } else {
-      appendToOutput(conLine(`Piston error: ${msg}`, 'error'));
-    }
+    _pistonRuntimesLoaded = true;
+    _pistonRuntimesOk = true;
+    return true;
+  } catch {
+    _pistonRuntimesLoaded = true;
+    _pistonRuntimesOk = false;
+    return false;
   }
 }
 
+async function runViaPiston(pistonKey, code, opts = {}) {
+  const cfg = PISTON_LANG_MAP[pistonKey];
+  if (!cfg) {
+    appendToOutput(conLine(`No Piston mapping for "${pistonKey}"`, 'warn'));
+    return { ok: false };
+  }
+  await pistonLoadRuntimes();
+  let langId = cfg.language;
+  let version = _pistonVersionCache[langId];
+  if (!version && langId === 'python' && _pistonVersionCache.python3) {
+    langId = 'python3';
+    version = _pistonVersionCache.python3;
+  }
+  if (!version) version = '*';
+  const stdin = opts.stdin != null ? opts.stdin : getPistonStdin();
+  const url = getPistonBase() + '/execute';
+  appendToOutput(conLine(`Piston · ${langId} ${version === '*' ? '*' : 'v' + version} · ${url}`, 'system', 'API'));
+
+  try {
+    const res = await fetchRetry(url, {
+      method: 'POST',
+      headers: pistonHeaders(),
+      body: JSON.stringify({
+        language: langId,
+        version,
+        files: [{ name: cfg.filename, content: code }],
+        stdin,
+        args: opts.args || [],
+        compile_timeout: 15000,
+        run_timeout: 10000,
+      }),
+    });
+    const data = await res.json();
+    if (data.message && !data.run && !data.compile) {
+      appendToOutput(conLine(data.message, 'error'));
+      return { ok: false, data, whitelist: /whitelist/i.test(data.message || '') };
+    }
+    emitProcessOutput({
+      compileStdout: data.compile?.stdout,
+      compileStderr: data.compile?.stderr,
+      stdout: data.run?.stdout,
+      stderr: data.run?.stderr,
+      code: data.run?.code ?? data.compile?.code,
+      signal: data.run?.signal,
+      badge: String(langId).toUpperCase().slice(0, 3),
+    });
+    const exitCode = data.run?.code ?? data.compile?.code ?? 0;
+    return { ok: exitCode === 0, data };
+  } catch (e) {
+    appendToOutput(conLine('Piston failed: ' + (e.message || e), 'error'));
+    if (e.status === 401 || /whitelist/i.test(e.detail || e.message || '')) {
+      appendToOutput(conLine('Public emkc.org Piston is whitelist-only. Host your own or use Judge0 (Settings).', 'info'));
+      return { ok: false, error: e, whitelist: true };
+    }
+    return { ok: false, error: e };
+  }
+}
+
+async function runViaJudge0(pistonKey, code, opts = {}) {
+  let langId = JUDGE0_LANG_IDS[pistonKey];
+  // TypeScript not always on CE — map to JS with note
+  if (pistonKey === 'typescript' && !langId) langId = 102;
+  if (!langId) {
+    appendToOutput(conLine(`Judge0 has no mapping for "${pistonKey}"`, 'warn'));
+    return { ok: false };
+  }
+  const stdin = opts.stdin != null ? opts.stdin : getPistonStdin();
+  const url = getJudge0Base() + '/submissions?base64_encoded=false&wait=true';
+  appendToOutput(conLine(`Judge0 · language_id=${langId} · ${getJudge0Base()}`, 'system', 'API'));
+
+  try {
+    const res = await fetchRetry(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        source_code: code,
+        language_id: langId,
+        stdin,
+        cpu_time_limit: 5,
+        wall_time_limit: 10,
+      }),
+    }, 2, 1500);
+    const data = await res.json();
+    const status = data.status?.description || '';
+    if (data.compile_output) {
+      String(data.compile_output).replace(/\n$/, '').split('\n').forEach(l => appendToOutput(conLine(l, 'error', 'CC')));
+    }
+    if (data.stdout) {
+      const badge = (pistonKey || 'OUT').toUpperCase().slice(0, 3);
+      String(data.stdout).replace(/\n$/, '').split('\n').forEach(l => appendToOutput(conLine(l, 'log', badge)));
+    } else if (!data.stderr && !data.compile_output && data.status?.id === 3) {
+      appendToOutput(conLine('(no stdout)', 'system'));
+    }
+    if (data.stderr) {
+      String(data.stderr).replace(/\n$/, '').split('\n').forEach(l => appendToOutput(conLine(l, 'error')));
+    }
+    if (data.message) appendToOutput(conLine(data.message, 'warn'));
+    const ok = data.status?.id === 3;
+    appendToOutput(conLine(
+      `${status || 'Done'}${data.time != null ? ' · ' + data.time + 's' : ''}${data.memory != null ? ' · ' + data.memory + 'KB' : ''}`,
+      ok ? 'system' : 'warn'
+    ));
+    return { ok, data };
+  } catch (e) {
+    appendToOutput(conLine('Judge0 failed: ' + (e.message || e), 'error'));
+    return { ok: false, error: e };
+  }
+}
+
+function emitProcessOutput({ compileStdout, compileStderr, stdout, stderr, code, signal, badge }) {
+  if (compileStderr) String(compileStderr).replace(/\n$/, '').split('\n').forEach(l => { if (l !== '') appendToOutput(conLine(l, 'error', 'CC')); });
+  if (compileStdout) String(compileStdout).replace(/\n$/, '').split('\n').forEach(l => { if (l !== '') appendToOutput(conLine(l, 'info', 'CC')); });
+  if (stdout) {
+    String(stdout).replace(/\n$/, '').split('\n').forEach(l => appendToOutput(conLine(l, 'log', badge || 'OUT')));
+  } else if (!stderr && !compileStderr && (code === 0 || code == null)) {
+    appendToOutput(conLine('(no stdout)', 'system'));
+  }
+  if (stderr) String(stderr).replace(/\n$/, '').split('\n').forEach(l => appendToOutput(conLine(l, 'error')));
+  if (signal) appendToOutput(conLine('Signal: ' + signal, 'warn'));
+  if (code != null) appendToOutput(conLine('Exit code ' + code, code === 0 ? 'system' : 'warn'));
+}
+
+async function runRemote(pistonKey, code) {
+  const mode = state.execEngine || 'auto';
+  if (mode === 'piston') return runViaPiston(pistonKey, code);
+  if (mode === 'judge0') return runViaJudge0(pistonKey, code);
+
+  // auto: try Judge0 first (public), then Piston (self-host / whitelist)
+  let r = await runViaJudge0(pistonKey, code);
+  if (r.ok) return r;
+  if (r.error || !r.ok) {
+    appendToOutput(conLine('Trying Piston…', 'system'));
+    r = await runViaPiston(pistonKey, code);
+  }
+  return r;
+}
+
+async function runWithEngine(langName, code) {
+  const L = LANGUAGES.find(l => l.name === langName);
+  const key = L?.pistonLang;
+  const engine = state.execEngine || 'auto';
+
+  // Local-only mode for browser sandboxes
+  if (engine === 'local') {
+    if (langName === 'Python') return runPython(code);
+    if (langName === 'JavaScript' || langName === 'TypeScript') return runJS(code);
+    if (key) {
+      appendToOutput(conLine('Local mode: only JS/Python run in-browser. Switching this language to remote…', 'warn'));
+      return runRemote(key, code);
+    }
+  }
+
+  if (key && wantsRemote(langName)) {
+    const result = await runRemote(key, code);
+    if (!result.ok && (langName === 'JavaScript' || langName === 'TypeScript' || langName === 'Python')) {
+      appendToOutput(conLine('Falling back to local sandbox…', 'warn'));
+      if (langName === 'Python') return runPython(code);
+      return runJS(code);
+    }
+    return result;
+  }
+
+  if (langName === 'Python') return runPython(code);
+  if (langName === 'JavaScript' || langName === 'TypeScript') return runJS(code);
+  appendToOutput(conLine(`No runner for "${langName}"`, 'info'));
+}
+
+// aliases used by older call sites
+function isPistonLanguage(langName) { return isRunnableRemote(langName); }
+function usesPistonFor(langName) { return wantsRemote(langName); }
 
 // ---- Markdown Preview (marked.js → iframe) ----
 let _mdLive = true;
@@ -4147,14 +4477,16 @@ function runCode() {
   if (!tab) return;
   if (!state.consoleOpen) { toggleConsole(); return; }
 
-  const lang     = tab.lang.name;
-  const code     = tab.cm.getValue();
-  const runBtn   = document.getElementById('run-btn');
-  const pistonKey = tab.lang.pistonLang;
+  const lang = tab.lang.name;
+  const code = tab.cm.getValue();
+  const runBtn = document.getElementById('run-btn');
 
   runBtn.classList.add('running');
   clearConsole();
-  appendToOutput(conLine(`▶ Running: ${lang}`, 'system'));
+  updatePistonUi();
+
+  const engine = engineLabelFor(lang);
+  appendToOutput(conLine(`▶ ${lang} · ${engine}`, 'system'));
 
   setTimeout(async () => {
     try {
@@ -4162,16 +4494,13 @@ function runCode() {
         runHTML(code);
       } else if (lang === 'Markdown') {
         runMarkdown(code);
-      } else if (lang === 'Python') {
-        runPython(code);
-      } else if (lang === 'JavaScript' || lang === 'TypeScript') {
-        await runJS(code);
-      } else if (pistonKey) {
-        await runViaPiston(pistonKey, code);
+      } else if (isPistonLanguage(lang) || lang === 'JavaScript' || lang === 'TypeScript' || lang === 'Python') {
+        await runWithEngine(lang, code);
       } else {
-        appendToOutput(conLine(`"${lang}" has no runtime. Use Preview for Markdown/HTML, or Piston languages (C, C++, Java, Rust…)`, 'info'));
+        appendToOutput(conLine(`"${lang}" has no runner. Switch language or use Markdown/HTML preview.`, 'info'));
+        appendToOutput(conLine('Piston: JS, TS, Python, C/C++/C#, Go, Rust, Java, Kotlin, Ruby, PHP, Lua, …', 'info'));
       }
-    } catch(e) {
+    } catch (e) {
       appendToOutput(conLine(`Runner error: ${e.message}`, 'error'));
     } finally {
       runBtn.classList.remove('running');
@@ -5290,6 +5619,9 @@ function collectSettings() {
     wordCompletion:        state.wordCompletion,
     wordCompletionMinChars: state.wordCompletionMinChars,
     spellCheck:            _spellEnabled,
+        execEngine:            state.execEngine || 'auto',
+        pistonBase:            state.pistonBase || 'https://emkc.org/api/v2/piston',
+        pistonToken:           state.pistonToken || '',
   };
 }
 

@@ -15,7 +15,7 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 |------|----------------|
 | **Editor** | Multi-tab CodeMirror, 20+ languages, find/replace, word completion, themes |
 | **Files** | File tree, open folder (Chromium), save via File System Access, export ZIP |
-| **Run** | JavaScript, Python (Skulpt), HTML preview, **Markdown preview** (live), C/C++/Rust/… via Piston |
+| **Run** | Remote code execution via **Judge0 CE** (default) + **Piston API** (custom URL/token) · local JS/Python fallback · HTML & Markdown preview |
 | **GitHub** | Browse repos, open files, commit & push, simple diff |
 | **Shell** | xterm + WebSocket (Termux + `ttyd`) |
 | **Extras** | Document map, snippets, spell check |
@@ -90,6 +90,10 @@ python3 scripts/fetch-vendor.py
 ---
 
 ## Notes
+
+- **Code execution** defaults to the public [Piston](https://emkc.org/api/v2/piston) API (`emkc.org`). Requires network. Toggle **Settings → Run via Piston API** off to use the in-browser JS/Python sandboxes instead.
+- Optional **stdin** appears in the console when Piston is active.
+
 
 - **GitHub PAT** is stored in the browser for the GitHub panel — use a fine-scoped token and sign out on shared devices.
 - **Open folder** and native save need a secure context (HTTPS or localhost) and a Chromium-based browser.
