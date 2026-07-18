@@ -6,17 +6,12 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Local / env
+# Local / secrets
 .env
 .env.*
 *.local
+.vercel/
 
-# Node (if ever added)
-node_modules/
-/dist/
-package-lock.json
-
-# Logs / caches
-npm-debug.log*
+# Caches / logs
 .cache/
 *.log

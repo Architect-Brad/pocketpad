@@ -1,91 +1,102 @@
 # PocketPad
 
-**Mobile code editor** — zero-build PWA. No npm.
+A **mobile-first code editor** that runs entirely in the browser — multi-tab editing, run consoles, GitHub, and a Termux shell — as a zero-build PWA.
 
-Open tabs, run code, talk to Termux, push to GitHub, export a ZIP. Works from any static host.
+**[Open live demo →](https://pocketpad-gilt.vercel.app)**
 
-![status](https://img.shields.io/badge/build-zero--build-brightgreen) ![pwa](https://img.shields.io/badge/PWA-ready-blue)
+[![Deploy](https://img.shields.io/badge/deploy-Vercel-black)](https://pocketpad-gilt.vercel.app)
+[![Repo](https://img.shields.io/badge/github-Architect--Brad%2Fpocketpad-blue)](https://github.com/Architect-Brad/pocketpad)
 
-## Live demo
-
-**https://pocketpad-gilt.vercel.app**
-
-GitHub: [Architect-Brad/pocketpad](https://github.com/Architect-Brad/pocketpad)  
-Auto-deploys to Vercel on push to `main`.
-
-## Run locally (30 seconds)
-
-```bash
-# any static server from this folder
-python3 -m http.server 8080
-```
-
-Open **http://localhost:8080** on desktop or phone.
-
-| Goal | How |
-|------|-----|
-| Production | Vercel (linked repo) — `vercel --prod` or push to `main` |
-| Install as app | Browser menu → **Add to Home Screen** (HTTPS) |
-| Offline-friendly | Libraries are in `vendor/` with CDN fallback |
-
-Refresh vendor copies anytime (optional, needs network):
-
-```bash
-python3 scripts/fetch-vendor.py
-```
+---
 
 ## Features
 
-- Multi-tab editing (CodeMirror 5), 20+ languages  
-- **File tree** of open files · Open **folder** (Chromium) · **Export ZIP**  
-- Find/replace, word completion, themes, spell check  
-- Run: JavaScript, Python (Skulpt), HTML preview, Piston (C/C++/Rust/…)  
-- Document map, snippets, GitHub browse/commit/diff  
-- Shell via xterm + WebSocket (Termux + `ttyd`)  
-- Session restore via **IndexedDB** (localStorage fallback)  
-- Save/open via **File System Access API** when available  
+| Area | What you get |
+|------|----------------|
+| **Editor** | Multi-tab CodeMirror, 20+ languages, find/replace, word completion, themes |
+| **Files** | File tree, open folder (Chromium), save via File System Access, export ZIP |
+| **Run** | JavaScript, Python (Skulpt), HTML preview, C/C++/Rust/… via Piston |
+| **GitHub** | Browse repos, open files, commit & push, simple diff |
+| **Shell** | xterm + WebSocket (Termux + `ttyd`) |
+| **Extras** | Document map, snippets, spell check |
+| **Session** | Auto-save to IndexedDB (localStorage fallback) |
+| **Install** | PWA — Add to Home Screen on HTTPS |
 
-### Shortcuts
+### Keyboard shortcuts
 
 | Keys | Action |
 |------|--------|
-| Ctrl/Cmd+S | Save |
-| Ctrl/Cmd+O | Open file |
-| Ctrl/Cmd+F | Find |
-| Ctrl/Cmd+B | File tree |
-| Ctrl/Cmd+M | Document map |
-| Ctrl/Cmd+N | New tab |
-| Ctrl/Cmd+\` | Shell pane |
-| Ctrl/Cmd+Enter | Run |
+| `Ctrl/Cmd + S` | Save |
+| `Ctrl/Cmd + O` | Open file |
+| `Ctrl/Cmd + F` | Find |
+| `Ctrl/Cmd + B` | Toggle file tree |
+| `Ctrl/Cmd + M` | Document map |
+| `Ctrl/Cmd + N` | New tab |
+| `Ctrl/Cmd + \`` | Shell pane |
+| `Ctrl/Cmd + Enter` | Run |
+
+---
+
+## Quick start
+
+### Production
+
+Already deployed on Vercel. Pushes to `main` redeploy automatically.
+
+```
+https://pocketpad-gilt.vercel.app
+```
+
+### Local
+
+Serve the project root with any static server (service worker needs `http://` or `https://`, not `file://`):
+
+```bash
+python3 -m http.server 8080
+```
+
+Then open `http://localhost:8080`.
 
 ### Termux shell
 
 ```bash
 pkg install ttyd
-ttyd -p 8080 -W bash
+ttyd -p 7681 -W bash
 ```
 
-In PocketPad: **Shell → Connect** → `ws://localhost:8080`  
-(If the editor is also on 8080, use another port for ttyd, e.g. `7681`.)
+In PocketPad: **Shell → Connect** → `ws://localhost:7681`
+
+---
 
 ## Project layout
 
 ```
-index.html          # app (HTML + CSS + JS)
-manifest.json       # PWA
-sw.js               # service worker
-logo.svg            # icon
-vendor/             # local copies of CodeMirror, xterm, Skulpt, …
-scripts/fetch-vendor.py
-index.legacy.html   # older single-file backup
+index.html              # Full app (UI + logic)
+manifest.json           # PWA manifest
+sw.js                   # Service worker
+logo.svg                # App icon
+vercel.json             # Vercel headers / rewrites
+404.html                # SPA-style fallback
+vendor/                 # Vendored editor libs (local-first, CDN fallback)
+scripts/fetch-vendor.py # Optional: refresh vendor/ from CDN
 ```
+
+Libraries load from `vendor/` first; if a file is missing, they fall back to CDN. To re-download vendor assets:
+
+```bash
+python3 scripts/fetch-vendor.py
+```
+
+---
 
 ## Notes
 
-- Renamed from “Notepad++ Mobile” to avoid trademark clash; personal forks can rebrand freely.  
-- GitHub PAT is stored in the browser — use a fine-scoped token.  
-- Folder open / native save need a secure context (HTTPS or localhost) and a Chromium-based browser.
+- **GitHub PAT** is stored in the browser for the GitHub panel — use a fine-scoped token and sign out on shared devices.
+- **Open folder** and native save need a secure context (HTTPS or localhost) and a Chromium-based browser.
+- Spell-check dictionary still loads from the network on first use.
+
+---
 
 ## License
 
-Use and modify freely for your own projects unless you add a license file.
+Use and modify freely unless a separate license file is added.
