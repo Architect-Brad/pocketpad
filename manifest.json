@@ -1,0 +1,20 @@
+{
+  "name": "PocketPad",
+  "short_name": "PocketPad",
+  "description": "Mobile code editor — zero-build PWA with run, GitHub, shell, and file tree",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1e1f1b",
+  "theme_color": "#1e1f1b",
+  "icons": [
+    {
+      "src": "./logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["developer", "productivity", "utilities"]
+}

@@ -1,0 +1,5509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1e1f1b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PocketPad">
+<meta name="description" content="PocketPad – mobile code editor. Zero-build PWA with run, GitHub, shell, file tree.">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./logo.svg">
+<title>PocketPad</title>
+
+<!-- Local-first assets: vendor/* with CDN fallback (see vendor/README) -->
+<script>
+window.__ppLoadFallback = function(el) {
+  var cdn = el.getAttribute('data-cdn');
+  if (!cdn || el.dataset.fallbackApplied) return;
+  el.dataset.fallbackApplied = '1';
+  if (el.tagName === 'LINK') {
+    el.href = cdn;
+  } else if (el.tagName === 'SCRIPT') {
+    var s = document.createElement('script');
+    s.src = cdn;
+    s.async = false;
+    if (el.getAttribute('data-cdn')) s.setAttribute('data-from-cdn', '1');
+    el.parentNode.insertBefore(s, el.nextSibling);
+  }
+};
+</script>
+
+
+<!-- CodeMirror Core -->
+<link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/codemirror.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" onerror="__ppLoadFallback(this)">
+<script src="./vendor/cdnjs/codemirror/5.65.16/codemirror.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- CodeMirror Modes -->
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/javascript/javascript.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/css/css.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/python/python.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/xml/xml.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/markdown/markdown.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/php/php.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/clike/clike.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/sql/sql.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/shell/shell.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/shell/shell.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/gas/gas.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/gas/gas.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/verilog/verilog.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/verilog/verilog.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/mode/rust/rust.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- xterm.js (Shell Terminal) -->
+<link rel="stylesheet" href="./vendor/jsdelivr/xterm@5.3.0/css/xterm.min.css" data-cdn="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" onerror="__ppLoadFallback(this)">
+<script src="./vendor/jsdelivr/xterm@5.3.0/lib/xterm.min.js" data-cdn="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/jsdelivr/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js" data-cdn="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- CodeMirror Hint (Word Completion) -->
+<link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/addon/hint/show-hint.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css" onerror="__ppLoadFallback(this)">
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/hint/show-hint.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/hint/anyword-hint.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/anyword-hint.min.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- CodeMirror Addons -->
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/search/search.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/search/searchcursor.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/edit/matchbrackets.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/edit/closebrackets.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/comment/comment.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/fold/foldcode.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/fold/brace-fold.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/selection/active-line.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/display/fullscreen.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/fullscreen.min.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- CodeMirror Lint (Spell Check) -->
+<link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/addon/lint/lint.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.css" onerror="__ppLoadFallback(this)">
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/lint/lint.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- Skulpt (Python Runtime) -->
+<script src="./vendor/jsdelivr/skulpt@1.2.0/dist/skulpt.min.js" data-cdn="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js" onerror="__ppLoadFallback(this)"></script>
+<script src="./vendor/jsdelivr/skulpt@1.2.0/dist/skulpt-stdlib.js" data-cdn="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- Typo.js (Spell Checker) -->
+<script src="./vendor/jsdelivr/typo-js@1.2.3/typo.js" data-cdn="https://cdn.jsdelivr.net/npm/typo-js@1.2.3/typo.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- CodeMirror Themes -->
+<link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/theme/dracula.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" onerror="__ppLoadFallback(this)">
+<link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/theme/monokai.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css" onerror="__ppLoadFallback(this)">
+<link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/theme/eclipse.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css" onerror="__ppLoadFallback(this)">
+<link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/theme/nord.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/nord.min.css" onerror="__ppLoadFallback(this)">
+<link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/theme/solarized.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/solarized.min.css" onerror="__ppLoadFallback(this)">
+
+<style>
+/* ===================== RESET & BASE ===================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* PocketPad palette */
+  --npp-bg: #272822;
+  --npp-bg2: #1e1f1b;
+  --npp-bg3: #333430;
+  --npp-border: #454540;
+  --npp-border2: #5a5a52;
+  --npp-accent: #a6e22e;
+  --npp-accent2: #66d9e8;
+  --npp-text: #f8f8f2;
+  --npp-text2: #a0a097;
+  --npp-text3: #75715e;
+  --npp-tab-active: #272822;
+  --npp-tab-inactive: #1a1b18;
+  --npp-tab-hover: #2d2e29;
+  --npp-toolbar: #1e1f1b;
+  --npp-toolbar-btn: #2d2e29;
+  --npp-toolbar-btn-hover: #3d3e39;
+  --npp-toolbar-btn-active: #a6e22e;
+  --npp-status: #1a1b18;
+  --npp-find-bg: #1e1f1b;
+  --npp-highlight: #49483e;
+  --npp-danger: #f92672;
+  --npp-warn: #e6db74;
+  --npp-modified: #e6db74;
+  
+  --font-ui: 'Courier New', 'Lucida Console', monospace;
+  --font-editor: 'Courier New', monospace;
+  --font-size: 14px;
+  --tab-height: 42px;
+  --toolbar-height: 52px;
+  --statusbar-height: 28px;
+  --bottom-bar-height: 60px;
+  --find-height: 0px;
+  --radius: 3px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--npp-bg2);
+  color: var(--npp-text);
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===================== TOP TITLEBAR ===================== */
+#titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--npp-bg2);
+  border-bottom: 1px solid var(--npp-border);
+  height: 44px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+#titlebar .logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--npp-accent);
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+
+#titlebar .logo svg { width: 22px; height: 22px; }
+
+#titlebar .title-text {
+  font-size: 11px;
+  color: var(--npp-text3);
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#titlebar .title-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  color: var(--npp-text2);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.icon-btn:hover, .icon-btn:active { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
+.icon-btn.active { color: var(--npp-accent); }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* ===================== TAB BAR ===================== */
+#tabbar-wrap {
+  background: var(--npp-tab-inactive);
+  border-bottom: 2px solid var(--npp-accent);
+  flex-shrink: 0;
+  position: relative;
+  height: var(--tab-height);
+  display: flex;
+  align-items: stretch;
+}
+
+#tabbar {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  align-items: stretch;
+}
+#tabbar::-webkit-scrollbar { display: none; }
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  min-width: 110px;
+  max-width: 180px;
+  background: var(--npp-tab-inactive);
+  border-right: 1px solid var(--npp-border);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.1s;
+}
+.tab:hover { background: var(--npp-tab-hover); }
+.tab.active {
+  background: var(--npp-tab-active);
+  color: var(--npp-text);
+}
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--npp-accent);
+}
+.tab.modified .tab-name::after {
+  content: ' ●';
+  color: var(--npp-modified);
+  font-size: 10px;
+}
+.tab-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.tab-name {
+  font-size: 12px;
+  color: var(--npp-text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.tab.active .tab-name { color: var(--npp-text); }
+.tab-close {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--npp-text3);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-close:hover { background: var(--npp-danger); color: white; }
+
+#tab-add-btn {
+  width: 42px;
+  border: none;
+  background: var(--npp-tab-inactive);
+  color: var(--npp-text3);
+  font-size: 20px;
+  cursor: pointer;
+  border-left: 1px solid var(--npp-border);
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+#tab-add-btn:hover { color: var(--npp-accent); background: var(--npp-tab-hover); }
+
+/* ===================== FIND/REPLACE BAR ===================== */
+#findbar {
+  background: var(--npp-find-bg);
+  border-bottom: 1px solid var(--npp-border);
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.2s ease;
+  flex-shrink: 0;
+}
+#findbar.open { max-height: 130px; }
+#findbar-inner {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.find-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.find-label {
+  font-size: 11px;
+  color: var(--npp-text3);
+  width: 52px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.find-input {
+  flex: 1;
+  background: var(--npp-bg3);
+  border: 1px solid var(--npp-border2);
+  border-radius: var(--radius);
+  color: var(--npp-text);
+  font-family: var(--font-editor);
+  font-size: 13px;
+  padding: 5px 8px;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.find-input:focus { border-color: var(--npp-accent); }
+.find-actions {
+  display: flex;
+  gap: 4px;
+}
+.find-btn {
+  padding: 5px 10px;
+  background: var(--npp-toolbar-btn);
+  border: 1px solid var(--npp-border2);
+  color: var(--npp-text2);
+  border-radius: var(--radius);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.find-btn:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
+.find-btn.accent { background: var(--npp-accent); color: #272822; border-color: var(--npp-accent); font-weight: bold; }
+.find-opts {
+  display: flex;
+  gap: 8px;
+  padding: 0 0 2px 58px;
+}
+.find-opt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--npp-text3);
+  cursor: pointer;
+}
+.find-opt input { accent-color: var(--npp-accent); cursor: pointer; }
+#find-status {
+  font-size: 11px;
+  color: var(--npp-text3);
+  padding: 0 10px 4px 10px;
+}
+#find-status.found { color: var(--npp-accent); }
+#find-status.notfound { color: var(--npp-danger); }
+
+/* ===================== EDITOR AREA ===================== */
+#editor-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.editor-instance {
+  display: none;
+  height: 100%;
+}
+.editor-instance.active { display: block; }
+
+.CodeMirror {
+  height: 100%;
+  font-family: var(--font-editor) !important;
+  font-size: var(--font-size) !important;
+  line-height: 1.6 !important;
+}
+
+/* PocketPad custom CM theme */
+.cm-s-npp .CodeMirror-gutters {
+  background: #1e1f1b;
+  border-right: 1px solid #3a3b36;
+}
+.cm-s-npp .CodeMirror-linenumber { color: #75715e; }
+.cm-s-npp .CodeMirror-cursor { border-left: 2px solid #f8f8f2; }
+.cm-s-npp .CodeMirror-activeline-background { background: #313232; }
+.cm-s-npp { background: #272822; color: #f8f8f2; }
+.cm-s-npp .cm-keyword { color: #f92672; }
+.cm-s-npp .cm-atom { color: #ae81ff; }
+.cm-s-npp .cm-number { color: #ae81ff; }
+.cm-s-npp .cm-def { color: #a6e22e; }
+.cm-s-npp .cm-variable { color: #f8f8f2; }
+.cm-s-npp .cm-variable-2 { color: #9effff; }
+.cm-s-npp .cm-variable-3, .cm-s-npp .cm-type { color: #66d9e8; }
+.cm-s-npp .cm-comment { color: #75715e; font-style: italic; }
+.cm-s-npp .cm-string { color: #e6db74; }
+.cm-s-npp .cm-string-2 { color: #e6db74; }
+.cm-s-npp .cm-operator { color: #f92672; }
+.cm-s-npp .cm-tag { color: #f92672; }
+.cm-s-npp .cm-attribute { color: #a6e22e; }
+.cm-s-npp .cm-qualifier { color: #a6e22e; }
+.cm-s-npp .cm-builtin { color: #66d9e8; }
+.cm-s-npp .cm-bracket { color: #f8f8f2; }
+.cm-s-npp .cm-property { color: #a6e22e; }
+.cm-s-npp .cm-meta { color: #75715e; }
+.cm-s-npp .cm-header { color: #ae81ff; font-weight: bold; }
+.cm-s-npp .cm-link { color: #a6e22e; text-decoration: underline; }
+.cm-s-npp .cm-error { color: #f92672; background: rgba(249,38,114,0.15); }
+.cm-s-npp .CodeMirror-matchingbracket { outline: 1px solid var(--npp-accent); color: #f8f8f2 !important; }
+.cm-s-npp .CodeMirror-selected { background: #49483e; }
+.cm-s-npp .CodeMirror-focused .CodeMirror-selected { background: #49483e; }
+.cm-s-npp .CodeMirror-scrollbar-filler, .cm-s-npp .CodeMirror-gutter-filler { background: #1e1f1b; }
+
+/* Light theme override */
+body.theme-light {
+  --npp-bg: #ffffff;
+  --npp-bg2: #f0f0f0;
+  --npp-bg3: #e8e8e8;
+  --npp-border: #c8c8c8;
+  --npp-border2: #aaaaaa;
+  --npp-accent: #2d7a00;
+  --npp-accent2: #0070c0;
+  --npp-text: #1a1a1a;
+  --npp-text2: #444444;
+  --npp-text3: #888888;
+  --npp-tab-active: #ffffff;
+  --npp-tab-inactive: #e0e0e0;
+  --npp-tab-hover: #ececec;
+  --npp-toolbar: #f0f0f0;
+  --npp-toolbar-btn: #e4e4e4;
+  --npp-toolbar-btn-hover: #d8d8d8;
+  --npp-status: #e0e0e0;
+  --npp-find-bg: #f0f0f0;
+  --npp-highlight: #c8e6c9;
+  --npp-danger: #cc0000;
+  --npp-warn: #996600;
+  --npp-modified: #cc6600;
+}
+
+/* ===================== STATUS BAR ===================== */
+#statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--npp-status);
+  border-top: 1px solid var(--npp-border);
+  height: var(--statusbar-height);
+  padding: 0 10px;
+  font-size: 11px;
+  color: var(--npp-text3);
+  flex-shrink: 0;
+  gap: 8px;
+  overflow: hidden;
+}
+.status-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.status-item.lang {
+  color: var(--npp-accent2);
+  cursor: pointer;
+  font-weight: bold;
+}
+.status-item.lang:hover { color: var(--npp-accent); }
+.status-sep {
+  color: var(--npp-border2);
+  flex-shrink: 0;
+}
+
+/* ===================== BOTTOM TOOLBAR ===================== */
+#bottombar {
+  display: flex;
+  align-items: center;
+  background: var(--npp-toolbar);
+  border-top: 1px solid var(--npp-border2);
+  height: var(--bottom-bar-height);
+  padding: 0 4px;
+  padding-bottom: var(--safe-bottom);
+  flex-shrink: 0;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#bottombar::-webkit-scrollbar { display: none; }
+
+.toolbar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 52px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  color: var(--npp-text2);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  padding: 2px 4px;
+}
+.toolbar-btn:hover, .toolbar-btn:active { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
+.toolbar-btn.active { color: var(--npp-accent); }
+.toolbar-btn svg { width: 20px; height: 20px; }
+.toolbar-btn span {
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+}
+.toolbar-sep {
+  width: 1px;
+  height: 32px;
+  background: var(--npp-border);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+/* ===================== MODALS & OVERLAYS ===================== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+.overlay.open { display: flex; }
+
+.sheet {
+  background: var(--npp-bg3);
+  border: 1px solid var(--npp-border2);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 600px;
+  padding: 0 0 calc(16px + var(--safe-bottom)) 0;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--npp-border2);
+  border-radius: 2px;
+  margin: 10px auto 0;
+}
+.sheet-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--npp-text);
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--npp-border);
+}
+.sheet-body { padding: 12px 16px; }
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.1s;
+  color: var(--npp-text2);
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.menu-item:hover, .menu-item:active { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
+.menu-item svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--npp-accent); }
+.menu-item .menu-item-shortcut {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--npp-text3);
+}
+.menu-section {
+  font-size: 10px;
+  color: var(--npp-text3);
+  padding: 8px 14px 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.menu-divider {
+  height: 1px;
+  background: var(--npp-border);
+  margin: 6px 0;
+}
+
+/* Lang picker */
+#lang-sheet .lang-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.lang-btn {
+  padding: 10px;
+  background: var(--npp-toolbar-btn);
+  border: 1px solid var(--npp-border);
+  border-radius: var(--radius);
+  color: var(--npp-text2);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  font-family: var(--font-ui);
+}
+.lang-btn:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
+.lang-btn.active { border-color: var(--npp-accent); color: var(--npp-accent); background: rgba(166,226,46,0.1); }
+
+/* Settings sheet */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--npp-border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 13px; color: var(--npp-text2); }
+.settings-sublabel { font-size: 11px; color: var(--npp-text3); }
+.settings-ctrl { display: flex; align-items: center; gap: 8px; }
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+.toggle input { display: none; }
+.toggle-track {
+  width: 44px;
+  height: 24px;
+  background: var(--npp-border2);
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+.toggle input:checked + .toggle-track { background: var(--npp-accent); }
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle input:checked ~ .toggle-thumb { transform: translateX(20px); }
+
+/* Font size stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--npp-border2);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.stepper-btn {
+  width: 32px;
+  height: 30px;
+  background: var(--npp-toolbar-btn);
+  border: none;
+  color: var(--npp-text);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stepper-btn:hover { background: var(--npp-toolbar-btn-hover); }
+.stepper-val {
+  width: 36px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--npp-text);
+  background: var(--npp-bg3);
+  border-left: 1px solid var(--npp-border2);
+  border-right: 1px solid var(--npp-border2);
+  line-height: 30px;
+}
+
+/* Theme selector */
+.theme-options {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.theme-opt {
+  padding: 5px 10px;
+  background: var(--npp-toolbar-btn);
+  border: 1px solid var(--npp-border);
+  border-radius: var(--radius);
+  color: var(--npp-text2);
+  font-size: 11px;
+  cursor: pointer;
+}
+.theme-opt.active { border-color: var(--npp-accent); color: var(--npp-accent); }
+
+/* Notification toast */
+#toast {
+  position: fixed;
+  bottom: calc(var(--bottom-bar-height) + 10px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--npp-bg3);
+  color: var(--npp-text);
+  border: 1px solid var(--npp-border2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.success { border-color: var(--npp-accent); color: var(--npp-accent); }
+#toast.error { border-color: var(--npp-danger); color: var(--npp-danger); }
+
+/* Context menu */
+#ctx-menu {
+  position: fixed;
+  background: var(--npp-bg3);
+  border: 1px solid var(--npp-border2);
+  border-radius: 6px;
+  z-index: 300;
+  min-width: 160px;
+  padding: 4px;
+  display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+#ctx-menu.open { display: block; }
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--npp-text2);
+  transition: background 0.1s;
+}
+.ctx-item:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
+.ctx-item.danger:hover { color: var(--npp-danger); }
+
+/* Rename input inline */
+.tab-name input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--npp-accent);
+  color: var(--npp-text);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  outline: none;
+  width: 80px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* File open hidden input */
+#file-open-input { display: none; }
+
+/* Scrollbars */
+.CodeMirror-vscrollbar::-webkit-scrollbar,
+.CodeMirror-hscrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.CodeMirror-vscrollbar::-webkit-scrollbar-track,
+.CodeMirror-hscrollbar::-webkit-scrollbar-track { background: transparent; }
+.CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
+.CodeMirror-hscrollbar::-webkit-scrollbar-thumb { background: var(--npp-border2); border-radius: 3px; }
+
+/* responsive */
+@media (max-width: 400px) {
+  .toolbar-btn span { display: none; }
+  .toolbar-btn { min-width: 42px; }
+}
+
+/* Word wrap toggle */
+.cm-s-npp.wrap .CodeMirror-scroll { overflow-x: hidden; }
+
+/* ===================== PERFORMANCE: large-file tweaks ===================== */
+.editor-instance.large-file .CodeMirror-activeline-background { opacity: 0.5; }
+
+/* ===================== EDITOR + DOCMAP LAYOUT ===================== */
+#editor-and-map {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  min-height: 0;
+}
+#editor-wrap {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===================== DOCUMENT MAP ===================== */
+#docmap-panel {
+  width: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #16171300;
+  border-left: 1px solid var(--npp-border);
+  position: relative;
+  transition: width 0.2s ease;
+}
+#docmap-panel.open { width: 74px; }
+#docmap-wrap {
+  width: 74px;
+  height: 100%;
+  position: relative;
+  cursor: ns-resize;
+  overflow: hidden;
+}
+#docmap-canvas {
+  display: block;
+  width: 74px;
+  background: #12130f;
+  image-rendering: pixelated;
+}
+#docmap-viewport {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background: rgba(166,226,46,0.12);
+  border-top: 1px solid rgba(166,226,46,0.5);
+  border-bottom: 1px solid rgba(166,226,46,0.5);
+  pointer-events: none;
+}
+
+/* ===================== CONSOLE: Preview 80% ===================== */
+#console-panel.preview-mode { height: 80vh !important; }
+
+/* ===================== TERMINAL SHEET ===================== */
+#terminal-container {
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 320px;
+}
+.xterm-viewport::-webkit-scrollbar { width: 4px; }
+.xterm-viewport::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+.terminal-ws-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.terminal-ws-bar input {
+  flex: 1;
+  background: var(--npp-bg3);
+  border: 1px solid var(--npp-border2);
+  border-radius: 4px;
+  color: var(--npp-text);
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  padding: 6px 10px;
+  outline: none;
+  user-select: text; -webkit-user-select: text;
+}
+.terminal-ws-bar input:focus { border-color: var(--npp-accent); }
+.ws-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #555; flex-shrink: 0;
+  transition: background 0.3s;
+}
+.ws-dot.connected { background: #a6e22e; box-shadow: 0 0 5px #a6e22e88; }
+.ws-dot.connecting { background: #e6db74; animation: pulse 0.8s infinite; }
+.ws-dot.error { background: #f92672; }
+.terminal-help {
+  font-size: 11px; color: var(--npp-text3);
+  line-height: 1.7; margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--npp-bg3);
+  border-radius: 4px;
+  border: 1px solid var(--npp-border);
+}
+.terminal-help code { color: var(--npp-accent); font-family: 'Courier New', monospace; }
+
+/* ===================== GIT DIFF VIEWER ===================== */
+.git-diff-view {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  background: #0d0d0d;
+  border-radius: 4px;
+  overflow-y: auto;
+  max-height: 280px;
+  border: 1px solid var(--npp-border);
+}
+.git-diff-line { padding: 1px 8px; white-space: pre; border-left: 3px solid transparent; }
+.git-diff-line.add  { color: #a6e22e; border-color: #a6e22e44; background: rgba(166,226,46,0.06); }
+.git-diff-line.del  { color: #f92672; border-color: #f9267244; background: rgba(249,38,114,0.06); }
+.git-diff-line.hunk { color: #66d9e8; background: rgba(30,50,60,0.4); }
+.git-diff-line.ctx  { color: #5a5a52; }
+.git-file-changed {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 4px;
+  font-size: 12px; font-family: 'Courier New', monospace;
+  cursor: pointer; border: 1px solid var(--npp-border);
+  margin-bottom: 5px; background: var(--npp-toolbar-btn);
+  transition: border-color 0.1s, background 0.1s;
+}
+.git-file-changed:hover { border-color: var(--npp-accent); background: var(--npp-toolbar-btn-hover); }
+.git-badge {
+  font-size: 9px; font-weight: 900;
+  width: 16px; height: 16px;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.git-badge.M { background: rgba(230,219,116,.2); color: #e6db74; }
+.git-badge.A { background: rgba(166,226,46,.2);  color: #a6e22e; }
+.git-badge.D { background: rgba(249,38,114,.2);  color: #f92672; }
+.git-badge.R { background: rgba(102,217,232,.2); color: #66d9e8; }
+.git-section-tabs { display: flex; border-bottom: 1px solid var(--npp-border); margin-bottom: 10px; }
+.git-tab { padding: 7px 14px; font-size: 12px; color: var(--npp-text3); cursor: pointer; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; }
+.git-tab.active { color: var(--npp-accent); border-bottom-color: var(--npp-accent); }
+.git-pane { display: none; }
+.git-pane.active { display: block; }
+
+/* ===================== LANGUAGE ICON BADGES ===================== */
+.tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 16px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+  font-family: 'Courier New', monospace;
+}
+
+/* ===================== CONSOLE PANEL ===================== */
+#console-panel {
+  display: flex;
+  flex-direction: column;
+  background: #0d0d0d;
+  border-top: 2px solid var(--npp-border);
+  flex-shrink: 0;
+  transition: height 0.2s ease;
+  height: 0;
+  overflow: hidden;
+  position: relative;
+}
+#console-panel.open { height: 240px; }
+
+#console-resize-handle {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  cursor: ns-resize;
+  z-index: 10;
+  background: transparent;
+}
+#console-resize-handle:hover { background: rgba(166,226,46,0.2); }
+
+#console-header {
+  display: flex;
+  align-items: center;
+  background: #141414;
+  border-bottom: 1px solid #222;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0 6px;
+  gap: 2px;
+}
+.console-tab {
+  padding: 0 12px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  gap: 5px;
+  white-space: nowrap;
+}
+.console-tab.active { color: #a6e22e; border-bottom-color: #a6e22e; }
+.console-tab:hover { color: #aaa; }
+.console-tab .c-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+#console-header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.console-btn {
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 3px;
+  color: #666;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.console-btn:hover { border-color: #555; color: #aaa; }
+.console-btn.run-btn { border-color: #a6e22e44; color: #a6e22e; }
+.console-btn.run-btn:hover { background: rgba(166,226,46,0.1); border-color: #a6e22e; }
+.console-btn.run-btn.running { border-color: #e6db74; color: #e6db74; animation: pulse 0.8s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+.console-btn.clear-btn { color: #555; }
+.console-btn.close-btn { color: #555; font-size: 14px; padding: 3px 6px; }
+
+#console-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.console-pane {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+  padding: 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+.console-pane.active { display: block; }
+.console-pane::-webkit-scrollbar { width: 5px; }
+.console-pane::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+/* Preview pane */
+#pane-preview {
+  padding: 0;
+  background: white;
+}
+#preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: white;
+}
+
+/* Console output lines */
+.con-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 2px 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  border-bottom: 1px solid #111;
+  word-break: break-all;
+}
+.con-line:last-child { border-bottom: none; }
+.con-badge {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.con-log .con-badge { background: #1a2a1a; color: #a6e22e; }
+.con-info .con-badge { background: #1a2030; color: #66d9e8; }
+.con-warn .con-badge { background: #2a2500; color: #e6db74; }
+.con-error .con-badge { background: #2a0a0a; color: #f92672; }
+.con-result .con-badge { background: #1e1e2a; color: #ae81ff; }
+.con-system .con-badge { background: #1e1e1e; color: #555; }
+.con-text {
+  flex: 1;
+  color: #ccc;
+  white-space: pre-wrap;
+}
+.con-log .con-text { color: #f8f8f2; }
+.con-info .con-text { color: #66d9e8; }
+.con-warn .con-text { color: #e6db74; }
+.con-error .con-text { color: #f92672; }
+.con-result .con-text { color: #ae81ff; }
+.con-system .con-text { color: #555; font-style: italic; }
+
+/* REPL input */
+#repl-wrap {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #222;
+  background: #0a0a0a;
+  padding: 4px 10px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+#repl-prompt { color: #a6e22e; font-size: 13px; font-family: monospace; flex-shrink: 0; }
+#repl-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #f8f8f2;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  outline: none;
+  caret-color: #a6e22e;
+  user-select: text;
+  -webkit-user-select: text;
+}
+#repl-run-btn {
+  background: rgba(166,226,46,0.15);
+  border: 1px solid #a6e22e55;
+  color: #a6e22e;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+#repl-run-btn:hover { background: rgba(166,226,46,0.25); }
+
+/* Body with console open adjusts editor */
+body.console-open #editor-wrap { /* flex handles it */ }
+
+/* ===================== SPELL CHECK ===================== */
+.CodeMirror-lint-mark-error {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='M0 2.5 L1.5 1 L3 2.5 L4.5 1 L6 2.5' fill='none' stroke='%23f92672' stroke-width='1'/%3E%3C/svg%3E") !important;
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-color: transparent !important;
+}
+.CodeMirror-lint-mark-warning {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='3'%3E%3Cpath d='M0 2.5 L1.5 1 L3 2.5 L4.5 1 L6 2.5' fill='none' stroke='%23e6db74' stroke-width='1'/%3E%3C/svg%3E") !important;
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-color: transparent !important;
+}
+.CodeMirror-lint-tooltip {
+  background: #1e1f1b;
+  border: 1px solid #5a5a52;
+  border-radius: 4px;
+  color: #f8f8f2;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  max-width: 200px;
+  z-index: 400;
+}
+.CodeMirror-lint-tooltip:before { display: none; }
+.lint-error-icon, .lint-warning-icon { display: none; }
+
+/* Spell check suggestion popup */
+#spell-popup {
+  position: fixed;
+  background: #1e1f1b;
+  border: 1px solid #5a5a52;
+  border-radius: 6px;
+  z-index: 400;
+  min-width: 150px;
+  max-width: 220px;
+  padding: 4px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  display: none;
+}
+#spell-popup.open { display: block; }
+.spell-sugg {
+  padding: 7px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #f8f8f2;
+  font-family: 'Courier New', monospace;
+  transition: background 0.1s;
+}
+.spell-sugg:hover { background: #3d3e39; color: #a6e22e; }
+.spell-sugg.no-sugg { color: #555; font-style: italic; pointer-events: none; }
+.spell-sugg.add-word { color: #66d9e8; border-top: 1px solid #333; margin-top: 2px; padding-top: 9px; }
+.spell-sugg.ignore-word { color: #75715e; }
+
+/* light theme console */
+body.theme-light #console-panel { background: #f5f5f5; border-top-color: #ccc; }
+body.theme-light #console-header { background: #ebebeb; border-bottom-color: #ddd; }
+body.theme-light .console-tab.active { color: #2d7a00; border-bottom-color: #2d7a00; }
+body.theme-light .con-line { border-bottom-color: #e8e8e8; }
+body.theme-light .con-text { color: #333; }
+body.theme-light #repl-wrap { background: #ebebeb; border-top-color: #ddd; }
+body.theme-light #repl-input { color: #222; }
+body.theme-light #repl-prompt { color: #2d7a00; }
+
+/* ===================== SHEET HEADER (with back btn) ===================== */
+.sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--npp-border);
+  height: 48px;
+  flex-shrink: 0;
+}
+.sheet-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--npp-toolbar-btn);
+  border: 1px solid var(--npp-border);
+  border-radius: 8px;
+  color: var(--npp-text);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+.sheet-back-btn:hover, .sheet-back-btn:active { background: var(--npp-toolbar-btn-hover); color: var(--npp-accent); }
+.sheet-header .sheet-title {
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--npp-text);
+  flex: 1;
+  padding: 0;
+  border: none;
+}
+.sheet-header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ===================== SNIPPET LIBRARY ===================== */
+.snippet-list { display: flex; flex-direction: column; gap: 6px; }
+.snippet-item {
+  display: flex;
+  align-items: center;
+  background: var(--npp-toolbar-btn);
+  border: 1px solid var(--npp-border);
+  border-radius: 6px;
+  overflow: hidden;
+  gap: 0;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.snippet-item:hover { border-color: var(--npp-accent); }
+.snippet-body {
+  flex: 1;
+  padding: 10px 12px;
+  overflow: hidden;
+}
+.snippet-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--npp-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.snippet-preview {
+  font-size: 11px;
+  color: var(--npp-text3);
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.snippet-lang-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+.snippet-actions {
+  display: flex;
+  border-left: 1px solid var(--npp-border);
+}
+.snippet-action-btn {
+  padding: 0 10px;
+  height: 100%;
+  min-height: 50px;
+  background: transparent;
+  border: none;
+  color: var(--npp-text3);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  display: flex;
+  align-items: center;
+}
+.snippet-action-btn:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
+.snippet-action-btn.del:hover { color: var(--npp-danger); }
+.snippet-empty { color: var(--npp-text3); font-size: 13px; text-align: center; padding: 24px 0; font-style: italic; }
+/* New snippet form */
+.snippet-form { display: flex; flex-direction: column; gap: 8px; }
+.snippet-form-input {
+  background: var(--npp-bg3);
+  border: 1px solid var(--npp-border2);
+  border-radius: 4px;
+  color: var(--npp-text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+  width: 100%;
+}
+.snippet-form-input:focus { border-color: var(--npp-accent); }
+.snippet-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+.snippet-form-row { display: flex; gap: 6px; }
+.snippet-form-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px; }
+.btn-primary {
+  padding: 8px 16px;
+  background: var(--npp-accent);
+  border: none;
+  border-radius: 4px;
+  color: #222;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.85; }
+.btn-secondary {
+  padding: 8px 14px;
+  background: var(--npp-toolbar-btn);
+  border: 1px solid var(--npp-border2);
+  border-radius: 4px;
+  color: var(--npp-text2);
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-secondary:hover { background: var(--npp-toolbar-btn-hover); }
+.snippet-tabs { display: flex; border-bottom: 1px solid var(--npp-border); margin-bottom: 12px; }
+.snippet-tab {
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--npp-text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.snippet-tab.active { color: var(--npp-accent); border-bottom-color: var(--npp-accent); }
+.snippet-pane { display: none; }
+.snippet-pane.active { display: block; }
+.snippet-search {
+  margin-bottom: 10px;
+}
+.snippet-select {
+  background: var(--npp-bg3);
+  border: 1px solid var(--npp-border2);
+  border-radius: 4px;
+  color: var(--npp-text2);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+  flex: 1;
+}
+
+/* ===================== GITHUB SHEET ===================== */
+.github-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--npp-toolbar-btn);
+  border: 1px solid var(--npp-border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--npp-text3);
+}
+.github-status.connected { border-color: var(--npp-accent); color: var(--npp-accent); }
+.github-status.connected .gh-dot { background: var(--npp-accent); }
+.github-status.error { border-color: var(--npp-danger); color: var(--npp-danger); }
+.gh-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--npp-border2); flex-shrink: 0; }
+.github-section-title {
+  font-size: 11px;
+  color: var(--npp-text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 12px 0 6px;
+}
+.github-file-list { max-height: 180px; overflow-y: auto; }
+.github-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--npp-text2);
+  transition: background 0.1s;
+  border-bottom: 1px solid var(--npp-border);
+  font-family: 'Courier New', monospace;
+}
+.github-file-item:last-child { border-bottom: none; }
+.github-file-item:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
+.github-file-item .gh-file-icon { flex-shrink: 0; opacity: 0.6; }
+.github-file-item.is-dir { color: var(--npp-accent2); }
+.github-path-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--npp-text3);
+  padding: 4px 0 8px;
+  flex-wrap: wrap;
+}
+.gh-path-part { cursor: pointer; color: var(--npp-accent2); }
+.gh-path-part:hover { text-decoration: underline; }
+.gh-path-sep { color: var(--npp-border2); }
+.github-commit-form { display: flex; flex-direction: column; gap: 8px; }
+.gh-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--npp-text3);
+  font-size: 12px;
+  gap: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.gh-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--npp-border2);
+  border-top-color: var(--npp-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.gh-branch-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(166,226,46,0.15);
+  border: 1px solid rgba(166,226,46,0.3);
+  border-radius: 3px;
+  color: var(--npp-accent);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ===================== FILE TREE ===================== */
+#workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  min-height: 0;
+}
+#filetree-panel {
+  width: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--npp-bg2);
+  border-right: 1px solid var(--npp-border);
+  transition: width 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+#filetree-panel.open { width: 180px; }
+#filetree-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--npp-border);
+  font-size: 11px;
+  color: var(--npp-text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+#filetree-header span { flex: 1; }
+#filetree-header button {
+  background: transparent;
+  border: none;
+  color: var(--npp-text2);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#filetree-header button:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-accent); }
+#filetree-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+  scrollbar-width: thin;
+}
+.ft-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--npp-text2);
+  border-left: 2px solid transparent;
+  user-select: none;
+}
+.ft-item:hover { background: var(--npp-tab-hover); color: var(--npp-text); }
+.ft-item.active {
+  background: var(--npp-tab-active);
+  color: var(--npp-text);
+  border-left-color: var(--npp-accent);
+}
+.ft-item.modified .ft-name::after { content: ' ●'; color: var(--npp-modified); font-size: 9px; }
+.ft-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ft-close {
+  opacity: 0.4;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ft-close:hover { opacity: 1; background: var(--npp-danger); color: #fff; }
+.ft-empty {
+  padding: 16px 10px;
+  font-size: 11px;
+  color: var(--npp-text3);
+  text-align: center;
+  font-style: italic;
+}
+#editor-and-map { flex: 1; min-width: 0; }
+
+</style>
+</head>
+<body>
+
+<!-- Hidden file input -->
+<input type="file" id="file-open-input" multiple accept="*/*">
+
+<!-- ===================== TITLEBAR ===================== -->
+<div id="titlebar">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <path d="M7 8h10M7 12h10M7 16h6"/>
+      <circle cx="19" cy="16" r="2" fill="currentColor" stroke="none"/>
+    </svg>
+    <span>PocketPad</span>
+  </div>
+  <div class="title-text" id="titlebar-filename">untitled</div>
+  <div class="title-actions">
+    <button class="icon-btn" id="btn-find" title="Find/Replace" onclick="toggleFind()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="btn-menu" title="Menu" onclick="openSheet('menu-sheet')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== TAB BAR ===================== -->
+<div id="tabbar-wrap">
+  <div id="tabbar"></div>
+  <button id="tab-add-btn" onclick="newTab()" title="New Tab">+</button>
+</div>
+
+<!-- ===================== FIND BAR ===================== -->
+<div id="findbar">
+  <div id="findbar-inner">
+    <div class="find-row">
+      <span class="find-label">Find:</span>
+      <input type="search" class="find-input" id="find-input" placeholder="Search text…" oninput="liveSearch()" onkeydown="findKeydown(event)">
+      <div class="find-actions">
+        <button class="find-btn" onclick="findPrev()">↑</button>
+        <button class="find-btn" onclick="findNext()">↓</button>
+        <button class="find-btn" onclick="closeFind()">✕</button>
+      </div>
+    </div>
+    <div class="find-row" id="replace-row" style="display:none">
+      <span class="find-label">Replace:</span>
+      <input type="text" class="find-input" id="replace-input" placeholder="Replace with…" onkeydown="replaceKeydown(event)">
+      <div class="find-actions">
+        <button class="find-btn" onclick="replaceOne()">1×</button>
+        <button class="find-btn accent" onclick="replaceAll()">All</button>
+      </div>
+    </div>
+    <div class="find-opts">
+      <label class="find-opt"><input type="checkbox" id="opt-case"> Case</label>
+      <label class="find-opt"><input type="checkbox" id="opt-word"> Word</label>
+      <label class="find-opt"><input type="checkbox" id="opt-regex"> Regex</label>
+      <label class="find-opt" id="replace-toggle-label" style="margin-left:auto">
+        <input type="checkbox" id="opt-replace" onchange="toggleReplaceRow()"> Replace
+      </label>
+    </div>
+    <div id="find-status"></div>
+  </div>
+</div>
+
+<!-- ===================== WORKSPACE: FILE TREE + EDITOR + DOCMAP ===================== -->
+<div id="workspace">
+  <div id="filetree-panel">
+    <div id="filetree-header">
+      <span>Files</span>
+      <button type="button" title="New file" onclick="newTab()">+</button>
+      <button type="button" title="Open folder" onclick="openFolder()">📁</button>
+      <button type="button" title="Export ZIP" onclick="exportZip()">⬇</button>
+    </div>
+    <div id="filetree-list"></div>
+  </div>
+  <div id="editor-and-map">
+    <div id="editor-wrap"></div>
+    <div id="docmap-panel">
+      <div id="docmap-wrap">
+        <canvas id="docmap-canvas" width="74" height="600"></canvas>
+        <div id="docmap-viewport"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CONSOLE PANEL ===================== -->
+<div id="console-panel">
+  <div id="console-resize-handle"></div>
+  <div id="console-header">
+    <div class="console-tab active" data-pane="output" onclick="switchConsolePane('output')">
+      <span class="c-dot"></span> Output
+    </div>
+    <div class="console-tab" data-pane="repl" onclick="switchConsolePane('repl')">
+      <span class="c-dot"></span> Console
+    </div>
+    <div class="console-tab" id="console-tab-preview" data-pane="preview" onclick="switchConsolePane('preview')" style="display:none">
+      <span class="c-dot"></span> Preview
+    </div>
+    <div class="console-tab" data-pane="shell" onclick="switchConsolePane('shell')">
+      <span class="c-dot"></span> Shell
+    </div>
+    <div id="console-header-right">
+      <button class="console-btn run-btn" id="run-btn" onclick="runCode()">▶ Run</button>
+      <button class="console-btn clear-btn" onclick="clearConsole()">Clear</button>
+      <button class="console-btn close-btn" onclick="toggleConsole()">✕</button>
+    </div>
+  </div>
+  <div id="console-body">
+    <div class="console-pane active" id="pane-output"></div>
+    <div class="console-pane" id="pane-repl">
+      <div id="repl-log"></div>
+    </div>
+    <div class="console-pane" id="pane-preview">
+      <iframe id="preview-iframe" sandbox="allow-scripts allow-same-origin allow-modals allow-popups"></iframe>
+    </div>
+    <div class="console-pane" id="pane-shell">
+      <div class="terminal-ws-bar" style="padding:6px 8px">
+        <div class="ws-dot" id="ws-dot"></div>
+        <input type="text" id="ws-url-input" placeholder="ws://localhost:8080" value="ws://localhost:8080">
+        <button class="console-btn" onclick="wsConnect()">Connect</button>
+        <button class="console-btn" onclick="wsDisconnect()" style="color:var(--npp-danger)">✕</button>
+      </div>
+      <div id="xterm-container" style="height:calc(100% - 40px);background:#000;padding:2px"></div>
+    </div>
+  </div>
+  <div id="repl-wrap" style="display:none">
+    <span id="repl-prompt">&gt;&gt;&gt;</span>
+    <input type="text" id="repl-input" placeholder="Enter expression…" onkeydown="replEval(event)">
+    <button id="repl-run-btn" onclick="replSubmit()">↵</button>
+  </div>
+</div>
+
+<!-- ===================== STATUS BAR ===================== -->
+<div id="statusbar">
+  <div class="status-group">
+    <span class="status-item lang" id="status-lang" onclick="openSheet('lang-sheet')">Plain Text</span>
+    <span class="status-sep">│</span>
+    <span class="status-item" id="status-pos">Ln 1, Col 1</span>
+  </div>
+  <div class="status-group">
+    <span class="status-item" id="status-chars">0 chars</span>
+    <span class="status-sep">│</span>
+    <span class="status-item" id="status-encoding">UTF-8</span>
+    <span class="status-sep">│</span>
+    <span class="status-item" id="status-eol">CRLF</span>
+  </div>
+</div>
+
+<!-- ===================== BOTTOM TOOLBAR ===================== -->
+<div id="bottombar">
+  
+  <button class="toolbar-btn" id="btn-filetree" onclick="toggleFileTree()" title="File tree">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h12M3 18h18"/>
+      <path d="M14 10l4 2-4 2"/>
+    </svg>
+    <span>Files</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="newTab()" title="New">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
+    </svg>
+    <span>New</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="openFile()" title="Open">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+    </svg>
+    <span>Open</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="saveFile()" title="Save">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+      <polyline points="17 21 17 13 7 13 7 21"/>
+      <polyline points="7 3 7 8 15 8"/>
+    </svg>
+    <span>Save</span>
+  </button>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="toolbar-btn" onclick="doUndo()" title="Undo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="9 14 4 9 9 4"/>
+      <path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+    </svg>
+    <span>Undo</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="doRedo()" title="Redo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="15 14 20 9 15 4"/>
+      <path d="M4 20v-7a4 4 0 0 0 4-4h12"/>
+    </svg>
+    <span>Redo</span>
+  </button>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="toolbar-btn" onclick="doCut()" title="Cut">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="6" cy="20" r="2"/><circle cx="18" cy="20" r="2"/>
+      <path d="M5.45 5.11 2 12v6"/><path d="M8 2 5.45 5.11"/><path d="m11.9 12 6.6 8"/><path d="M20 12 8 2"/>
+    </svg>
+    <span>Cut</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="doCopy()" title="Copy">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="9" y="9" width="13" height="13" rx="2"/>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+    <span>Copy</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="doPaste()" title="Paste">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+      <rect x="8" y="2" width="8" height="4" rx="1"/>
+    </svg>
+    <span>Paste</span>
+  </button>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="toolbar-btn" onclick="doIndent()" title="Indent">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="3 8 7 12 3 16"/><line x1="21" y1="12" x2="11" y2="12"/>
+      <line x1="21" y1="6" x2="11" y2="6"/><line x1="21" y1="18" x2="11" y2="18"/>
+    </svg>
+    <span>Indent</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="doComment()" title="Comment">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      <line x1="9" y1="10" x2="15" y2="10"/>
+    </svg>
+    <span>Comment</span>
+  </button>
+
+  <button class="toolbar-btn" id="btn-wrap" onclick="toggleWrap()" title="Word Wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="17 10 21 14 17 18"/>
+      <path d="M3 6h10a8 8 0 0 1 8 8"/>
+    </svg>
+    <span>Wrap</span>
+  </button>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="toolbar-btn" id="btn-run" onclick="toggleConsole()" title="Run / Console">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" stroke="none"/>
+    </svg>
+    <span>Run</span>
+  </button>
+
+  <button class="toolbar-btn" id="btn-docmap" onclick="toggleDocMap()" title="Document Map">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="5" height="18" rx="1"/>
+      <rect x="10" y="3" width="11" height="5" rx="1"/>
+      <rect x="10" y="10" width="7" height="4" rx="1"/>
+      <rect x="10" y="16" width="11" height="5" rx="1"/>
+    </svg>
+    <span>Map</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="switchConsolePane('shell');if(!state.consoleOpen)toggleConsole()" title="Shell / Termux">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="4 17 10 11 4 5"/>
+      <line x1="12" y1="19" x2="20" y2="19"/>
+    </svg>
+    <span>Shell</span>
+  </button>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="toolbar-btn" onclick="openSheet('snippet-sheet')" title="Snippets">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="8" y1="13" x2="16" y2="13"/>
+      <line x1="8" y1="17" x2="11" y2="17"/>
+    </svg>
+    <span>Snippets</span>
+  </button>
+
+  <button class="toolbar-btn" onclick="openSheet('github-sheet')" title="GitHub">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+    </svg>
+    <span>GitHub</span>
+  </button>
+
+  <div class="toolbar-sep"></div>
+
+  <button class="toolbar-btn" onclick="openSheet('settings-sheet')" title="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    <span>Settings</span>
+  </button>
+</div>
+
+<!-- ===================== OVERLAYS ===================== -->
+
+<!-- Context menu -->
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxRename()">✏️ Rename tab</div>
+  <div class="ctx-item" onclick="ctxDuplicate()">📋 Duplicate</div>
+  <div class="ctx-item danger" onclick="ctxClose()">✕ Close tab</div>
+</div>
+
+<!-- Menu Sheet -->
+<div class="overlay" id="menu-sheet" onclick="closeSheetOutside(event, 'menu-sheet')">
+  <div class="sheet" onclick="e=>e.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Menu</div>
+    <div class="sheet-body">
+      <div class="menu-list">
+        <div class="menu-section">File</div>
+        <button class="menu-item" onclick="newTab();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          New File <span class="menu-item-shortcut"></span>
+        </button>
+        <button class="menu-item" onclick="openFile();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Open File…
+        </button>
+        
+        <button class="menu-item" onclick="openFolder();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Open Folder…
+        </button>
+        <button class="menu-item" onclick="exportZip();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export All as ZIP
+        </button>
+
+        <button class="menu-item" onclick="saveFile();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save / Download
+        </button>
+        <div class="menu-divider"></div>
+        <div class="menu-section">Edit</div>
+        <button class="menu-item" onclick="selectAll();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+          Select All
+        </button>
+        <button class="menu-item" onclick="duplicateLine();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Duplicate Line
+        </button>
+        <button class="menu-item" onclick="deleteLine();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete Line
+        </button>
+        <button class="menu-item" onclick="toUppercase();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2L8 8H4l8 12 8-12h-4L12 2z"/></svg>
+          UPPERCASE
+        </button>
+        <button class="menu-item" onclick="toLowercase();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 22L8 16H4l8-12 8 12h-4L12 22z"/></svg>
+          lowercase
+        </button>
+        <div class="menu-divider"></div>
+        <div class="menu-section">View</div>
+        <button class="menu-item" onclick="toggleFind();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+          Find / Replace
+        </button>
+        <button class="menu-item" onclick="jumpToLine();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="8 8 3 12 8 16"/></svg>
+          Go To Line…
+        </button>
+        <div class="menu-divider"></div>
+        <div class="menu-section">Templates</div>
+        <button class="menu-item" onclick="loadTemplate('js')">JS Hello</button>
+        <button class="menu-item" onclick="loadTemplate('py')">Python Hello</button>
+        <button class="menu-item" onclick="loadTemplate('html')">HTML Hello</button>
+        <button class="menu-item" onclick="loadTemplate('c')">C Hello</button>
+        <div class="menu-divider"></div>
+        <div class="menu-section">Tools</div>
+        <button class="menu-item" onclick="openSheet('snippet-sheet');closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg>
+          Snippet Library
+        </button>
+        <button class="menu-item" onclick="openSheet('github-sheet');closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          GitHub
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Language Sheet -->
+<div class="overlay" id="lang-sheet" onclick="closeSheetOutside(event, 'lang-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('lang-sheet')">&#8592;</button>
+      <span class="sheet-title">Select Language</span>
+    </div>
+    <div class="sheet-body">
+      <div class="lang-grid" id="lang-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Sheet -->
+<div class="overlay" id="settings-sheet" onclick="closeSheetOutside(event, 'settings-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('settings-sheet')" title="Close">&#8592;</button>
+      <span class="sheet-title">Settings</span>
+    </div>
+    <div class="sheet-body" style="overflow-y:auto;max-height:65vh">
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Color Theme</div>
+          <div class="settings-sublabel">Editor color scheme</div>
+        </div>
+        <div class="settings-ctrl">
+          <div class="theme-options" id="theme-options"></div>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">UI Theme</div>
+          <div class="settings-sublabel">Light or Dark interface</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-ui-theme" onchange="toggleUITheme()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Font Size</div>
+        </div>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="adjustFontSize(-1)">−</button>
+          <div class="stepper-val" id="font-size-val">14</div>
+          <button class="stepper-btn" onclick="adjustFontSize(1)">+</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Line Numbers</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-linenum" checked onchange="toggleLineNumbers()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Match Brackets</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-brackets" checked onchange="toggleBrackets()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Auto-close Brackets</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-autoclose" checked onchange="toggleAutoClose()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Highlight Active Line</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-activeline" checked onchange="toggleActiveLine()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Tab Size</div>
+        </div>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="adjustTabSize(-1)">−</button>
+          <div class="stepper-val" id="tab-size-val">4</div>
+          <button class="stepper-btn" onclick="adjustTabSize(1)">+</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Word Completion</div>
+          <div class="settings-sublabel">Auto-suggest from document words</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-wordcompletion" checked onchange="toggleWordCompletion()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row" id="row-wc-minchars">
+        <div>
+          <div class="settings-label">Trigger After</div>
+          <div class="settings-sublabel">Minimum characters typed</div>
+        </div>
+        <div class="stepper">
+          <button class="stepper-btn" onclick="adjustWcMinChars(-1)">−</button>
+          <div class="stepper-val" id="wc-minchars-val">2</div>
+          <button class="stepper-btn" onclick="adjustWcMinChars(1)">+</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-label">Spell Check</div>
+          <div class="settings-sublabel">Highlight misspelled words</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-spellcheck" onchange="toggleSpellCheck()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="settings-row" id="row-spellcheck-lang" style="opacity:0.4">
+        <div>
+          <div class="settings-label">Dictionary</div>
+          <div class="settings-sublabel" id="spell-dict-status">Not loaded</div>
+        </div>
+        <button class="find-btn" onclick="loadSpellDict(true)">Load</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spell check context popup -->
+<div id="spell-popup"></div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ===================== SNIPPET LIBRARY SHEET ===================== -->
+<div class="overlay" id="snippet-sheet" onclick="closeSheetOutside(event,'snippet-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('snippet-sheet')">&#8592;</button>
+      <span class="sheet-title">Snippet Library</span>
+      <div class="sheet-header-actions">
+        <button class="find-btn" onclick="switchSnippetTab('new')">+ New</button>
+      </div>
+    </div>
+    <div class="sheet-body" style="overflow-y:auto;max-height:65vh">
+      <div class="snippet-tabs">
+        <div class="snippet-tab active" data-stab="browse" onclick="switchSnippetTab('browse')">Browse</div>
+        <div class="snippet-tab" data-stab="new" onclick="switchSnippetTab('new')">New Snippet</div>
+      </div>
+      <!-- Browse pane -->
+      <div class="snippet-pane active" id="stab-browse">
+        <div class="snippet-search">
+          <input type="search" class="snippet-form-input" id="snippet-search-input"
+            placeholder="Search snippets…" oninput="renderSnippetList()">
+        </div>
+        <div class="snippet-list" id="snippet-list">
+          <div class="snippet-empty">No snippets yet. Create one!</div>
+        </div>
+      </div>
+      <!-- New pane -->
+      <div class="snippet-pane" id="stab-new">
+        <div class="snippet-form">
+          <input type="text" class="snippet-form-input" id="snip-name" placeholder="Snippet name…">
+          <div class="snippet-form-row">
+            <select class="snippet-select" id="snip-lang">
+              <option value="">Any language</option>
+            </select>
+            <input type="text" class="snippet-form-input" id="snip-prefix" placeholder="Shortcut (optional)" style="max-width:140px">
+          </div>
+          <textarea class="snippet-form-input snippet-form-textarea" id="snip-code" placeholder="// Snippet code…"></textarea>
+          <div class="snippet-form-actions">
+            <button class="btn-secondary" onclick="switchSnippetTab('browse')">Cancel</button>
+            <button class="btn-primary" onclick="saveSnippet()">Save Snippet</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== GITHUB INTEGRATION SHEET ===================== -->
+<div class="overlay" id="github-sheet" onclick="closeSheetOutside(event,'github-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('github-sheet')">&#8592;</button>
+      <span class="sheet-title">GitHub</span>
+      <div class="sheet-header-actions">
+        <button class="find-btn" id="gh-auth-btn" onclick="openGhAuthDialog()">Auth</button>
+      </div>
+    </div>
+    <div class="sheet-body" style="overflow-y:auto;max-height:70vh" id="github-sheet-body">
+      <div class="github-status" id="gh-status">
+        <div class="gh-dot"></div>
+        <span id="gh-status-text">Not connected</span>
+      </div>
+      <!-- Repo / File browser -->
+      <div id="gh-browser">
+        <div class="github-section-title">Repository</div>
+        <div class="snippet-form-row" style="margin-bottom:8px">
+          <input type="text" class="snippet-form-input" id="gh-repo-input"
+            placeholder="owner/repo" style="flex:1">
+          <select class="snippet-select" id="gh-branch-select" style="max-width:100px"><option>main</option></select>
+          <button class="find-btn" onclick="ghBrowse('')">Browse</button>
+        </div>
+        <div class="github-path-bar" id="gh-path-bar"></div>
+        <div class="github-file-list" id="gh-file-list">
+          <div class="gh-loading" style="display:none"><div class="gh-spinner"></div> Loading…</div>
+        </div>
+        <!-- Commit panel -->
+        <div id="gh-commit-panel" style="margin-top:12px;display:none">
+          <div class="github-section-title">Commit &amp; Push</div>
+          <div class="github-commit-form">
+            <input type="text" class="snippet-form-input" id="gh-commit-msg"
+              placeholder="Commit message…" value="Update via PocketPad">
+            <div class="snippet-form-actions">
+              <button class="btn-secondary" onclick="openGitDiff()">View Diff</button>
+              <button class="btn-primary" onclick="ghCommitFile()">Push to GitHub</button>
+            </div>
+          </div>
+          <!-- Diff panel -->
+          <div id="gh-diff-view" style="display:none;margin-top:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <span class="github-section-title" style="margin:0">Changes</span>
+              <span id="gh-diff-summary" style="font-size:11px;color:#a6e22e"></span>
+            </div>
+            <div class="git-diff-view" id="gh-diff-panel"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== APP STATE =====================
+const state = {
+  tabs: [],
+  activeTab: null,
+  tabCounter: 0,
+  wordWrap: false,
+  fontSize: 14,
+  tabSize: 4,
+  editorTheme: 'npp',
+  showLineNumbers: true,
+  matchBrackets: true,
+  autoCloseBrackets: true,
+  styleActiveLine: true,
+  findOpen: false,
+  wordCompletion: true,
+  wordCompletionMinChars: 2,
+  spellCheck: false,
+  consoleOpen: false,
+  consoleLang: 'js', // current active runtime
+};
+
+// ===================== LANGUAGE CONFIG =====================
+const LANGUAGES = [
+  { name: 'Plain Text',  mode: 'text/plain',                  ext: ['txt', 'log'],           pistonLang: null },
+  { name: 'JavaScript', mode: 'javascript',                   ext: ['js', 'jsx', 'mjs'],     pistonLang: 'javascript' },
+  { name: 'TypeScript', mode: { name: 'javascript', typescript: true }, ext: ['ts', 'tsx'], pistonLang: 'typescript' },
+  { name: 'JSON',       mode: { name: 'javascript', json: true }, ext: ['json'],             pistonLang: null },
+  { name: 'HTML',       mode: 'htmlmixed',                    ext: ['html', 'htm'],          pistonLang: null },
+  { name: 'CSS',        mode: 'css',                          ext: ['css', 'scss', 'less'],  pistonLang: null },
+  { name: 'Python',     mode: 'python',                       ext: ['py'],                   pistonLang: 'python' },
+  { name: 'C',          mode: 'text/x-csrc',                  ext: ['c'],                    pistonLang: 'c' },
+  { name: 'C++',        mode: 'text/x-c++src',                ext: ['cpp', 'cc', 'cxx'],     pistonLang: 'cpp' },
+  { name: 'Assembly',   mode: 'gas',                          ext: ['asm', 's', 'S'],        pistonLang: 'nasm' },
+  { name: 'Verilog',    mode: 'verilog',                      ext: ['v', 'sv'],              pistonLang: 'iverilog' },
+  { name: 'VHDL',       mode: 'vhdl',                         ext: ['vhd', 'vhdl'],          pistonLang: 'ghdl' },
+  { name: 'Binary',     mode: 'binary',                       ext: ['bin', 'bits'],          pistonLang: null },
+  { name: 'XML',        mode: 'xml',                          ext: ['xml', 'svg'],           pistonLang: null },
+  { name: 'Markdown',   mode: 'markdown',                     ext: ['md', 'markdown'],       pistonLang: null },
+  { name: 'PHP',        mode: 'php',                          ext: ['php'],                  pistonLang: 'php' },
+  { name: 'Java',       mode: 'text/x-java',                  ext: ['java'],                 pistonLang: 'java' },
+  { name: 'SQL',        mode: 'sql',                          ext: ['sql'],                  pistonLang: null },
+  { name: 'Shell',      mode: 'shell',                        ext: ['sh', 'bash'],           pistonLang: 'bash' },
+  { name: 'Rust',       mode: 'rust',                         ext: ['rs'],                   pistonLang: 'rust' },
+];
+
+// Register custom Binary mode
+CodeMirror.defineMode('binary', () => ({
+  token(stream) {
+    if (stream.eat('0')) return 'number';
+    if (stream.eat('1')) return 'keyword';
+    if (stream.match(/\s+/)) return null;
+    if (stream.match(/[01]{8}/)) return 'string';
+    stream.next();
+    return 'comment';
+  }
+}));
+
+// Register VHDL mode alias (uses verilog highlighter as approximation)
+CodeMirror.defineMode('vhdl', () => CodeMirror.getMode({}, 'verilog'));
+
+const THEMES = [
+  { id: 'npp', name: 'Npp' },
+  { id: 'dracula', name: 'Dracula' },
+  { id: 'monokai', name: 'Monokai' },
+  { id: 'nord', name: 'Nord' },
+  { id: 'eclipse', name: 'Eclipse' },
+  { id: 'solarized light', name: 'Solar' },
+];
+
+function getThemeName(id) {
+  return id === 'npp' ? 'npp' : id;
+}
+
+function getLangForExt(ext) {
+  const e = ext.toLowerCase();
+  return LANGUAGES.find(l => l.ext.includes(e)) || LANGUAGES[0];
+}
+
+// ===================== TAB MANAGEMENT =====================
+function newTab(name = null, content = '', langName = 'Plain Text') {
+  state.tabCounter++;
+  const id = `tab-${state.tabCounter}`;
+  const filename = name || `untitled-${state.tabCounter}.txt`;
+  const lang = LANGUAGES.find(l => l.name === langName) || LANGUAGES[0];
+  
+  // Create editor container
+  const container = document.createElement('div');
+  container.className = 'editor-instance';
+  container.id = `editor-${id}`;
+  document.getElementById('editor-wrap').appendChild(container);
+  
+  // Create CodeMirror instance with performance options
+  const cm = CodeMirror(container, {
+    value: content,
+    mode: lang.mode,
+    theme: getThemeName(state.editorTheme),
+    lineNumbers: state.showLineNumbers,
+    matchBrackets: state.matchBrackets,
+    autoCloseBrackets: state.autoCloseBrackets,
+    styleActiveLine: state.styleActiveLine,
+    lineWrapping: state.wordWrap,
+    tabSize: state.tabSize,
+    indentWithTabs: false,
+    indentUnit: state.tabSize,
+    // ---- Performance: only render ~100 lines around viewport ----
+    viewportMargin: 50,
+    // Lazy token parsing — don't highlight beyond visible lines
+    pollInterval: 300,
+    flattenSpans: false,
+    addModeClass: false,
+    extraKeys: {
+      'Tab': cm => cm.execCommand('indentMore'),
+      'Shift-Tab': cm => cm.execCommand('indentLess'),
+      'Ctrl-/': cm => cm.execCommand('toggleComment'),
+      'Cmd-/': cm => cm.execCommand('toggleComment'),
+      'Ctrl-Space': cm => triggerWordCompletion(cm),
+    },
+  });
+
+  // Auto-trigger word completion on input
+  cm.on('inputRead', (editor, change) => {
+    if (!state.wordCompletion) return;
+    if (change.origin === '+delete' || change.origin === 'paste') return;
+    if (editor.state.completionActive) return;
+    const cur = editor.getCursor();
+    const token = editor.getTokenAt(cur);
+    const word = token.string.replace(/[^A-Za-z0-9_$]/g, '');
+    if (word.length >= state.wordCompletionMinChars) {
+      triggerWordCompletion(editor);
+    }
+  });
+
+  cm.on('cursorActivity', updateStatus);
+  cm.on('change', () => {
+    markModified(id, true);
+    updateStatus();
+    // Large-file mode: disable expensive features above 3000 lines
+    const lineCount = cm.lineCount();
+    if (lineCount > 3000 && !container.classList.contains('large-file')) {
+      container.classList.add('large-file');
+      cm.setOption('matchBrackets', false);
+      cm.setOption('styleActiveLine', false);
+    } else if (lineCount <= 3000 && container.classList.contains('large-file')) {
+      container.classList.remove('large-file');
+      cm.setOption('matchBrackets', state.matchBrackets);
+      cm.setOption('styleActiveLine', state.styleActiveLine);
+    }
+    scheduleDocMapUpdate();
+  });
+
+  // Wire spell check & popup
+  hookSpellPopup(cm);
+  if (_spellEnabled && _typo) applySpellCheck(cm);
+
+  // Docmap scroll tracking
+  cm.on('scroll', () => updateDocMapViewport(cm));
+  cm.on('cursorActivity', () => updateDocMapViewport(cm));
+
+  const tab = {
+    id, filename, lang, cm, modified: false,
+    container,
+  };
+  state.tabs.push(tab);
+
+  renderTabBar();
+  switchTab(id);
+  setTimeout(() => cm.refresh(), 50);
+  return tab;
+}
+
+function switchTab(id) {
+  state.activeTab = id;
+  state.tabs.forEach(t => {
+    t.container.classList.toggle('active', t.id === id);
+  });
+  renderTabBar();
+  const tab = getTab(id);
+  if (tab) {
+    setTimeout(() => { tab.cm.refresh(); tab.cm.focus(); }, 30);
+    updateStatus();
+    updateTitleBar();
+    updateLangStatus();
+  }
+}
+
+function getTab(id) {
+  return state.tabs.find(t => t.id === id);
+}
+
+function getActiveTab() {
+  return getTab(state.activeTab);
+}
+
+function closeTab(id, e) {
+  if (e) e.stopPropagation();
+  const idx = state.tabs.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  const tab = state.tabs[idx];
+  
+  if (tab.modified) {
+    if (!confirm(`"${tab.filename}" has unsaved changes. Close anyway?`)) return;
+  }
+  
+  tab.container.remove();
+  state.tabs.splice(idx, 1);
+  
+  if (state.tabs.length === 0) {
+    newTab();
+    return;
+  }
+  
+  if (state.activeTab === id) {
+    const newIdx = Math.min(idx, state.tabs.length - 1);
+    switchTab(state.tabs[newIdx].id);
+  }
+  
+  renderTabBar();
+}
+
+function markModified(id, val) {
+  const tab = getTab(id);
+  if (!tab) return;
+  tab.modified = val;
+  renderTabBar();
+}
+
+function renderTabBar() {
+  const bar = document.getElementById('tabbar');
+  bar.innerHTML = '';
+  state.tabs.forEach(tab => {
+    const el = document.createElement('div');
+    el.className = `tab${tab.id === state.activeTab ? ' active' : ''}${tab.modified ? ' modified' : ''}`;
+    el.dataset.id = tab.id;
+    el.innerHTML = `
+      ${getTabIcon(tab.filename)}
+      <span class="tab-name">${esc(tab.filename)}</span>
+      <button class="tab-close" data-id="${tab.id}">×</button>
+    `;
+    el.addEventListener('click', () => switchTab(tab.id));
+    el.addEventListener('contextmenu', (e) => { e.preventDefault(); showCtxMenu(e, tab.id); });
+    el.addEventListener('touchstart', longPressHandler(tab.id), { passive: true });
+    el.querySelector('.tab-close').addEventListener('click', (e) => closeTab(tab.id, e));
+    bar.appendChild(el);
+  });
+  
+  // Scroll active tab into view
+  const activeEl = bar.querySelector('.tab.active');
+  if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
+}
+
+// Language icon badge config: [label, bg, fg]
+const LANG_ICONS = {
+  js:   ['JS',  '#f7df1e', '#222'],
+  mjs:  ['JS',  '#f7df1e', '#222'],
+  jsx:  ['JSX', '#61dafb', '#222'],
+  ts:   ['TS',  '#3178c6', '#fff'],
+  tsx:  ['TSX', '#3178c6', '#fff'],
+  py:   ['PY',  '#3776ab', '#ffd43b'],
+  html: ['HTM', '#e34c26', '#fff'],
+  htm:  ['HTM', '#e34c26', '#fff'],
+  css:  ['CSS', '#264de4', '#fff'],
+  scss: ['CSS', '#cc6699', '#fff'],
+  less: ['CSS', '#1d365d', '#fff'],
+  json: ['JSON','#000',    '#fff'],
+  xml:  ['XML', '#f16529', '#fff'],
+  svg:  ['SVG', '#ff9a00', '#fff'],
+  md:   ['MD',  '#083fa1', '#fff'],
+  markdown: ['MD','#083fa1','#fff'],
+  php:  ['PHP', '#777bb4', '#fff'],
+  c:    ['C',   '#a8b9cc', '#222'],
+  cpp:  ['C++', '#659ad2', '#fff'],
+  cc:   ['C++', '#659ad2', '#fff'],
+  cxx:  ['C++', '#659ad2', '#fff'],
+  h:    ['H',   '#a8b9cc', '#222'],
+  hpp:  ['H++', '#659ad2', '#fff'],
+  java: ['JAV', '#ed8b00', '#fff'],
+  sql:  ['SQL', '#e48e00', '#fff'],
+  sh:   ['SH',  '#4eaa25', '#fff'],
+  bash: ['SH',  '#4eaa25', '#fff'],
+  rb:   ['RB',  '#cc342d', '#fff'],
+  rs:   ['RS',  '#dea584', '#222'],
+  kt:   ['KT',  '#7f52ff', '#fff'],
+  swift:['SW',  '#f05138', '#fff'],
+  asm:  ['ASM', '#6e4c13', '#f5c542'],
+  s:    ['ASM', '#6e4c13', '#f5c542'],
+  v:    ['VLG', '#2e6da4', '#7ec8e3'],
+  sv:   ['SV',  '#2e6da4', '#7ec8e3'],
+  vhd:  ['VHDL','#1a1a6e', '#9999ff'],
+  vhdl: ['VHDL','#1a1a6e', '#9999ff'],
+  bin:  ['BIN', '#111',    '#0f0'],
+  bits: ['BIN', '#111',    '#0f0'],
+  txt:  ['TXT', '#555',    '#aaa'],
+  log:  ['LOG', '#333',    '#888'],
+  csv:  ['CSV', '#237f52', '#fff'],
+  go:   ['GO',  '#00add8', '#fff'],
+};
+
+function getTabIcon(filename) {
+  const ext = (filename.split('.').pop() || '').toLowerCase();
+  const cfg = LANG_ICONS[ext] || ['?', '#444', '#888'];
+  return `<span class="tab-icon" style="background:${cfg[1]};color:${cfg[2]}">${cfg[0]}</span>`;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===================== STATUS BAR =====================
+function updateStatus() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const cursor = cm.getCursor();
+  const content = cm.getValue();
+  
+  document.getElementById('status-pos').textContent = `Ln ${cursor.line+1}, Col ${cursor.ch+1}`;
+  document.getElementById('status-chars').textContent = `${content.length} chars`;
+}
+
+function updateTitleBar() {
+  const tab = getActiveTab();
+  document.getElementById('titlebar-filename').textContent = tab ? tab.filename : 'PocketPad';
+}
+
+function updateLangStatus() {
+  const tab = getActiveTab();
+  document.getElementById('status-lang').textContent = tab ? tab.lang.name : 'Plain Text';
+}
+
+
+// ===================== FILE TREE + EXPORT + FOLDER =====================
+let _fileTreeOpen = true;
+
+function toggleFileTree(force) {
+  if (typeof force === 'boolean') _fileTreeOpen = force;
+  else _fileTreeOpen = !_fileTreeOpen;
+  const panel = document.getElementById('filetree-panel');
+  if (panel) panel.classList.toggle('open', _fileTreeOpen);
+  const btn = document.getElementById('btn-filetree');
+  if (btn) btn.classList.toggle('active', _fileTreeOpen);
+  state.tabs.forEach(t => { try { t.cm.refresh(); } catch (e) {} });
+  try { localStorage.setItem('pp_filetree', _fileTreeOpen ? '1' : '0'); } catch (e) {}
+}
+
+function renderFileTree() {
+  const list = document.getElementById('filetree-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!state.tabs.length) {
+    list.innerHTML = '<div class="ft-empty">No open files</div>';
+    return;
+  }
+  state.tabs.forEach(tab => {
+    const el = document.createElement('div');
+    el.className = 'ft-item' + (tab.id === state.activeTab ? ' active' : '') + (tab.modified ? ' modified' : '');
+    el.innerHTML = getTabIcon(tab.filename) + '<span class="ft-name">' + esc(tab.filename) + '</span><button class="ft-close" title="Close">×</button>';
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.ft-close')) {
+        e.stopPropagation();
+        closeTab(tab.id, e);
+        return;
+      }
+      switchTab(tab.id);
+    });
+    list.appendChild(el);
+  });
+}
+
+const _origRenderTabBarFT = renderTabBar;
+renderTabBar = function () {
+  _origRenderTabBarFT();
+  renderFileTree();
+};
+
+function crc32(buf) {
+  let c = ~0;
+  for (let i = 0; i < buf.length; i++) {
+    c ^= buf[i];
+    for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+  }
+  return ~c >>> 0;
+}
+function u16(n) { return new Uint8Array([n & 255, (n >>> 8) & 255]); }
+function u32(n) {
+  return new Uint8Array([n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]);
+}
+
+function buildZip(files) {
+  const enc = new TextEncoder();
+  const parts = [];
+  const central = [];
+  let offset = 0;
+  for (const f of files) {
+    const nameBytes = enc.encode(f.name.replace(/\\/g, '/'));
+    const data = f.data;
+    const crc = crc32(data);
+    const localHead = new Uint8Array(30 + nameBytes.length);
+    localHead.set([0x50, 0x4b, 0x03, 0x04, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0);
+    localHead.set(u32(crc), 14);
+    localHead.set(u32(data.length), 18);
+    localHead.set(u32(data.length), 22);
+    localHead.set(u16(nameBytes.length), 26);
+    localHead.set(nameBytes, 30);
+    parts.push(localHead, data);
+
+    const cen = new Uint8Array(46 + nameBytes.length);
+    cen.set([0x50, 0x4b, 0x01, 0x02, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0], 0);
+    cen.set(u32(crc), 16);
+    cen.set(u32(data.length), 20);
+    cen.set(u32(data.length), 24);
+    cen.set(u16(nameBytes.length), 28);
+    cen.set(u32(offset), 42);
+    cen.set(nameBytes, 46);
+    central.push(cen);
+    offset += localHead.length + data.length;
+  }
+  let centralSize = 0;
+  central.forEach(c => { centralSize += c.length; });
+  const end = new Uint8Array(22);
+  end.set([0x50, 0x4b, 0x05, 0x06], 0);
+  end.set(u16(files.length), 8);
+  end.set(u16(files.length), 10);
+  end.set(u32(centralSize), 12);
+  end.set(u32(offset), 16);
+  return new Blob([...parts, ...central, end], { type: 'application/zip' });
+}
+
+function exportZip() {
+  if (!state.tabs.length) { showToast('No files to export', 'error'); return; }
+  const enc = new TextEncoder();
+  const used = new Set();
+  const files = state.tabs.map(t => {
+    let name = t.filename || 'untitled.txt';
+    let base = name, n = 1;
+    while (used.has(name)) {
+      const m = base.match(/^(.*?)(\.\w+)?$/);
+      name = (m[1] || base) + '_' + n + (m[2] || '');
+      n++;
+    }
+    used.add(name);
+    return { name: name, data: enc.encode(t.cm.getValue()) };
+  });
+  const blob = buildZip(files);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pocketpad-export-' + new Date().toISOString().slice(0, 10) + '.zip';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Exported ' + files.length + ' file(s)', 'success');
+}
+
+async function openFolder() {
+  if (typeof window.showDirectoryPicker !== 'function') {
+    showToast('Folder open needs Chrome/Edge on HTTPS or localhost', 'error');
+    openFile();
+    return;
+  }
+  try {
+    const dir = await window.showDirectoryPicker();
+    let count = 0;
+    async function walk(handle, prefix) {
+      for await (const ent of handle.values()) {
+        const path = prefix ? prefix + '/' + ent.name : ent.name;
+        if (ent.kind === 'file') {
+          if (/\.(png|jpe?g|gif|webp|ico|woff2?|ttf|eot|mp[34]|zip|gz|pdf|wasm)$/i.test(ent.name)) continue;
+          try {
+            const file = await ent.getFile();
+            if (file.size > 2000000) continue;
+            const text = await file.text();
+            const ext = ent.name.split('.').pop();
+            const lang = getLangForExt(ext);
+            const tab = newTab(path, text, lang.name);
+            tab.lang = lang;
+            tab.cm.setOption('mode', lang.mode);
+            tab.fileHandle = ent;
+            markModified(tab.id, false);
+            count++;
+          } catch (e) { console.warn('skip', path, e); }
+        } else if (ent.kind === 'directory') {
+          if (ent.name === 'node_modules' || ent.name === '.git' || ent.name === 'vendor') continue;
+          await walk(ent, path);
+        }
+      }
+    }
+    await walk(dir, '');
+    if (count) {
+      toggleFileTree(true);
+      showToast('Opened ' + count + ' file(s) from folder', 'success');
+    } else {
+      showToast('No text files found', 'error');
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') showToast('Folder open failed', 'error');
+  }
+}
+
+function loadTemplate(kind) {
+  var templates = {
+    js: {
+      name: 'main.js',
+      lang: 'JavaScript',
+      code: 'console.log("Hello from PocketPad");\n'
+    },
+    py: {
+      name: 'main.py',
+      lang: 'Python',
+      code: 'print("Hello from PocketPad")\n'
+    },
+    html: {
+      name: 'index.html',
+      lang: 'HTML',
+      code: '<!DOCTYPE html>\n<html>\n<head><meta charset="utf-8"><title>Hi</title></head>\n<body>\n  <h1>Hello PocketPad</h1>\n</body>\n</html>\n'
+    },
+    c: {
+      name: 'main.c',
+      lang: 'C',
+      code: '#include <stdio.h>\n\nint main(void) {\n  printf("Hello\\n");\n  return 0;\n}\n'
+    }
+  };
+  var tpl = templates[kind];
+  if (!tpl) return;
+  newTab(tpl.name, tpl.code, tpl.lang);
+  closeSheet('menu-sheet');
+}
+
+
+// ===================== FILE OPERATIONS =====================
+const HAS_FS_ACCESS = typeof window.showOpenFilePicker === 'function';
+
+async function openFile() {
+  if (HAS_FS_ACCESS) {
+    try {
+      const handles = await window.showOpenFilePicker({ multiple: true });
+      for (const handle of handles) {
+        const file = await handle.getFile();
+        const text = await file.text();
+        const ext = file.name.split('.').pop();
+        const lang = getLangForExt(ext);
+        const tab = newTab(file.name, text, lang.name);
+        tab.lang = lang;
+        tab.cm.setOption('mode', lang.mode);
+        tab.fileHandle = handle;
+        markModified(tab.id, false);
+        updateLangStatus();
+      }
+      showToast(`Opened ${handles.length} file(s)`);
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+  document.getElementById('file-open-input').click();
+}
+
+document.getElementById('file-open-input').addEventListener('change', function(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const ext = file.name.split('.').pop();
+      const lang = getLangForExt(ext);
+      const tab = newTab(file.name, ev.target.result, lang.name);
+      tab.lang = lang;
+      tab.cm.setOption('mode', lang.mode);
+      markModified(tab.id, false);
+      updateLangStatus();
+    };
+    reader.readAsText(file);
+  });
+  this.value = '';
+});
+
+function downloadBlob(filename, content) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function saveFile() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const content = tab.cm.getValue();
+
+  if (HAS_FS_ACCESS && tab.fileHandle) {
+    try {
+      const writable = await tab.fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      markModified(tab.id, false);
+      showToast(`Saved: ${tab.filename}`, 'success');
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      console.warn('fileHandle save failed', e);
+    }
+  }
+
+  if (HAS_FS_ACCESS) {
+    try {
+      const handle = await window.showSaveFilePicker({ suggestedName: tab.filename });
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      tab.fileHandle = handle;
+      if (handle.name) tab.filename = handle.name;
+      markModified(tab.id, false);
+      updateTitleBar();
+      renderTabBar();
+      showToast(`Saved: ${tab.filename}`, 'success');
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+
+  downloadBlob(tab.filename, content);
+  markModified(tab.id, false);
+  showToast(`Downloaded: ${tab.filename}`, 'success');
+}
+
+// ===================== EDIT OPERATIONS =====================
+function doUndo() { getActiveTab()?.cm.undo(); }
+function doRedo() { getActiveTab()?.cm.redo(); }
+
+function doCut() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const sel = tab.cm.getSelection();
+  if (sel) {
+    navigator.clipboard.writeText(sel).then(() => {
+      tab.cm.replaceSelection('');
+      showToast('Cut');
+    });
+  }
+}
+
+function doCopy() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const sel = tab.cm.getSelection() || tab.cm.getValue();
+  navigator.clipboard.writeText(sel).then(() => showToast('Copied'));
+}
+
+function doPaste() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  navigator.clipboard.readText().then(text => {
+    tab.cm.replaceSelection(text);
+    showToast('Pasted');
+  }).catch(() => {
+    tab.cm.focus();
+    showToast('Tap the text area and use long-press to paste', 'error');
+  });
+}
+
+function selectAll() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  cm.setSelection({ line: 0, ch: 0 }, { line: cm.lineCount()-1, ch: Infinity });
+}
+
+function doIndent() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  tab.cm.execCommand('indentMore');
+}
+
+function doComment() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  tab.cm.execCommand('toggleComment');
+}
+
+function duplicateLine() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const cursor = cm.getCursor();
+  const lineContent = cm.getLine(cursor.line);
+  cm.replaceRange('\n' + lineContent, { line: cursor.line, ch: lineContent.length });
+  showToast('Line duplicated');
+}
+
+function deleteLine() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const cursor = cm.getCursor();
+  const lineCount = cm.lineCount();
+  if (lineCount === 1) { cm.setValue(''); return; }
+  if (cursor.line < lineCount - 1) {
+    cm.replaceRange('', { line: cursor.line, ch: 0 }, { line: cursor.line + 1, ch: 0 });
+  } else {
+    cm.replaceRange('', { line: cursor.line - 1, ch: cm.getLine(cursor.line-1).length }, { line: cursor.line, ch: Infinity });
+  }
+  showToast('Line deleted');
+}
+
+function toUppercase() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const sel = cm.getSelection();
+  if (sel) { cm.replaceSelection(sel.toUpperCase()); }
+  else {
+    const cursor = cm.getCursor();
+    const line = cm.getLine(cursor.line);
+    cm.replaceRange(line.toUpperCase(), {line:cursor.line,ch:0}, {line:cursor.line,ch:line.length});
+  }
+}
+
+function toLowercase() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const sel = cm.getSelection();
+  if (sel) { cm.replaceSelection(sel.toLowerCase()); }
+  else {
+    const cursor = cm.getCursor();
+    const line = cm.getLine(cursor.line);
+    cm.replaceRange(line.toLowerCase(), {line:cursor.line,ch:0}, {line:cursor.line,ch:line.length});
+  }
+}
+
+function jumpToLine() {
+  const lineStr = prompt('Go to line:');
+  const line = parseInt(lineStr);
+  const tab = getActiveTab();
+  if (!tab || isNaN(line)) return;
+  const cm = tab.cm;
+  const ln = Math.max(0, Math.min(line-1, cm.lineCount()-1));
+  cm.setCursor({ line: ln, ch: 0 });
+  cm.scrollIntoView({ line: ln, ch: 0 }, 100);
+  cm.focus();
+}
+
+// ===================== WORD WRAP =====================
+function toggleWrap() {
+  state.wordWrap = !state.wordWrap;
+  state.tabs.forEach(t => t.cm.setOption('lineWrapping', state.wordWrap));
+  document.getElementById('btn-wrap').classList.toggle('active', state.wordWrap);
+  showToast(state.wordWrap ? 'Word Wrap On' : 'Word Wrap Off');
+}
+
+// ===================== FIND / REPLACE =====================
+let searchCursor = null;
+
+function toggleFind() {
+  state.findOpen = !state.findOpen;
+  document.getElementById('findbar').classList.toggle('open', state.findOpen);
+  document.getElementById('btn-find').classList.toggle('active', state.findOpen);
+  if (state.findOpen) {
+    setTimeout(() => document.getElementById('find-input').focus(), 200);
+  } else {
+    clearHighlight();
+    document.getElementById('find-status').textContent = '';
+    document.getElementById('find-status').className = '';
+  }
+}
+
+function closeFind() {
+  state.findOpen = false;
+  document.getElementById('findbar').classList.remove('open');
+  document.getElementById('btn-find').classList.remove('active');
+  clearHighlight();
+  document.getElementById('find-status').textContent = '';
+  document.getElementById('find-status').className = '';
+  getActiveTab()?.cm.focus();
+}
+
+function toggleReplaceRow() {
+  const show = document.getElementById('opt-replace').checked;
+  document.getElementById('replace-row').style.display = show ? 'flex' : 'none';
+}
+
+function getSearchOpts() {
+  return {
+    caseFold: !document.getElementById('opt-case').checked,
+    isRegexp: document.getElementById('opt-regex').checked,
+    wholeWord: document.getElementById('opt-word').checked,
+  };
+}
+
+let _hlMarks = [];
+function clearHighlight() {
+  _hlMarks.forEach(m => m.clear());
+  _hlMarks = [];
+}
+
+function liveSearch() {
+  clearHighlight();
+  const query = document.getElementById('find-input').value;
+  const statusEl = document.getElementById('find-status');
+  if (!query) { statusEl.textContent = ''; statusEl.className = ''; return; }
+  
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const opts = getSearchOpts();
+  
+  let count = 0;
+  try {
+    const cursor = cm.getSearchCursor(query, null, opts);
+    while (cursor.findNext()) {
+      count++;
+      const mark = cm.markText(cursor.from(), cursor.to(), { className: 'cm-searching' });
+      _hlMarks.push(mark);
+    }
+  } catch(e) {}
+  
+  if (count === 0 && query) {
+    statusEl.textContent = 'No matches';
+    statusEl.className = 'notfound';
+  } else {
+    statusEl.textContent = count > 0 ? `${count} match${count!==1?'es':''}` : '';
+    statusEl.className = count > 0 ? 'found' : '';
+  }
+}
+
+function findNext() {
+  const query = document.getElementById('find-input').value;
+  if (!query) return;
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const opts = getSearchOpts();
+  try {
+    const cursor = cm.getSearchCursor(query, cm.getCursor('to'), opts);
+    if (!cursor.findNext()) {
+      // Wrap around
+      const c2 = cm.getSearchCursor(query, { line: 0, ch: 0 }, opts);
+      if (c2.findNext()) {
+        cm.setSelection(c2.from(), c2.to());
+        cm.scrollIntoView({ from: c2.from(), to: c2.to() }, 50);
+        showToast('Wrapped around');
+      }
+    } else {
+      cm.setSelection(cursor.from(), cursor.to());
+      cm.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
+    }
+  } catch(e) {}
+}
+
+function findPrev() {
+  const query = document.getElementById('find-input').value;
+  if (!query) return;
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const opts = getSearchOpts();
+  try {
+    const cursor = cm.getSearchCursor(query, cm.getCursor('from'), opts);
+    if (!cursor.findPrevious()) {
+      const c2 = cm.getSearchCursor(query, { line: cm.lineCount(), ch: 0 }, opts);
+      if (c2.findPrevious()) {
+        cm.setSelection(c2.from(), c2.to());
+        cm.scrollIntoView({ from: c2.from(), to: c2.to() }, 50);
+        showToast('Wrapped around');
+      }
+    } else {
+      cm.setSelection(cursor.from(), cursor.to());
+      cm.scrollIntoView({ from: cursor.from(), to: cursor.to() }, 50);
+    }
+  } catch(e) {}
+}
+
+function replaceOne() {
+  const query = document.getElementById('find-input').value;
+  const replacement = document.getElementById('replace-input').value;
+  if (!query) return;
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const opts = getSearchOpts();
+  const sel = cm.getSelection();
+  const cursor = cm.getSearchCursor(query, cm.getCursor('from'), opts);
+  if (cursor.findNext()) {
+    cm.setSelection(cursor.from(), cursor.to());
+    cm.replaceSelection(replacement);
+    showToast('Replaced 1');
+    liveSearch();
+  }
+}
+
+function replaceAll() {
+  const query = document.getElementById('find-input').value;
+  const replacement = document.getElementById('replace-input').value;
+  if (!query) return;
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const opts = getSearchOpts();
+  let count = 0;
+  cm.operation(() => {
+    const cursor = cm.getSearchCursor(query, { line: 0, ch: 0 }, opts);
+    while (cursor.findNext()) {
+      cursor.replace(replacement);
+      count++;
+    }
+  });
+  showToast(`Replaced ${count} occurrence${count!==1?'s':''}`);
+  liveSearch();
+}
+
+function findKeydown(e) {
+  if (e.key === 'Enter') { e.shiftKey ? findPrev() : findNext(); }
+  if (e.key === 'Escape') closeFind();
+}
+
+function replaceKeydown(e) {
+  if (e.key === 'Enter') replaceOne();
+  if (e.key === 'Escape') closeFind();
+}
+
+// Add highlight style
+const highlightStyle = document.createElement('style');
+highlightStyle.textContent = `.cm-searching { background: rgba(230, 219, 116, 0.4); border-bottom: 1px solid #e6db74; }`;
+document.head.appendChild(highlightStyle);
+
+// ===================== LANGUAGE PICKER =====================
+function buildLangGrid() {
+  const grid = document.getElementById('lang-grid');
+  grid.innerHTML = '';
+  LANGUAGES.forEach(lang => {
+    const btn = document.createElement('button');
+    btn.className = 'lang-btn';
+    const tab = getActiveTab();
+    if (tab && tab.lang.name === lang.name) btn.classList.add('active');
+    btn.textContent = lang.name;
+    btn.addEventListener('click', () => {
+      setLanguage(lang);
+      closeSheet('lang-sheet');
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function setLanguage(lang) {
+  const tab = getActiveTab();
+  if (!tab) return;
+  tab.lang = lang;
+  tab.cm.setOption('mode', lang.mode);
+  updateLangStatus();
+  showToast(`Language: ${lang.name}`);
+}
+
+// ===================== SETTINGS =====================
+function buildThemeOptions() {
+  const container = document.getElementById('theme-options');
+  container.innerHTML = '';
+  THEMES.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = `theme-opt${state.editorTheme === t.id ? ' active' : ''}`;
+    btn.textContent = t.name;
+    btn.onclick = () => setEditorTheme(t.id);
+    container.appendChild(btn);
+  });
+}
+
+function setEditorTheme(id) {
+  state.editorTheme = id;
+  state.tabs.forEach(t => t.cm.setOption('theme', getThemeName(id)));
+  buildThemeOptions();
+  showToast(`Theme: ${THEMES.find(t=>t.id===id)?.name}`);
+}
+
+function toggleUITheme() {
+  const isLight = document.getElementById('toggle-ui-theme').checked;
+  document.body.classList.toggle('theme-light', isLight);
+}
+
+function adjustFontSize(delta) {
+  state.fontSize = Math.max(10, Math.min(28, state.fontSize + delta));
+  document.getElementById('font-size-val').textContent = state.fontSize;
+  document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
+  state.tabs.forEach(t => t.cm.refresh());
+}
+
+function adjustTabSize(delta) {
+  state.tabSize = Math.max(1, Math.min(8, state.tabSize + delta));
+  document.getElementById('tab-size-val').textContent = state.tabSize;
+  state.tabs.forEach(t => {
+    t.cm.setOption('tabSize', state.tabSize);
+    t.cm.setOption('indentUnit', state.tabSize);
+  });
+}
+
+function toggleLineNumbers() {
+  state.showLineNumbers = document.getElementById('toggle-linenum').checked;
+  state.tabs.forEach(t => t.cm.setOption('lineNumbers', state.showLineNumbers));
+}
+function toggleBrackets() {
+  state.matchBrackets = document.getElementById('toggle-brackets').checked;
+  state.tabs.forEach(t => t.cm.setOption('matchBrackets', state.matchBrackets));
+}
+function toggleAutoClose() {
+  state.autoCloseBrackets = document.getElementById('toggle-autoclose').checked;
+  state.tabs.forEach(t => t.cm.setOption('autoCloseBrackets', state.autoCloseBrackets));
+}
+function toggleActiveLine() {
+  state.styleActiveLine = document.getElementById('toggle-activeline').checked;
+  state.tabs.forEach(t => t.cm.setOption('styleActiveLine', state.styleActiveLine));
+}
+
+// ===================== CONTEXT MENU =====================
+let ctxTabId = null;
+
+function showCtxMenu(e, tabId) {
+  ctxTabId = tabId;
+  const menu = document.getElementById('ctx-menu');
+  menu.classList.add('open');
+  const x = Math.min(e.clientX, window.innerWidth - 180);
+  const y = Math.min(e.clientY, window.innerHeight - 120);
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('ctx-menu').classList.remove('open');
+});
+
+function ctxRename() {
+  document.getElementById('ctx-menu').classList.remove('open');
+  const tab = getTab(ctxTabId);
+  if (!tab) return;
+  const newName = prompt('Rename file:', tab.filename);
+  if (newName && newName.trim()) {
+    tab.filename = newName.trim();
+    const ext = newName.split('.').pop();
+    const lang = getLangForExt(ext);
+    tab.lang = lang;
+    tab.cm.setOption('mode', lang.mode);
+    renderTabBar();
+    updateTitleBar();
+    updateLangStatus();
+  }
+}
+
+function ctxDuplicate() {
+  document.getElementById('ctx-menu').classList.remove('open');
+  const tab = getTab(ctxTabId);
+  if (!tab) return;
+  const content = tab.cm.getValue();
+  const parts = tab.filename.split('.');
+  const ext = parts.length > 1 ? `.${parts.pop()}` : '';
+  const baseName = parts.join('.');
+  newTab(`${baseName}-copy${ext}`, content, tab.lang.name);
+}
+
+function ctxClose() {
+  document.getElementById('ctx-menu').classList.remove('open');
+  closeTab(ctxTabId);
+}
+
+// Long press for context menu on mobile
+function longPressHandler(tabId) {
+  let timer;
+  return function(e) {
+    timer = setTimeout(() => {
+      showCtxMenu({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY }, tabId);
+    }, 500);
+    const cancel = () => clearTimeout(timer);
+    document.addEventListener('touchend', cancel, { once: true });
+    document.addEventListener('touchmove', cancel, { once: true });
+  };
+}
+
+// ===================== SHEETS =====================
+function openSheet(id) {
+  if (id === 'lang-sheet') buildLangGrid();
+  if (id === 'settings-sheet') buildThemeOptions();
+  document.getElementById(id).classList.add('open');
+}
+
+function closeSheet(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function closeSheetOutside(e, id) {
+  if (e.target.id === id) closeSheet(id);
+}
+
+// ===================== TOAST =====================
+let _toastTimer;
+function showToast(msg, type = '') {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = `show${type ? ' ' + type : ''}`;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => {
+    toast.className = '';
+  }, 2000);
+}
+
+// ===================== KEYBOARD SHORTCUTS =====================
+document.addEventListener('keydown', (e) => {
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (ctrl && e.key === 's') { e.preventDefault(); saveFile(); }
+  if (ctrl && e.key === 'f') { e.preventDefault(); if (!state.findOpen) toggleFind(); else document.getElementById('find-input').focus(); }
+  if (ctrl && e.key === 'n') { e.preventDefault(); newTab(); }
+  if (ctrl && e.key === 'w') { e.preventDefault(); if (state.activeTab) closeTab(state.activeTab); }
+  if (ctrl && e.key === 'm') { e.preventDefault(); toggleDocMap(); }
+  if (ctrl && e.key === '`') { e.preventDefault(); if(!state.consoleOpen){toggleConsole();} switchConsolePane('shell'); }
+  if (e.key === 'Escape' && state.findOpen) closeFind();
+});
+
+// ===================== RESIZE HANDLER =====================
+window.addEventListener('resize', () => {
+  state.tabs.forEach(t => t.cm.refresh());
+});
+
+// ===================== WORD COMPLETION =====================
+
+/**
+ * Custom word-completion hint function.
+ * Scans every open tab's content for words, deduplicates,
+ * and returns matches for the current token prefix.
+ * This mirrors PocketPad's "Word Completion" (not language-aware intellisense).
+ */
+function wordCompletionHint(cm) {
+  const cur    = cm.getCursor();
+  const token  = cm.getTokenAt(cur);
+
+  // Only complete identifier-like tokens
+  const prefixMatch = token.string.match(/[A-Za-z_$][A-Za-z0-9_$]*$/);
+  if (!prefixMatch) return null;
+  const prefix = prefixMatch[0];
+  if (prefix.length < 1) return null;
+
+  // Collect all words from every open tab (skip large tabs for performance)
+  const wordSet = new Set();
+  const wordRe  = /[A-Za-z_$][A-Za-z0-9_$]{1,}/g;
+
+  state.tabs.forEach(t => {
+    const lineCount = t.cm.lineCount();
+    // For very large files only scan visible viewport + cursor area
+    let text;
+    if (lineCount > 2000) {
+      const vp = t.cm.getViewport();
+      const from = Math.max(0, vp.from - 50);
+      const to   = Math.min(lineCount, vp.to + 50);
+      text = t.cm.getRange({ line: from, ch: 0 }, { line: to, ch: 0 });
+    } else {
+      text = t.cm.getValue();
+    }
+    let m;
+    while ((m = wordRe.exec(text)) !== null) {
+      wordSet.add(m[0]);
+    }
+  });
+
+  // Filter: starts with prefix, longer than prefix, unique, sorted
+  const list = Array.from(wordSet)
+    .filter(w => w !== prefix && w.toLowerCase().startsWith(prefix.toLowerCase()))
+    .sort((a, b) => {
+      // Prefer case-exact first
+      const aExact = a.startsWith(prefix) ? 0 : 1;
+      const bExact = b.startsWith(prefix) ? 0 : 1;
+      return aExact - bExact || a.localeCompare(b);
+    })
+    .slice(0, 60); // cap list size
+
+  if (!list.length) return null;
+
+  return {
+    list,
+    from: CodeMirror.Pos(cur.line, token.start + (token.string.length - prefix.length)),
+    to:   CodeMirror.Pos(cur.line, token.end),
+  };
+}
+
+function triggerWordCompletion(cm) {
+  if (!state.wordCompletion) return;
+  cm.showHint({
+    hint:             wordCompletionHint,
+    completeSingle:   false,   // don't auto-insert if only 1 match
+    closeOnUnfocus:   true,
+    alignWithWord:    true,
+    extraKeys: {
+      // On mobile Tab is already taken — Enter & single-tap handle selection
+      'Tab':   (cm, handle) => handle.pick(),
+      'Enter': (cm, handle) => handle.pick(),
+    },
+  });
+}
+
+function toggleWordCompletion() {
+  state.wordCompletion = document.getElementById('toggle-wordcompletion').checked;
+  document.getElementById('row-wc-minchars').style.opacity = state.wordCompletion ? '1' : '0.4';
+  // Close any open hint popup immediately
+  if (!state.wordCompletion) {
+    state.tabs.forEach(t => {
+      if (t.cm.state.completionActive) t.cm.closeHint();
+    });
+  }
+  showToast(state.wordCompletion ? 'Word Completion On' : 'Word Completion Off');
+}
+
+function adjustWcMinChars(delta) {
+  state.wordCompletionMinChars = Math.max(1, Math.min(6, state.wordCompletionMinChars + delta));
+  document.getElementById('wc-minchars-val').textContent = state.wordCompletionMinChars;
+}
+
+// Inject hint dropdown styles tuned to the NPP colour scheme
+(function injectHintStyles() {
+  const s = document.createElement('style');
+  s.textContent = `
+    /* ---- CodeMirror hint popup ---- */
+    .CodeMirror-hints {
+      position: absolute;
+      z-index: 500;
+      overflow: hidden;
+      list-style: none;
+      margin: 0;
+      padding: 3px;
+      background: #1e1f1b;
+      border: 1px solid #5a5a52;
+      border-radius: 5px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+      min-width: 140px;
+      max-width: 280px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+    .CodeMirror-hint {
+      display: flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      color: #f8f8f2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      gap: 6px;
+    }
+    .CodeMirror-hint::before {
+      content: 'w';
+      font-size: 9px;
+      color: #a6e22e;
+      background: rgba(166,226,46,0.15);
+      border: 1px solid rgba(166,226,46,0.4);
+      border-radius: 2px;
+      padding: 0 3px;
+      line-height: 14px;
+      flex-shrink: 0;
+    }
+    .CodeMirror-hint-active {
+      background: #3d3e39 !important;
+      color: #a6e22e !important;
+    }
+    .CodeMirror-hint-active::before {
+      background: rgba(166,226,46,0.3);
+    }
+    /* Scrollbar in hint list */
+    .CodeMirror-hints::-webkit-scrollbar { width: 5px; }
+    .CodeMirror-hints::-webkit-scrollbar-track { background: transparent; }
+    .CodeMirror-hints::-webkit-scrollbar-thumb { background: #5a5a52; border-radius: 3px; }
+    /* Light theme override */
+    body.theme-light .CodeMirror-hints {
+      background: #f5f5f5;
+      border-color: #bbb;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    }
+    body.theme-light .CodeMirror-hint { color: #222; }
+    body.theme-light .CodeMirror-hint::before { color: #2d7a00; border-color: #2d7a00; background: rgba(45,122,0,0.1); }
+    body.theme-light .CodeMirror-hint-active { background: #e0eedb !important; color: #2d7a00 !important; }
+  `;
+  document.head.appendChild(s);
+})();
+
+// ===================== CONSOLE & RUNNER =====================
+
+const RUNNABLE_LANGS = ['JavaScript', 'TypeScript', 'HTML', 'Python'];
+
+function getConsoleLang() {
+  const tab = getActiveTab();
+  if (!tab) return null;
+  return tab.lang.name;
+}
+
+function toggleConsole() {
+  const panel = document.getElementById('console-panel');
+  state.consoleOpen = !state.consoleOpen;
+  if (!state.consoleOpen) {
+    panel.classList.remove('open', 'preview-mode');
+    panel.style.height = '';
+  } else {
+    panel.classList.add('open');
+    const lang = getConsoleLang();
+    updateConsoleForLang(lang);
+    if (lang === 'JavaScript' || lang === 'Python') runCode();
+    else if (lang === 'HTML') { runCode(); }
+  }
+  document.getElementById('btn-run').classList.toggle('active', state.consoleOpen);
+  state.tabs.forEach(t => t.cm.refresh());
+}
+
+function updateConsoleForLang(lang) {
+  const previewTab = document.getElementById('console-tab-preview');
+  previewTab.style.display = (lang === 'HTML') ? 'flex' : 'none';
+  // Update prompt
+  const prompt = document.getElementById('repl-prompt');
+  if (prompt) prompt.textContent = (lang === 'Python') ? '>>> ' : '> ';
+}
+
+function switchConsolePane(id) {
+  document.querySelectorAll('.console-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.console-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('pane-' + id).classList.add('active');
+  document.querySelector(`.console-tab[data-pane="${id}"]`).classList.add('active');
+  // Show REPL only for output/repl panes on JS/Python
+  const lang = getConsoleLang();
+  const replWrap = document.getElementById('repl-wrap');
+  replWrap.style.display = (id === 'repl' && (lang === 'JavaScript' || lang === 'Python')) ? 'flex' : 'none';
+}
+
+function conLine(text, type = 'log', badge = null) {
+  const badges = { log:'LOG', info:'INFO', warn:'WARN', error:'ERR', result:'←', system:'SYS' };
+  const b = badge || badges[type] || 'LOG';
+  const line = document.createElement('div');
+  line.className = `con-line con-${type}`;
+  line.innerHTML = `<span class="con-badge">${b}</span><span class="con-text">${escapeHtml(String(text))}</span>`;
+  return line;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function appendToOutput(el) {
+  const pane = document.getElementById('pane-output');
+  pane.appendChild(el);
+  pane.scrollTop = pane.scrollHeight;
+}
+
+function appendToRepl(el) {
+  const pane = document.getElementById('repl-log');
+  pane.appendChild(el);
+  pane.scrollTop = pane.scrollHeight;
+}
+
+function clearConsole() {
+  document.getElementById('pane-output').innerHTML = '';
+  document.getElementById('repl-log').innerHTML = '';
+}
+
+// ---- JavaScript Runner (postMessage bridge – avoids cross-origin error) ----
+function runJS(code, targetEl = null) {
+  return new Promise(resolve => {
+    const append = targetEl ? (el => targetEl.appendChild(el)) : appendToOutput;
+    const msgId  = Math.random().toString(36).slice(2);
+    let   done   = false;
+
+    function handler(e) {
+      if (!e.data || e.data.msgId !== msgId) return;
+      if (e.data.done) {
+        done = true;
+        window.removeEventListener('message', handler);
+        if (document.body.contains(iframe)) document.body.removeChild(iframe);
+        resolve();
+        return;
+      }
+      const { type, args } = e.data;
+      append(conLine((args || []).join(' '), type));
+    }
+    window.addEventListener('message', handler);
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;left:-9999px;top:-9999px';
+    // allow-scripts only → null origin → postMessage with '*' is safe
+    iframe.sandbox = 'allow-scripts';
+
+    const esc4json  = JSON.stringify(code);
+    const esc4msgId = JSON.stringify(msgId);
+
+    iframe.srcdoc = `<!DOCTYPE html><html><body><script>
+(function(){
+  var _id = ${esc4msgId};
+  var _p  = window.parent;
+  function _post(type) {
+    return function() {
+      var args = Array.prototype.slice.call(arguments).map(function(a){
+        try { return typeof a==='object' ? JSON.stringify(a,null,2) : String(a); } catch(e){ return String(a); }
+      });
+      _p.postMessage({msgId:_id, type:type, args:args}, '*');
+    };
+  }
+  window.console = {
+    log:   _post('log'),
+    info:  _post('info'),
+    warn:  _post('warn'),
+    error: _post('error'),
+    dir:   _post('log'),
+    table: _post('log'),
+    assert: function(c){ if(!c) _post('error')('Assertion failed'); },
+  };
+  try {
+    var __r = eval(${esc4json});
+    if (__r !== undefined) _post('result')(__r);
+  } catch(e) {
+    _post('error')(e.name + ': ' + e.message);
+  } finally {
+    _p.postMessage({msgId:_id, done:true}, '*');
+  }
+})();
+<\/script></body></html>`;
+
+    document.body.appendChild(iframe);
+
+    // Safety timeout – clean up if no response after 10s
+    setTimeout(() => {
+      if (!done) {
+        window.removeEventListener('message', handler);
+        if (document.body.contains(iframe)) document.body.removeChild(iframe);
+        append(conLine('Execution timed out', 'warn'));
+        resolve();
+      }
+    }, 10000);
+  });
+}
+
+// ---- Piston API Runner (C, C++, Assembly, Verilog, Java, PHP, Rust, Bash) ----
+const PISTON_URL      = 'https://emkc.org/api/v2/piston/execute';
+const PISTON_RUNTIMES = 'https://emkc.org/api/v2/piston/runtimes';
+
+// Cache of language→version discovered at runtime
+const _pistonVersionCache = {};
+let   _pistonRuntimesLoaded = false;
+
+const PISTON_LANG_MAP = {
+  'c':         { language: 'c',          filename: 'main.c'    },
+  'cpp':       { language: 'c++',        filename: 'main.cpp'  },
+  'nasm':      { language: 'nasm',       filename: 'main.asm'  },
+  'iverilog':  { language: 'iverilog',   filename: 'main.v'    },
+  'ghdl':      { language: 'ghdl',       filename: 'main.vhd'  },
+  'java':      { language: 'java',       filename: 'Main.java' },
+  'php':       { language: 'php',        filename: 'main.php'  },
+  'bash':      { language: 'bash',       filename: 'main.sh'   },
+  'rust':      { language: 'rust',       filename: 'main.rs'   },
+  'typescript':{ language: 'typescript', filename: 'main.ts'   },
+  'python':    { language: 'python3',    filename: 'main.py'   },
+  'javascript':{ language: 'javascript', filename: 'main.js'   },
+};
+
+// Fetch all available runtimes once and cache version strings
+async function pistonLoadRuntimes() {
+  if (_pistonRuntimesLoaded) return;
+  try {
+    const res = await fetchWithTimeout(PISTON_RUNTIMES, {}, 8000);
+    if (!res.ok) return;
+    const runtimes = await res.json();
+    runtimes.forEach(rt => {
+      _pistonVersionCache[rt.language] = rt.version;
+      // also index by alias
+      (rt.aliases || []).forEach(a => { _pistonVersionCache[a] = rt.version; });
+    });
+    _pistonRuntimesLoaded = true;
+  } catch { /* offline – will use '*' fallback */ }
+}
+
+// Fetch with timeout + abort
+function fetchWithTimeout(url, opts = {}, ms = 15000) {
+  const ctrl = new AbortController();
+  const tid   = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal })
+    .finally(() => clearTimeout(tid));
+}
+
+// Retry wrapper with exponential back-off
+async function fetchRetry(url, opts, retries = 3, baseDelay = 1200) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetchWithTimeout(url, opts, 20000);
+      if (res.ok) return res;
+      // 429 rate-limit → wait and retry
+      if (res.status === 429) {
+        const wait = baseDelay * Math.pow(2, i);
+        appendToOutput(conLine(`Rate-limited by Piston. Retrying in ${(wait/1000).toFixed(1)}s… (${i+1}/${retries})`, 'warn'));
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      // 503/502 → server busy, retry
+      if (res.status >= 500) {
+        const wait = baseDelay * Math.pow(2, i);
+        appendToOutput(conLine(`Piston server error ${res.status}. Retrying in ${(wait/1000).toFixed(1)}s…`, 'warn'));
+        await new Promise(r => setTimeout(r, wait));
+        continue;
+      }
+      return res; // 4xx – don't retry
+    } catch (err) {
+      const isLast = i === retries - 1;
+      if (err.name === 'AbortError') {
+        appendToOutput(conLine(`Request timed out${isLast ? ' – giving up.' : ' – retrying…'}`, 'warn'));
+      } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        appendToOutput(conLine(`Network error${isLast ? '. Check connection.' : ' – retrying…'}`, 'warn'));
+      } else {
+        appendToOutput(conLine(`${err.message}${isLast ? '' : ' – retrying…'}`, 'warn'));
+      }
+      if (isLast) throw err;
+      await new Promise(r => setTimeout(r, baseDelay * Math.pow(2, i)));
+    }
+  }
+  throw new Error('All retries failed');
+}
+
+async function runViaPiston(pistonKey, code) {
+  const cfg = PISTON_LANG_MAP[pistonKey];
+  if (!cfg) {
+    appendToOutput(conLine(`No Piston config for "${pistonKey}"`, 'warn'));
+    return;
+  }
+
+  // Try to load runtimes for accurate version
+  await pistonLoadRuntimes();
+  const version = _pistonVersionCache[cfg.language] || '*';
+
+  appendToOutput(conLine(`Compiling via Piston (${cfg.language} ${version === '*' ? 'latest' : version})…`, 'system'));
+
+  try {
+    const res = await fetchRetry(PISTON_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: cfg.language,
+        version,
+        files:    [{ name: cfg.filename, content: code }],
+        stdin:    '',
+        run_timeout:     10000,
+        compile_timeout: 15000,
+        run_memory_limit:    -1,
+      }),
+    });
+
+    const data = await res.json();
+
+    const out        = data.run?.stdout     || '';
+    const runErr     = data.run?.stderr      || '';
+    const compileOut = data.compile?.stdout  || '';
+    const compileErr = data.compile?.stderr  || '';
+    const exitCode   = data.run?.code ?? (data.compile?.code ?? 0);
+
+    if (compileErr) {
+      compileErr.split('\n').filter(Boolean).forEach(l =>
+        appendToOutput(conLine(l, 'error', 'CC'))
+      );
+    }
+    if (compileOut) {
+      compileOut.split('\n').filter(Boolean).forEach(l =>
+        appendToOutput(conLine(l, 'info', 'CC'))
+      );
+    }
+    if (out) {
+      const badge = cfg.language.toUpperCase().slice(0, 3);
+      out.split('\n').filter(Boolean).forEach(l =>
+        appendToOutput(conLine(l, 'log', badge))
+      );
+    }
+    if (runErr) {
+      runErr.split('\n').filter(Boolean).forEach(l =>
+        appendToOutput(conLine(l, 'error'))
+      );
+    }
+
+    const exitType = exitCode === 0 ? 'system' : 'warn';
+    appendToOutput(conLine(`Process exited with code ${exitCode}`, exitType));
+
+  } catch (e) {
+    // Distinguish CORS / network vs logic errors
+    const msg = e.message || String(e);
+    if (msg.includes('fetch') || msg.includes('CORS') || msg.includes('Network') || msg.includes('Failed')) {
+      appendToOutput(conLine('Cannot reach Piston API. Possible causes:', 'error'));
+      appendToOutput(conLine('• Network is offline', 'info'));
+      appendToOutput(conLine('• CORS blocked (try opening directly in browser: emkc.org)', 'info'));
+      appendToOutput(conLine('• Piston server is temporarily down', 'info'));
+      appendToOutput(conLine('Fallback: Copy code and paste at godbolt.org or repl.it', 'info'));
+    } else {
+      appendToOutput(conLine(`Piston error: ${msg}`, 'error'));
+    }
+  }
+}
+
+// ---- HTML Preview — covers 80% of screen ----
+function runHTML(code) {
+  const iframe = document.getElementById('preview-iframe');
+  iframe.srcdoc = code;
+  const panel = document.getElementById('console-panel');
+  panel.classList.add('preview-mode');
+  // Set height to 80vh explicitly
+  panel.style.height = Math.round(window.innerHeight * 0.80) + 'px';
+  switchConsolePane('preview');
+  state.tabs.forEach(t => t.cm.refresh());
+}
+
+// ---- Python Runner (Skulpt) ----
+let _skulptReady = false;
+
+function runPython(code) {
+  if (typeof Sk === 'undefined') {
+    appendToOutput(conLine('Skulpt not loaded yet. Retrying…', 'warn'));
+    return;
+  }
+
+  Sk.configure({
+    output: (text) => {
+      if (text === '\n') return;
+      appendToOutput(conLine(text.replace(/\n$/, ''), 'log', 'PY'));
+    },
+    read: (x) => {
+      if (Sk.builtinFiles?.files[x] === undefined)
+        throw new Error(`File not found: '${x}'`);
+      return Sk.builtinFiles.files[x];
+    },
+    execLimit: 10000,
+  });
+
+  Sk.misceval.asyncToPromise(() =>
+    Sk.importMainWithBody('<stdin>', false, code, true)
+  ).then(() => {
+    appendToOutput(conLine('Done.', 'system'));
+  }).catch(err => {
+    appendToOutput(conLine(String(err), 'error', 'PY'));
+  });
+}
+
+// ---- Python REPL history ----
+let _pyGlobals = null;
+let _replHistory = [];
+let _replHistoryIdx = -1;
+function resetPyGlobals() { _pyGlobals = null; }
+
+// ---- Main run dispatcher ----
+function runCode() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  if (!state.consoleOpen) { toggleConsole(); return; }
+
+  const lang     = tab.lang.name;
+  const code     = tab.cm.getValue();
+  const runBtn   = document.getElementById('run-btn');
+  const pistonKey = tab.lang.pistonLang;
+
+  runBtn.classList.add('running');
+  clearConsole();
+  appendToOutput(conLine(`▶ Running: ${lang}`, 'system'));
+
+  setTimeout(async () => {
+    try {
+      if (lang === 'HTML') {
+        runHTML(code);
+      } else if (lang === 'Python') {
+        runPython(code);
+      } else if (lang === 'JavaScript' || lang === 'TypeScript') {
+        await runJS(code);
+      } else if (pistonKey) {
+        await runViaPiston(pistonKey, code);
+      } else {
+        appendToOutput(conLine(`"${lang}" has no runtime. Use the Piston-supported languages (C, C++, Assembly, Java, Rust…)`, 'info'));
+      }
+    } catch(e) {
+      appendToOutput(conLine(`Runner error: ${e.message}`, 'error'));
+    } finally {
+      runBtn.classList.remove('running');
+    }
+  }, 20);
+}
+
+// ---- REPL ----
+let _replHistoryJs = [];
+let _replHistoryPy = [];
+
+function replEval(e) {
+  if (e.key === 'Enter') { e.preventDefault(); replSubmit(); }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const h = getConsoleLang() === 'Python' ? _replHistoryPy : _replHistoryJs;
+    if (_replHistoryIdx < h.length - 1) _replHistoryIdx++;
+    document.getElementById('repl-input').value = h[h.length - 1 - _replHistoryIdx] || '';
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const h = getConsoleLang() === 'Python' ? _replHistoryPy : _replHistoryJs;
+    if (_replHistoryIdx > 0) _replHistoryIdx--;
+    else { _replHistoryIdx = -1; document.getElementById('repl-input').value = ''; return; }
+    document.getElementById('repl-input').value = h[h.length - 1 - _replHistoryIdx] || '';
+  }
+}
+
+function replSubmit() {
+  const input = document.getElementById('repl-input');
+  const code = input.value.trim();
+  if (!code) return;
+  _replHistoryIdx = -1;
+
+  const lang = getConsoleLang();
+  // Echo input
+  const echo = document.createElement('div');
+  echo.className = 'con-line con-system';
+  echo.innerHTML = `<span class="con-badge">${lang === 'Python' ? '>>>' : '>'}</span><span class="con-text" style="color:#a6e22e">${escapeHtml(code)}</span>`;
+  appendToRepl(echo);
+
+  if (lang === 'Python') {
+    _replHistoryPy.push(code);
+    if (typeof Sk === 'undefined') { appendToRepl(conLine('Skulpt not loaded', 'error')); input.value = ''; return; }
+    Sk.configure({
+      output: (t) => { if (t !== '\n') appendToRepl(conLine(t.replace(/\n$/,''), 'log', 'PY')); },
+      read: (x) => {
+        if (!Sk.builtinFiles?.files[x]) throw new Error(`File not found: '${x}'`);
+        return Sk.builtinFiles.files[x];
+      },
+    });
+    Sk.misceval.asyncToPromise(() =>
+      Sk.importMainWithBody('<stdin>', false, code, true)
+    ).then(() => {}).catch(err => appendToRepl(conLine(String(err), 'error', 'PY')));
+  } else {
+    _replHistoryJs.push(code);
+    runJS(code, document.getElementById('repl-log'));
+  }
+
+  input.value = '';
+}
+
+// ---- Console resize handle ----
+(function setupConsoleResize() {
+  const handle = document.getElementById('console-resize-handle');
+  const panel  = document.getElementById('console-panel');
+  let startY, startH;
+
+  function onMove(clientY) {
+    const delta = startY - clientY;
+    const newH = Math.max(80, Math.min(window.innerHeight * 0.7, startH + delta));
+    panel.style.height = newH + 'px';
+  }
+
+  handle.addEventListener('mousedown', e => {
+    startY = e.clientY; startH = panel.offsetHeight;
+    const mm = ev => onMove(ev.clientY);
+    const mu = () => { window.removeEventListener('mousemove', mm); window.removeEventListener('mouseup', mu); };
+    window.addEventListener('mousemove', mm);
+    window.addEventListener('mouseup', mu);
+  });
+  handle.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY; startH = panel.offsetHeight;
+    const tm = ev => onMove(ev.touches[0].clientY);
+    const tu = () => { window.removeEventListener('touchmove', tm); window.removeEventListener('touchend', tu); };
+    window.addEventListener('touchmove', tm, { passive: true });
+    window.addEventListener('touchend', tu);
+  }, { passive: true });
+})();
+
+// ===================== SPELL CHECKER =====================
+
+let _typo = null;
+let _spellEnabled = false;
+let _spellLoading = false;
+let _userDict = new Set(); // words added by user
+let _ignoredWords = new Set();
+
+async function loadSpellDict(manual = false) {
+  if (_typo) { applySpellCheckAll(); return; }
+  if (_spellLoading) return;
+  _spellLoading = true;
+
+  const statusEl = document.getElementById('spell-dict-status');
+  if (statusEl) statusEl.textContent = 'Loading…';
+  document.getElementById('row-spellcheck-lang').style.opacity = '1';
+
+  const BASE = 'https://cdn.jsdelivr.net/npm/dictionary-en@4';
+  try {
+    const [affRes, dicRes] = await Promise.all([
+      fetch(`${BASE}/index.aff`),
+      fetch(`${BASE}/index.dic`),
+    ]);
+    if (!affRes.ok || !dicRes.ok) throw new Error('Fetch failed');
+    const [affText, dicText] = await Promise.all([affRes.text(), dicRes.text()]);
+    _typo = new Typo('en_US', affText, dicText, { platform: 'any' });
+    _spellLoading = false;
+    if (statusEl) statusEl.textContent = 'en_US loaded ✓';
+    if (manual || _spellEnabled) { _spellEnabled = true; applySpellCheckAll(); }
+    showToast('Spell check ready', 'success');
+  } catch (err) {
+    _spellLoading = false;
+    if (statusEl) statusEl.textContent = 'Load failed';
+    showToast('Dict load failed – check connection', 'error');
+  }
+}
+
+function toggleSpellCheck() {
+  _spellEnabled = document.getElementById('toggle-spellcheck').checked;
+  if (_spellEnabled && !_typo) {
+    loadSpellDict(false);
+    return;
+  }
+  applySpellCheckAll();
+  showToast(_spellEnabled ? 'Spell Check On' : 'Spell Check Off');
+  persistSession();
+}
+
+// Languages where spell check applies (prose/text modes)
+const SPELL_LANGS = new Set(['Plain Text', 'Markdown']);
+
+function spellLintFor(cm) {
+  return function(text, callback) {
+    if (!_typo || !_spellEnabled) { callback([]); return; }
+    const tab = state.tabs.find(t => t.cm === cm);
+    const langName = tab?.lang?.name || '';
+    if (!SPELL_LANGS.has(langName)) { callback([]); return; }
+
+    const found = [];
+    const wordRe = /\b([A-Za-z''-]{3,})\b/g;
+    const lines = text.split('\n');
+
+    lines.forEach((line, lineNo) => {
+      // Skip markdown code blocks, headings, links
+      if (/^(```|~~~|#|>|\s{4})/.test(line)) return;
+      let m;
+      wordRe.lastIndex = 0;
+      while ((m = wordRe.exec(line)) !== null) {
+        const word = m[1].replace(/^'+|'+$/g, ''); // strip apostrophes at edges
+        if (!word || word.length < 3) continue;
+        if (_userDict.has(word.toLowerCase()) || _ignoredWords.has(word.toLowerCase())) continue;
+        if (!_typo.check(word)) {
+          found.push({
+            from: CodeMirror.Pos(lineNo, m.index),
+            to:   CodeMirror.Pos(lineNo, m.index + m[0].length),
+            message: `"${word}" – misspelled`,
+            severity: 'error',
+          });
+        }
+      }
+    });
+    callback(found);
+  };
+}
+
+function applySpellCheckAll() {
+  state.tabs.forEach(t => applySpellCheck(t.cm));
+}
+
+function applySpellCheck(cm) {
+  if (_spellEnabled && _typo) {
+    cm.setOption('lint', {
+      getAnnotations: spellLintFor(cm),
+      async: true,
+    });
+    cm.setOption('gutters', ['CodeMirror-lint-markers']);
+  } else {
+    cm.setOption('lint', false);
+    cm.setOption('gutters', []);
+  }
+}
+
+// Spell check right-tap to get suggestions
+function showSpellSuggestions(cm, pos) {
+  if (!_typo || !_spellEnabled) return;
+  const token  = cm.getTokenAt(pos);
+  const word   = token.string.trim().replace(/^'+|'+$/g, '');
+  if (!word || word.length < 2) return;
+  if (_typo.check(word)) return;
+
+  const suggestions = _typo.suggest(word).slice(0, 6);
+  const popup = document.getElementById('spell-popup');
+  popup.innerHTML = '';
+
+  if (suggestions.length === 0) {
+    const el = document.createElement('div');
+    el.className = 'spell-sugg no-sugg';
+    el.textContent = 'No suggestions';
+    popup.appendChild(el);
+  } else {
+    suggestions.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'spell-sugg';
+      el.textContent = s;
+      el.onclick = () => {
+        cm.replaceRange(s,
+          CodeMirror.Pos(pos.line, token.start),
+          CodeMirror.Pos(pos.line, token.end)
+        );
+        closeSpellPopup();
+      };
+      popup.appendChild(el);
+    });
+  }
+
+  // Add to dictionary
+  const addEl = document.createElement('div');
+  addEl.className = 'spell-sugg add-word';
+  addEl.textContent = `＋ Add "${word}" to dictionary`;
+  addEl.onclick = () => { _userDict.add(word.toLowerCase()); cm.performLint(); closeSpellPopup(); };
+  popup.appendChild(addEl);
+
+  // Ignore
+  const ignEl = document.createElement('div');
+  ignEl.className = 'spell-sugg ignore-word';
+  ignEl.textContent = `⌀ Ignore "${word}"`;
+  ignEl.onclick = () => { _ignoredWords.add(word.toLowerCase()); cm.performLint(); closeSpellPopup(); };
+  popup.appendChild(ignEl);
+
+  // Position popup
+  const coords = cm.charCoords(pos, 'window');
+  const pw = 220, ph = popup.scrollHeight || 200;
+  let x = Math.min(coords.left, window.innerWidth - pw - 10);
+  let y = coords.bottom + 4;
+  if (y + ph > window.innerHeight - 80) y = coords.top - ph - 4;
+  popup.style.left = x + 'px';
+  popup.style.top  = y + 'px';
+  popup.classList.add('open');
+}
+
+function closeSpellPopup() {
+  document.getElementById('spell-popup').classList.remove('open');
+}
+
+document.addEventListener('click', () => closeSpellPopup());
+
+// Wire spell popup to each editor on tap/rightclick
+function hookSpellPopup(cm) {
+  cm.on('contextmenu', (editor, e) => {
+    if (!_spellEnabled) return;
+    e.preventDefault();
+    const pos = editor.coordsChar({ left: e.clientX, top: e.clientY });
+    showSpellSuggestions(editor, pos);
+  });
+  // Long-press on mobile
+  let _spellLpTimer;
+  cm.on('touchstart', (editor, e) => {
+    if (!_spellEnabled) return;
+    _spellLpTimer = setTimeout(() => {
+      const t = e.touches[0];
+      const pos = editor.coordsChar({ left: t.clientX, top: t.clientY });
+      showSpellSuggestions(editor, pos);
+    }, 600);
+  });
+  cm.on('touchend', () => clearTimeout(_spellLpTimer));
+  cm.on('touchmove', () => clearTimeout(_spellLpTimer));
+}
+
+// ===================== SNIPPET LIBRARY =====================
+
+const LS_SNIPPETS = 'npp_snippets';
+let _snippets = [];
+
+function loadSnippets() {
+  try {
+    _snippets = JSON.parse(localStorage.getItem(LS_SNIPPETS) || '[]');
+  } catch { _snippets = []; }
+}
+
+function saveSnippets() {
+  localStorage.setItem(LS_SNIPPETS, JSON.stringify(_snippets));
+}
+
+function openSheet_snippet() {
+  loadSnippets();
+  // Populate lang select
+  const sel = document.getElementById('snip-lang');
+  sel.innerHTML = '<option value="">Any language</option>';
+  LANGUAGES.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.name; opt.textContent = l.name;
+    sel.appendChild(opt);
+  });
+  // Pre-select active lang
+  const tab = getActiveTab();
+  if (tab) sel.value = tab.lang.name;
+  renderSnippetList();
+}
+
+function switchSnippetTab(id) {
+  document.querySelectorAll('.snippet-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.snippet-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`stab-${id}`)?.classList.add('active');
+  document.querySelector(`.snippet-tab[data-stab="${id}"]`)?.classList.add('active');
+  if (id === 'new') {
+    document.getElementById('snip-name').focus();
+  }
+}
+
+function renderSnippetList() {
+  const container = document.getElementById('snippet-list');
+  const query = (document.getElementById('snippet-search-input')?.value || '').toLowerCase();
+  container.innerHTML = '';
+
+  const filtered = _snippets.filter(s =>
+    !query || s.name.toLowerCase().includes(query) ||
+    (s.lang || '').toLowerCase().includes(query) ||
+    (s.prefix || '').toLowerCase().includes(query)
+  );
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="snippet-empty">${query ? 'No matching snippets.' : 'No snippets yet. Create one!'}</div>`;
+    return;
+  }
+
+  filtered.forEach((snip, idx) => {
+    const cfg = snip.lang ? LANG_ICONS[LANGUAGES.find(l=>l.name===snip.lang)?.ext?.[0]] || null : null;
+    const badge = cfg
+      ? `<span class="snippet-lang-badge" style="background:${cfg[1]};color:${cfg[2]}">${cfg[0]}</span>`
+      : '';
+
+    const el = document.createElement('div');
+    el.className = 'snippet-item';
+    el.innerHTML = `
+      <div class="snippet-body" onclick="insertSnippet(${idx})">
+        <div class="snippet-name">${badge}${esc(snip.name)}${snip.prefix ? ` <span style="color:var(--npp-text3);font-size:10px">(${esc(snip.prefix)})</span>` : ''}</div>
+        <div class="snippet-preview">${esc((snip.code||'').split('\n')[0].slice(0,60))}</div>
+      </div>
+      <div class="snippet-actions">
+        <button class="snippet-action-btn" onclick="insertSnippet(${idx});event.stopPropagation()" title="Insert">↙</button>
+        <button class="snippet-action-btn del" onclick="deleteSnippet(${idx});event.stopPropagation()" title="Delete">✕</button>
+      </div>
+    `;
+    container.appendChild(el);
+  });
+}
+
+function insertSnippet(idx) {
+  const snip = _snippets[idx];
+  if (!snip) return;
+  const tab = getActiveTab();
+  if (!tab) { showToast('No active editor', 'error'); return; }
+  tab.cm.replaceSelection(snip.code);
+  tab.cm.focus();
+  closeSheet('snippet-sheet');
+  showToast(`Snippet "${snip.name}" inserted`);
+}
+
+function saveSnippet() {
+  const name   = document.getElementById('snip-name').value.trim();
+  const lang   = document.getElementById('snip-lang').value;
+  const prefix = document.getElementById('snip-prefix').value.trim();
+  const code   = document.getElementById('snip-code').value;
+
+  if (!name) { showToast('Snippet needs a name', 'error'); return; }
+  if (!code) { showToast('Snippet code is empty', 'error'); return; }
+
+  _snippets.push({ name, lang, prefix, code, created: Date.now() });
+  saveSnippets();
+
+  // Reset form
+  document.getElementById('snip-name').value   = '';
+  document.getElementById('snip-prefix').value = '';
+  document.getElementById('snip-code').value   = '';
+
+  switchSnippetTab('browse');
+  renderSnippetList();
+  showToast(`Snippet "${name}" saved`, 'success');
+}
+
+function deleteSnippet(idx) {
+  const name = _snippets[idx]?.name || 'this snippet';
+  if (!confirm(`Delete "${name}"?`)) return;
+  _snippets.splice(idx, 1);
+  saveSnippets();
+  renderSnippetList();
+}
+
+// Patch openSheet to init snippets
+const _origOpenSheet = openSheet;
+openSheet = function(id) {
+  if (id === 'snippet-sheet') openSheet_snippet();
+  _origOpenSheet(id);
+};
+
+// ===================== GITHUB INTEGRATION =====================
+
+const LS_GH = 'npp_github';
+let _gh = { token: '', user: null, repo: '', branch: 'main', path: '' };
+let _ghCurrentPath = '';
+let _ghCurrentFilePath = null; // file currently open from GitHub
+
+function loadGhState() {
+  try { Object.assign(_gh, JSON.parse(localStorage.getItem(LS_GH) || '{}')); } catch {}
+}
+
+function saveGhState() {
+  localStorage.setItem(LS_GH, JSON.stringify({
+    token: _gh.token, repo: _gh.repo, branch: _gh.branch
+  }));
+}
+
+function openSheet_github() {
+  loadGhState();
+  if (_gh.repo) document.getElementById('gh-repo-input').value = _gh.repo;
+  if (_gh.token) {
+    ghVerifyToken().catch(() => {});
+  }
+  updateGhStatus(_gh.user ? 'connected' : 'disconnected');
+  // Populate branch
+  if (_gh.branch) document.getElementById('gh-branch-select').value = _gh.branch;
+}
+
+function updateGhStatus(status, msg) {
+  const el = document.getElementById('gh-status');
+  const txt = document.getElementById('gh-status-text');
+  el.className = 'github-status ' + (status === 'connected' ? 'connected' : status === 'error' ? 'error' : '');
+  txt.textContent = msg || (status === 'connected' ? `Connected as @${_gh.user}` : 'Not connected – tap Auth');
+}
+
+async function openGhAuthDialog() {
+  const token = prompt('Enter GitHub Personal Access Token (PAT):\n\nNeeds "repo" scope. Visit github.com/settings/tokens', _gh.token || '');
+  if (token === null) return;
+  _gh.token = token.trim();
+  if (!_gh.token) { _gh.user = null; updateGhStatus('disconnected'); saveGhState(); return; }
+  await ghVerifyToken();
+}
+
+async function ghVerifyToken() {
+  updateGhStatus('loading', 'Verifying…');
+  try {
+    const res = await ghFetch('https://api.github.com/user');
+    if (!res.ok) throw new Error(`${res.status}`);
+    const data = await res.json();
+    _gh.user = data.login;
+    saveGhState();
+    updateGhStatus('connected');
+    showToast(`GitHub: connected as @${_gh.user}`, 'success');
+    // Load branches if repo set
+    const repo = document.getElementById('gh-repo-input').value.trim();
+    if (repo) ghLoadBranches(repo);
+  } catch (e) {
+    _gh.user = null;
+    updateGhStatus('error', `Auth failed: ${e.message}`);
+  }
+}
+
+function ghFetch(url, opts = {}) {
+  const headers = { 'Accept': 'application/vnd.github+json' };
+  if (_gh.token) headers['Authorization'] = `Bearer ${_gh.token}`;
+  return fetch(url, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
+}
+
+async function ghLoadBranches(repo) {
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/branches?per_page=30`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const sel  = document.getElementById('gh-branch-select');
+    sel.innerHTML = '';
+    data.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.name; opt.textContent = b.name;
+      if (b.name === _gh.branch) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.onchange = () => { _gh.branch = sel.value; _ghCurrentPath = ''; ghBrowse(''); };
+  } catch {}
+}
+
+async function ghBrowse(path) {
+  const repo = document.getElementById('gh-repo-input').value.trim();
+  _gh.branch = document.getElementById('gh-branch-select').value || 'main';
+  _gh.repo   = repo;
+  saveGhState();
+
+  if (!repo) { showToast('Enter a repo (owner/repo)', 'error'); return; }
+  if (!_gh.token) { showToast('Authenticate first', 'error'); return; }
+
+  _ghCurrentPath = path;
+  const list  = document.getElementById('gh-file-list');
+  const pathBar = document.getElementById('gh-path-bar');
+
+  list.innerHTML = '<div class="gh-loading"><div class="gh-spinner"></div> Loading…</div>';
+
+  // Render path bar
+  pathBar.innerHTML = '';
+  const parts = path ? path.split('/') : [];
+  const rootSpan = document.createElement('span');
+  rootSpan.className = 'gh-path-part';
+  rootSpan.textContent = repo.split('/')[1] || repo;
+  rootSpan.onclick = () => ghBrowse('');
+  pathBar.appendChild(rootSpan);
+  parts.forEach((p, i) => {
+    const sep = document.createElement('span'); sep.className = 'gh-path-sep'; sep.textContent = ' / ';
+    pathBar.appendChild(sep);
+    const span = document.createElement('span');
+    span.className = 'gh-path-part';
+    span.textContent = p;
+    const subPath = parts.slice(0, i+1).join('/');
+    span.onclick = () => ghBrowse(subPath);
+    pathBar.appendChild(span);
+  });
+  // Branch badge
+  const bb = document.createElement('span'); bb.className = 'gh-branch-badge'; bb.textContent = _gh.branch;
+  pathBar.appendChild(bb);
+
+  try {
+    const url = `https://api.github.com/repos/${repo}/contents/${path}?ref=${encodeURIComponent(_gh.branch)}`;
+    const res = await ghFetch(url);
+    if (!res.ok) {
+      const err = await res.json();
+      list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${err.message || 'Error'}</div>`;
+      return;
+    }
+    const data = await res.json();
+
+    // Single file? Open it
+    if (!Array.isArray(data)) {
+      await ghOpenFile(data);
+      return;
+    }
+
+    // Sort: dirs first, then files
+    const sorted = [...data].sort((a,b) => {
+      if (a.type === b.type) return a.name.localeCompare(b.name);
+      return a.type === 'dir' ? -1 : 1;
+    });
+
+    list.innerHTML = '';
+
+    if (path) {
+      const back = document.createElement('div');
+      back.className = 'github-file-item is-dir';
+      back.innerHTML = '<span class="gh-file-icon">📁</span> ..';
+      back.onclick = () => { const up = path.split('/').slice(0,-1).join('/'); ghBrowse(up); };
+      list.appendChild(back);
+    }
+
+    sorted.forEach(item => {
+      const el = document.createElement('div');
+      el.className = `github-file-item${item.type==='dir'?' is-dir':''}`;
+      const icon = item.type === 'dir' ? '📁' : (getTabIcon(item.name).match(/background:([^;]+)/)?.[1] ? getTabIcon(item.name) : '📄');
+      el.innerHTML = `<span class="gh-file-icon">${item.type==='dir'?'📁':''}</span>${item.name}`;
+      if (item.type === 'dir') {
+        el.onclick = () => ghBrowse(item.path);
+      } else {
+        el.onclick = () => ghOpenFile(item);
+      }
+      list.appendChild(el);
+    });
+
+    if (sorted.length === 0) {
+      list.innerHTML = '<div class="gh-loading">Empty directory</div>';
+    }
+
+    // Hide commit panel when browsing
+    document.getElementById('gh-commit-panel').style.display = 'none';
+
+    await ghLoadBranches(repo);
+  } catch (e) {
+    list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">Error: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function ghOpenFile(item) {
+  const repo   = _gh.repo;
+  const branch = _gh.branch;
+
+  // Fetch full content if download_url not included
+  let content;
+  try {
+    if (item.content) {
+      content = atob(item.content.replace(/\n/g, ''));
+    } else {
+      const res = await ghFetch(`https://api.github.com/repos/${repo}/contents/${item.path}?ref=${encodeURIComponent(branch)}`);
+      const data = await res.json();
+      content = atob((data.content || '').replace(/\n/g, ''));
+    }
+  } catch(e) {
+    showToast(`Could not open file: ${e.message}`, 'error');
+    return;
+  }
+
+  const ext  = item.name.split('.').pop();
+  const lang = getLangForExt(ext);
+  const tab  = newTab(`[GH] ${item.name}`, content, lang.name);
+  tab.ghMeta = { repo, branch, path: item.path, sha: item.sha };
+  markModified(tab.id, false);
+  closeSheet('github-sheet');
+  showToast(`Opened: ${item.name}`);
+
+  // Show commit panel
+  document.getElementById('gh-commit-panel').style.display = 'block';
+  _ghCurrentFilePath = item.path;
+}
+
+async function ghCommitFile() {
+  const tab = getActiveTab();
+  if (!tab || !tab.ghMeta) {
+    showToast('Open a file from GitHub first', 'error');
+    return;
+  }
+  const { repo, branch, path, sha } = tab.ghMeta;
+  const message = document.getElementById('gh-commit-msg').value.trim() || 'Update via PocketPad';
+  const content = btoa(unescape(encodeURIComponent(tab.cm.getValue())));
+
+  showToast('Pushing to GitHub…');
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, content, sha, branch }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message);
+    }
+    const data = await res.json();
+    tab.ghMeta.sha = data.content.sha; // update SHA
+    markModified(tab.id, false);
+    showToast('Pushed successfully ✓', 'success');
+  } catch (e) {
+    showToast(`Push failed: ${e.message}`, 'error');
+  }
+}
+
+// Patch openSheet to init github
+const _origOpenSheet2 = openSheet;
+openSheet = function(id) {
+  if (id === 'github-sheet') openSheet_github();
+  _origOpenSheet2(id);
+};
+
+// ===================== DOCUMENT MAP =====================
+
+let _docMapEnabled = false;
+let _docMapTimer   = null;
+let _docMapRaf     = null;
+
+function toggleDocMap() {
+  _docMapEnabled = !_docMapEnabled;
+  const panel = document.getElementById('docmap-panel');
+  panel.classList.toggle('open', _docMapEnabled);
+  document.getElementById('btn-docmap').classList.toggle('active', _docMapEnabled);
+  if (_docMapEnabled) {
+    setTimeout(() => {
+      renderDocMap();
+      state.tabs.forEach(t => t.cm.refresh());
+    }, 250);
+  } else {
+    state.tabs.forEach(t => t.cm.refresh());
+  }
+}
+
+function scheduleDocMapUpdate() {
+  if (!_docMapEnabled) return;
+  clearTimeout(_docMapTimer);
+  _docMapTimer = setTimeout(renderDocMap, 600);
+}
+
+function renderDocMap() {
+  if (!_docMapEnabled) return;
+  const tab = getActiveTab();
+  if (!tab) return;
+
+  const canvas  = document.getElementById('docmap-canvas');
+  const panel   = document.getElementById('docmap-wrap');
+  if (!canvas || !panel) return;
+
+  const W       = 74;
+  const content = tab.cm.getValue();
+  const lines   = content.split('\n');
+  const totalLines = lines.length;
+
+  // Scale: each pixel row = ~2 lines; cap at panel height
+  const panelH  = panel.offsetHeight || 600;
+  const PX_PER_LINE = Math.max(1, Math.min(4, panelH / totalLines));
+  const H       = Math.max(panelH, Math.ceil(totalLines * PX_PER_LINE));
+
+  canvas.width  = W;
+  canvas.height = H;
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#12130f';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw each line as tiny colored blocks
+  const charW    = Math.max(1, (W - 4) / 80); // scale chars to width
+  const lineH    = PX_PER_LINE;
+
+  // Syntax color map (rough heuristics without full tokenizing)
+  const colors = {
+    keyword:  '#f92672',
+    string:   '#e6db74',
+    comment:  '#3d3d30',
+    number:   '#ae81ff',
+    fn:       '#a6e22e',
+    default:  '#4a4a42',
+  };
+
+  lines.forEach((line, i) => {
+    const y = Math.floor(i * lineH);
+    if (y >= H) return;
+
+    const trimmed = line.trimStart();
+    const indent  = line.length - trimmed.length;
+    let   color   = colors.default;
+
+    if (/^\s*(\/\/|#|--|\*)/.test(line))  color = colors.comment;
+    else if (/^\s*(function|def |class |const |let |var |if |for |while |return|import|export|public|private|void|int|char|struct|enum)/.test(line)) color = colors.keyword;
+    else if (/^\s*["'`]/.test(line) || /"[^"]*"|'[^']*'/.test(line)) color = colors.string;
+    else if (/^\s*[\d]/.test(trimmed)) color = colors.number;
+    else if (/\w+\s*\(/.test(line)) color = colors.fn;
+
+    const blockW = Math.min(W - 4, Math.max(2, (line.length - indent) * charW));
+    const x      = 2 + indent * charW * 0.3;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, blockW, Math.max(1, lineH - 0.5));
+  });
+
+  updateDocMapViewport(tab.cm);
+}
+
+function updateDocMapViewport(cm) {
+  if (!_docMapEnabled) return;
+  const canvas  = document.getElementById('docmap-canvas');
+  const vpEl    = document.getElementById('docmap-viewport');
+  if (!canvas || !vpEl) return;
+
+  const totalLines = cm.lineCount();
+  const scrollInfo = cm.getScrollInfo();
+  const panelH     = document.getElementById('docmap-wrap')?.offsetHeight || 600;
+  const canvasH    = canvas.height;
+
+  const ratio    = canvasH / Math.max(1, totalLines);
+  const fromLine = cm.lineAtHeight(scrollInfo.top, 'local');
+  const toLine   = cm.lineAtHeight(scrollInfo.top + scrollInfo.clientHeight, 'local');
+
+  const vpTop    = Math.floor(fromLine * ratio);
+  const vpHeight = Math.max(4, Math.ceil((toLine - fromLine) * ratio));
+
+  vpEl.style.top    = vpTop + 'px';
+  vpEl.style.height = vpHeight + 'px';
+}
+
+// Docmap click-to-scroll
+(function setupDocMapClick() {
+  const wrap = document.getElementById('docmap-wrap');
+  if (!wrap) return;
+
+  function scrollToFraction(clientY) {
+    const tab = getActiveTab();
+    if (!tab) return;
+    const rect   = wrap.getBoundingClientRect();
+    const frac   = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    const canvas = document.getElementById('docmap-canvas');
+    const total  = tab.cm.lineCount();
+    const targetLine = Math.floor(frac * total);
+    const coords = tab.cm.charCoords({ line: targetLine, ch: 0 }, 'local');
+    tab.cm.scrollTo(null, coords.top - tab.cm.getScrollInfo().clientHeight / 2);
+  }
+
+  let _dragging = false;
+  wrap.addEventListener('mousedown', e => {
+    _dragging = true;
+    scrollToFraction(e.clientY);
+  });
+  window.addEventListener('mousemove', e => { if (_dragging) scrollToFraction(e.clientY); });
+  window.addEventListener('mouseup',   () => { _dragging = false; });
+
+  wrap.addEventListener('touchstart', e => {
+    _dragging = true;
+    scrollToFraction(e.touches[0].clientY);
+  }, { passive: true });
+  window.addEventListener('touchmove', e => {
+    if (_dragging) scrollToFraction(e.touches[0].clientY);
+  }, { passive: true });
+  window.addEventListener('touchend', () => { _dragging = false; });
+})();
+
+// Render docmap when tab switches
+const _origSwitchTabDocmap = switchTab;
+switchTab = function(id) {
+  _origSwitchTabDocmap(id);
+  if (_docMapEnabled) scheduleDocMapUpdate();
+};
+
+// ===================== GIT DIFF INTEGRATION =====================
+// Extends the existing GitHub sheet with a Diff / Status panel
+
+let _ghBaseShas  = {}; // path → original sha for in-editor diff
+let _ghDiffOpen  = false;
+
+function computeSimpleDiff(original, modified) {
+  // Line-level diff (LCS-based simplified)
+  const origLines = original.split('\n');
+  const modLines  = modified.split('\n');
+  const result    = [];
+
+  // Simple patience-style: find common lines using a greedy LCS
+  let i = 0, j = 0;
+  while (i < origLines.length || j < modLines.length) {
+    if (i < origLines.length && j < modLines.length && origLines[i] === modLines[j]) {
+      result.push({ type: 'ctx', text: ' ' + origLines[i] });
+      i++; j++;
+    } else {
+      // Find next match within a small window
+      let matched = false;
+      for (let di = 1; di <= 8 && !matched; di++) {
+        for (let dj = 1; dj <= 8 && !matched; dj++) {
+          if (i + di < origLines.length && j + dj < modLines.length &&
+              origLines[i + di] === modLines[j + dj]) {
+            for (let x = 0; x < dj; x++) result.push({ type: 'add', text: '+' + (modLines[j + x] || '') });
+            for (let x = 0; x < di; x++) result.push({ type: 'del', text: '-' + (origLines[i + x] || '') });
+            i += di; j += dj;
+            matched = true;
+          }
+        }
+      }
+      if (!matched) {
+        if (i < origLines.length) { result.push({ type: 'del', text: '-' + origLines[i] }); i++; }
+        if (j < modLines.length) { result.push({ type: 'add', text: '+' + modLines[j] }); j++; }
+      }
+    }
+  }
+  return result;
+}
+
+function renderGitDiff(original, modified) {
+  const diff    = computeSimpleDiff(original, modified);
+  const panel   = document.getElementById('gh-diff-panel');
+  if (!panel) return;
+
+  panel.innerHTML = '';
+  let added = 0, deleted = 0;
+
+  diff.forEach(line => {
+    const el = document.createElement('div');
+    el.className = `git-diff-line ${line.type}`;
+    el.textContent = line.text.slice(0, 120); // truncate very long lines
+    panel.appendChild(el);
+    if (line.type === 'add') added++;
+    if (line.type === 'del') deleted++;
+  });
+
+  const summary = document.getElementById('gh-diff-summary');
+  if (summary) {
+    summary.textContent = `+${added} −${deleted} lines changed`;
+    summary.style.color = added > 0 ? '#a6e22e' : '#555';
+  }
+}
+
+// Patch ghOpenFile to store original content for diff
+const _origGhOpenFile = ghOpenFile;
+ghOpenFile = async function(item) {
+  await _origGhOpenFile(item);
+  // Store original content on the newly-created tab
+  const tab = getActiveTab();
+  if (tab && item.content) {
+    try { tab.ghOrigContent = atob(item.content.replace(/\n/g, '')); } catch {}
+  }
+};
+
+// Show diff panel in GitHub sheet
+function openGitDiff() {
+  const tab = getActiveTab();
+  if (!tab) { showToast('No active tab', 'error'); return; }
+  if (!tab.ghOrigContent) { showToast('Open a file from GitHub first', 'error'); return; }
+  renderGitDiff(tab.ghOrigContent, tab.cm.getValue());
+  document.getElementById('gh-diff-view').style.display = 'block';
+}
+
+// ===================== SHELL / TERMUX WebSocket TERMINAL =====================
+
+let _wsConn    = null;
+let _xtermInst = null;
+let _fitAddon  = null;
+let _xtermReady = false;
+
+function initXterm() {
+  if (_xtermReady) return;
+  if (typeof Terminal === 'undefined') {
+    appendToOutput(conLine('xterm.js not loaded – check network', 'error'));
+    return;
+  }
+
+  _xtermInst = new Terminal({
+    theme: {
+      background: '#000000',
+      foreground: '#f8f8f2',
+      cursor:     '#a6e22e',
+      black:      '#272822',
+      green:      '#a6e22e',
+      yellow:     '#e6db74',
+      blue:       '#66d9e8',
+      magenta:    '#ae81ff',
+      red:        '#f92672',
+      white:      '#f8f8f2',
+      brightBlack:'#75715e',
+    },
+    fontFamily: "'Courier New', monospace",
+    fontSize:   13,
+    lineHeight: 1.3,
+    cursorStyle:'bar',
+    cursorBlink: true,
+    scrollback:  5000,
+    allowTransparency: false,
+  });
+
+  if (typeof FitAddon !== 'undefined') {
+    _fitAddon = new FitAddon.FitAddon();
+    _xtermInst.loadAddon(_fitAddon);
+  }
+
+  const container = document.getElementById('xterm-container');
+  if (container) {
+    _xtermInst.open(container);
+    if (_fitAddon) {
+      setTimeout(() => _fitAddon.fit(), 100);
+    }
+  }
+
+  // Send input to WebSocket
+  _xtermInst.onData(data => {
+    if (_wsConn && _wsConn.readyState === WebSocket.OPEN) {
+      _wsConn.send(data);
+    } else {
+      _xtermInst.write('\r\n\x1b[31m[Not connected]\x1b[0m\r\n');
+    }
+  });
+
+  _xtermReady = true;
+  _xtermInst.write('\x1b[32mPocketPad Shell\x1b[0m\r\n');
+  _xtermInst.write('\x1b[90mEnter WebSocket URL and tap Connect.\x1b[0m\r\n');
+  _xtermInst.write('\x1b[90mFor Termux: pkg install ttyd && ttyd -p 8080 bash\x1b[0m\r\n\r\n');
+}
+
+function wsSetStatus(status) {
+  const dot = document.getElementById('ws-dot');
+  if (!dot) return;
+  dot.className = 'ws-dot ' + status;
+}
+
+function wsConnect() {
+  const url = (document.getElementById('ws-url-input')?.value || 'ws://localhost:8080').trim();
+  if (!url) return;
+
+  initXterm();
+  wsDisconnect(); // close any existing connection
+
+  wsSetStatus('connecting');
+  _xtermInst?.write(`\r\n\x1b[33mConnecting to ${url}…\x1b[0m\r\n`);
+
+  try {
+    _wsConn = new WebSocket(url);
+
+    _wsConn.onopen = () => {
+      wsSetStatus('connected');
+      _xtermInst?.write(`\x1b[32m✓ Connected to ${url}\x1b[0m\r\n`);
+      if (_fitAddon) _fitAddon.fit();
+      // Send terminal size
+      const cols = _xtermInst?.cols || 80;
+      const rows = _xtermInst?.rows || 24;
+      // ttyd uses binary frame for resize: byte 1 = type '1', then JSON
+      try {
+        _wsConn.send(JSON.stringify({ type: 'resize', cols, rows }));
+      } catch {}
+    };
+
+    _wsConn.onmessage = (e) => {
+      if (typeof e.data === 'string') {
+        _xtermInst?.write(e.data);
+      } else {
+        // Binary frame (ttyd protocol)
+        const reader = new FileReader();
+        reader.onload = () => {
+          const ab  = reader.result;
+          const arr = new Uint8Array(ab);
+          if (arr[0] === 1) { // output type
+            _xtermInst?.write(new TextDecoder().decode(arr.slice(1)));
+          }
+        };
+        reader.readAsArrayBuffer(e.data);
+      }
+    };
+
+    _wsConn.onerror = (err) => {
+      wsSetStatus('error');
+      _xtermInst?.write(`\r\n\x1b[31m✕ Connection error\x1b[0m\r\n`);
+      _xtermInst?.write(`\x1b[90mMake sure the server is running and accessible.\x1b[0m\r\n`);
+      _xtermInst?.write(`\x1b[90mTermux setup: pkg install ttyd && ttyd -p 8080 -W bash\x1b[0m\r\n`);
+    };
+
+    _wsConn.onclose = (e) => {
+      wsSetStatus('');
+      const reason = e.reason ? ` (${e.reason})` : '';
+      _xtermInst?.write(`\r\n\x1b[33mDisconnected${reason}\x1b[0m\r\n`);
+    };
+
+  } catch (err) {
+    wsSetStatus('error');
+    _xtermInst?.write(`\r\n\x1b[31mFailed: ${err.message}\x1b[0m\r\n`);
+  }
+}
+
+function wsDisconnect() {
+  if (_wsConn) {
+    try { _wsConn.close(); } catch {}
+    _wsConn = null;
+  }
+  wsSetStatus('');
+}
+
+// Init xterm when shell pane is activated
+const _origSwitchConsolePane = switchConsolePane;
+switchConsolePane = function(id) {
+  _origSwitchConsolePane(id);
+  if (id === 'shell') {
+    setTimeout(() => {
+      initXterm();
+      if (_fitAddon) _fitAddon.fit();
+    }, 100);
+  }
+};
+
+// Resize terminal on console panel resize
+const _origResizeObserverCB = () => { if (_fitAddon && _xtermReady) _fitAddon.fit(); };
+window.addEventListener('resize', _origResizeObserverCB);
+
+// ===================== SESSION PERSISTENCE (IndexedDB + localStorage fallback) =====================
+const LS_TABS     = 'npp_tabs';
+const LS_ACTIVE   = 'npp_active';
+const LS_SETTINGS = 'npp_settings';
+const LS_COUNTER  = 'npp_counter';
+const IDB_NAME    = 'npp-mobile';
+const IDB_STORE   = 'kv';
+const SAVE_DEBOUNCE = 800; // ms
+
+let _saveTimer = null;
+let _idb = null;
+
+function idbOpen() {
+  if (_idb) return Promise.resolve(_idb);
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) return reject(new Error('no idb'));
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = () => { _idb = req.result; resolve(_idb); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbSet(key, value) {
+  return idbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+
+function idbGet(key) {
+  return idbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  }));
+}
+
+function idbDel(key) {
+  return idbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  })).catch(() => {});
+}
+
+function collectSettings() {
+  return {
+    wordWrap:              state.wordWrap,
+    fontSize:              state.fontSize,
+    tabSize:               state.tabSize,
+    editorTheme:           state.editorTheme,
+    showLineNumbers:       state.showLineNumbers,
+    matchBrackets:         state.matchBrackets,
+    autoCloseBrackets:     state.autoCloseBrackets,
+    styleActiveLine:       state.styleActiveLine,
+    uiLight:               document.body.classList.contains('theme-light'),
+    wordCompletion:        state.wordCompletion,
+    wordCompletionMinChars: state.wordCompletionMinChars,
+    spellCheck:            _spellEnabled,
+  };
+}
+
+function collectTabData() {
+  return state.tabs.map(t => ({
+    id:       t.id,
+    filename: t.filename,
+    langName: t.lang.name,
+    content:  t.cm.getValue(),
+    cursor:   t.cm.getCursor(),
+    scrollY:  t.cm.getScrollInfo().top,
+    modified: t.modified,
+  }));
+}
+
+/** Serialize current session (IndexedDB preferred) */
+function persistSession() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    const tabData = collectTabData();
+    const settings = collectSettings();
+    const active = state.activeTab || '';
+    const counter = state.tabCounter;
+
+    const saveLS = () => {
+      try {
+        localStorage.setItem(LS_TABS, JSON.stringify(tabData));
+        localStorage.setItem(LS_ACTIVE, active);
+        localStorage.setItem(LS_COUNTER, counter);
+        localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
+        flashSaveIndicator();
+      } catch (err) {
+        console.warn('localStorage save failed:', err);
+      }
+    };
+
+    idbSet(LS_TABS, tabData)
+      .then(() => idbSet(LS_ACTIVE, active))
+      .then(() => idbSet(LS_COUNTER, counter))
+      .then(() => idbSet(LS_SETTINGS, settings))
+      .then(() => {
+        // keep settings mirrored in LS for fast path
+        try { localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)); } catch {}
+        flashSaveIndicator();
+      })
+      .catch(() => saveLS());
+  }, SAVE_DEBOUNCE);
+}
+
+function applySettingsObject(s) {
+  if (!s) return;
+  state.wordWrap          = s.wordWrap          ?? false;
+  state.fontSize          = s.fontSize          ?? 14;
+  state.tabSize           = s.tabSize           ?? 4;
+  state.editorTheme       = s.editorTheme       ?? 'npp';
+  state.showLineNumbers   = s.showLineNumbers   ?? true;
+  state.matchBrackets     = s.matchBrackets     ?? true;
+  state.autoCloseBrackets = s.autoCloseBrackets ?? true;
+  state.styleActiveLine   = s.styleActiveLine   ?? true;
+
+  document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
+  document.getElementById('font-size-val').textContent = state.fontSize;
+  document.getElementById('tab-size-val').textContent  = state.tabSize;
+  document.getElementById('toggle-linenum').checked    = state.showLineNumbers;
+  document.getElementById('toggle-brackets').checked   = state.matchBrackets;
+  document.getElementById('toggle-autoclose').checked  = state.autoCloseBrackets;
+  document.getElementById('toggle-activeline').checked = state.styleActiveLine;
+  document.getElementById('btn-wrap').classList.toggle('active', state.wordWrap);
+
+  if (s.wordCompletion !== undefined) state.wordCompletion = s.wordCompletion;
+  if (s.wordCompletionMinChars !== undefined) state.wordCompletionMinChars = s.wordCompletionMinChars;
+  document.getElementById('toggle-wordcompletion').checked = state.wordCompletion;
+  document.getElementById('wc-minchars-val').textContent   = state.wordCompletionMinChars;
+  document.getElementById('row-wc-minchars').style.opacity = state.wordCompletion ? '1' : '0.4';
+
+  if (s.spellCheck) {
+    _spellEnabled = true;
+    document.getElementById('toggle-spellcheck').checked = true;
+    loadSpellDict(false);
+  }
+
+  if (s.uiLight) {
+    document.body.classList.add('theme-light');
+    document.getElementById('toggle-ui-theme').checked = true;
+  }
+}
+
+function rebuildTabsFromData(tabData, savedActive) {
+  if (!tabData || !tabData.length) return false;
+
+  tabData.forEach(td => {
+    const lang = LANGUAGES.find(l => l.name === td.langName) || LANGUAGES[0];
+
+    const container = document.createElement('div');
+    container.className = 'editor-instance';
+    container.id = `editor-${td.id}`;
+    document.getElementById('editor-wrap').appendChild(container);
+
+    const cm = CodeMirror(container, {
+      value:             td.content || '',
+      mode:              lang.mode,
+      theme:             getThemeName(state.editorTheme),
+      lineNumbers:       state.showLineNumbers,
+      matchBrackets:     state.matchBrackets,
+      autoCloseBrackets: state.autoCloseBrackets,
+      styleActiveLine:   state.styleActiveLine,
+      lineWrapping:      state.wordWrap,
+      tabSize:           state.tabSize,
+      indentWithTabs:    false,
+      indentUnit:        state.tabSize,
+      extraKeys: {
+        'Tab':       cm => cm.execCommand('indentMore'),
+        'Shift-Tab': cm => cm.execCommand('indentLess'),
+        'Ctrl-/':    cm => cm.execCommand('toggleComment'),
+        'Cmd-/':     cm => cm.execCommand('toggleComment'),
+        'Ctrl-Space': cm => triggerWordCompletion(cm),
+      },
+    });
+
+    cm.on('inputRead', (editor, change) => {
+      if (!state.wordCompletion) return;
+      if (change.origin === '+delete' || change.origin === 'paste') return;
+      if (editor.state.completionActive) return;
+      const cur = editor.getCursor();
+      const token = editor.getTokenAt(cur);
+      const word = token.string.replace(/[^A-Za-z0-9_$]/g, '');
+      if (word.length >= state.wordCompletionMinChars) {
+        triggerWordCompletion(editor);
+      }
+    });
+
+    cm.on('cursorActivity', updateStatus);
+    cm.on('change', () => { markModified(td.id, true); updateStatus(); persistSession(); });
+
+    hookSpellPopup(cm);
+    if (_spellEnabled && _typo) applySpellCheck(cm);
+
+    const tab = { id: td.id, filename: td.filename, lang, cm, modified: td.modified || false, container, fileHandle: null };
+    state.tabs.push(tab);
+
+    requestAnimationFrame(() => {
+      if (td.cursor) cm.setCursor(td.cursor);
+      if (td.scrollY) cm.scrollTo(null, td.scrollY);
+      cm.refresh();
+    });
+  });
+
+  const activateId = savedActive && state.tabs.find(t => t.id === savedActive)
+    ? savedActive
+    : state.tabs[0]?.id;
+
+  if (activateId) {
+    state.activeTab = activateId;
+    state.tabs.forEach(t => t.container.classList.toggle('active', t.id === activateId));
+    renderTabBar();
+    updateStatus();
+    updateTitleBar();
+    updateLangStatus();
+    setTimeout(() => {
+      const tab = getTab(activateId);
+      if (tab) { tab.cm.refresh(); tab.cm.focus(); }
+    }, 80);
+  }
+  return true;
+}
+
+/** Restore session. Returns true if data was found. Async-capable via callback init. */
+function restoreSession() {
+  try {
+    // Settings: LS first (sync), IDB will re-apply async if present
+    const rawSettings = localStorage.getItem(LS_SETTINGS);
+    if (rawSettings) applySettingsObject(JSON.parse(rawSettings));
+
+    // Tabs from LS sync path (works even if IDB empty / first paint)
+    const rawTabs = localStorage.getItem(LS_TABS);
+    if (rawTabs) {
+      const tabData = JSON.parse(rawTabs);
+      if (tabData && tabData.length) {
+        state.tabCounter = parseInt(localStorage.getItem(LS_COUNTER) || '0', 10);
+        const savedActive = localStorage.getItem(LS_ACTIVE);
+        return rebuildTabsFromData(tabData, savedActive);
+      }
+    }
+    return false;
+  } catch (err) {
+    console.warn('Session restore failed:', err);
+    return false;
+  }
+}
+
+/** Prefer IndexedDB when available; migrate into memory if LS empty */
+async function restoreSessionAsync() {
+  try {
+    const settings = await idbGet(LS_SETTINGS);
+    if (settings) applySettingsObject(settings);
+
+    const tabData = await idbGet(LS_TABS);
+    if (tabData && tabData.length) {
+      // if tabs already restored from LS with same content, skip rebuild
+      if (state.tabs.length) return true;
+      const counter = await idbGet(LS_COUNTER);
+      state.tabCounter = parseInt(counter || '0', 10);
+      const savedActive = await idbGet(LS_ACTIVE);
+      return rebuildTabsFromData(tabData, savedActive);
+    }
+  } catch (e) {
+    console.warn('IDB restore skipped', e);
+  }
+  return state.tabs.length > 0;
+}
+
+/** Erase everything from localStorage and reload a fresh session */
+function clearSession() {
+  if (!confirm('Clear all saved tabs and settings? This cannot be undone.')) return;
+  localStorage.removeItem(LS_TABS);
+  localStorage.removeItem(LS_ACTIVE);
+  localStorage.removeItem(LS_SETTINGS);
+  localStorage.removeItem(LS_COUNTER);
+  idbDel(LS_TABS); idbDel(LS_ACTIVE); idbDel(LS_SETTINGS); idbDel(LS_COUNTER);
+  location.reload();
+}
+
+/** Tiny "saved" flash on the title */
+function flashSaveIndicator() {
+  const el = document.getElementById('save-dot');
+  if (!el) return;
+  el.classList.add('saved');
+  setTimeout(() => el.classList.remove('saved'), 1200);
+}
+
+// Patch existing mutating functions to also call persistSession
+
+// Patch markModified
+const _origMarkModified = markModified;
+// (already calls persistSession via cm.on('change') handler above for new tabs;
+//  for restored tabs it's wired in restoreSession)
+
+// Patch switchTab to persist active tab id
+const _origSwitchTab = switchTab;
+switchTab = function(id) {
+  _origSwitchTab(id);
+  if (state.consoleOpen) updateConsoleForLang(getConsoleLang());
+  persistSession();
+};
+
+// Patch closeTab
+const _origCloseTab = closeTab;
+closeTab = function(id, e) {
+  _origCloseTab(id, e);
+  persistSession();
+};
+
+// Patch setLanguage
+const _origSetLanguage = setLanguage;
+setLanguage = function(lang) {
+  _origSetLanguage(lang);
+  persistSession();
+};
+
+// Patch setEditorTheme
+const _origSetEditorTheme = setEditorTheme;
+setEditorTheme = function(id) {
+  _origSetEditorTheme(id);
+  persistSession();
+};
+
+// Patch toggleWrap
+const _origToggleWrap = toggleWrap;
+toggleWrap = function() {
+  _origToggleWrap();
+  persistSession();
+};
+
+// Patch adjustFontSize
+const _origAdjustFontSize = adjustFontSize;
+adjustFontSize = function(d) {
+  _origAdjustFontSize(d);
+  persistSession();
+};
+
+// Patch adjustTabSize
+const _origAdjustTabSize = adjustTabSize;
+adjustTabSize = function(d) {
+  _origAdjustTabSize(d);
+  persistSession();
+};
+
+// Patch toggleUITheme
+const _origToggleUITheme = toggleUITheme;
+toggleUITheme = function() {
+  _origToggleUITheme();
+  persistSession();
+};
+
+// Patch toggleLineNumbers / toggleBrackets / toggleAutoClose / toggleActiveLine / toggleWordCompletion
+['toggleLineNumbers','toggleBrackets','toggleAutoClose','toggleActiveLine','toggleWordCompletion'].forEach(fn => {
+  const orig = window[fn];
+  window[fn] = function() { orig(); persistSession(); };
+});
+
+// Patch adjustWcMinChars
+const _origAdjustWcMinChars = adjustWcMinChars;
+adjustWcMinChars = function(d) { _origAdjustWcMinChars(d); persistSession(); };
+
+// Also hook newTab so freshly created tabs trigger a persist
+const _origNewTab = newTab;
+newTab = function(name, content, langName) {
+  const tab = _origNewTab(name, content, langName);
+  // Wire persist on change for new tabs (already done inside _origNewTab via cm.on)
+  persistSession();
+  return tab;
+};
+
+// ===================== SAVE INDICATOR STYLE =====================
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    #save-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--npp-border2);
+      flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    #save-dot.saved {
+      background: var(--npp-accent);
+      box-shadow: 0 0 6px var(--npp-accent);
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+// ===================== CLEAR SESSION MENU ITEM =====================
+// Inject into menu sheet after DOM ready
+(function injectClearSession() {
+  const menuList = document.querySelector('#menu-sheet .menu-list');
+  if (!menuList) return;
+  const divider = document.createElement('div');
+  divider.className = 'menu-divider';
+  const btn = document.createElement('button');
+  btn.className = 'menu-item';
+  btn.style.color = 'var(--npp-danger)';
+  btn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"
+      style="color:var(--npp-danger)">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14H6L5 6"/>
+      <path d="M10 11v6"/><path d="M14 11v6"/>
+      <path d="M9 6V4h6v2"/>
+    </svg>
+    Clear Session…
+  `;
+  btn.onclick = () => { closeSheet('menu-sheet'); clearSession(); };
+  menuList.appendChild(divider);
+  menuList.appendChild(btn);
+})();
+
+// ===================== WELCOME TAB =====================
+function loadWelcomeTab() {
+  const welcome = `// Welcome to PocketPad
+// Mobile code editor — zero-build PWA. No npm required.
+//
+// Quick start:
+//   • Files toolbar — file tree of open tabs
+//   • Open Folder (Chrome) or Open files
+//   • Export All as ZIP from Menu
+//   • Run JS / Python / HTML; C/C++/Rust via Piston
+//   • Shell → Termux: ttyd -p 8080 -W bash
+//   • GitHub browse / commit (Auth with PAT)
+//
+// Tips:
+//   Ctrl/Cmd+S save · Ctrl/Cmd+F find · Ctrl/Cmd+M map
+//   Session auto-saves to IndexedDB
+//   Add to Home Screen for app-like install
+
+function greet(name) {
+  const msg = "Hello, " + name + "! Welcome to PocketPad.";
+  console.log(msg);
+  return msg;
+}
+
+greet("World");
+`;
+  newTab('welcome.js' , welcome, 'JavaScript');
+  markModified(state.activeTab, false);
+}
+
+// ===================== INIT =====================
+
+// ===================== KEYBOARD SHORTCUTS =====================
+(function pp_shortcuts() {
+  window.addEventListener('keydown', function(e) {
+    var mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    var k = e.key.toLowerCase();
+    if (k === 's') { e.preventDefault(); saveFile(); }
+    else if (k === 'o' && !e.shiftKey) { e.preventDefault(); openFile(); }
+    else if (k === 'f') { e.preventDefault(); toggleFind(); }
+    else if (k === 'b') { e.preventDefault(); toggleFileTree(); }
+    else if (k === 'm') { e.preventDefault(); toggleDocMap(); }
+    else if (k === 'n') { e.preventDefault(); newTab(); }
+    else if (k === '`') {
+      e.preventDefault();
+      switchConsolePane('shell');
+      if (!state.consoleOpen) toggleConsole();
+    }
+    else if (e.key === 'Enter') { e.preventDefault(); runCode(); }
+  });
+})();
+
+(async function init() {
+  // Register service worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
+  loadSnippets();
+
+  const titleText = document.getElementById('titlebar-filename');
+  if (titleText && !document.getElementById('save-dot')) {
+    const dot = document.createElement('span');
+    dot.id = 'save-dot';
+    titleText.parentNode.insertBefore(dot, titleText);
+  }
+
+  let restored = restoreSession();
+  if (!restored) {
+    restored = await restoreSessionAsync();
+  } else {
+    // still pull fresher IDB data if LS was truncated / old
+    restoreSessionAsync().catch(() => {});
+  }
+  if (!restored && !state.tabs.length) {
+    loadWelcomeTab();
+  }
+
+  // File tree preference (default open on wider screens)
+  try {
+    const pref = localStorage.getItem('pp_filetree');
+    if (pref === '0') toggleFileTree(false);
+    else if (pref === '1' || window.innerWidth >= 500) toggleFileTree(true);
+    else toggleFileTree(false);
+  } catch (e) {
+    if (window.innerWidth >= 500) toggleFileTree(true);
+  }
+  renderFileTree();
+})();
+</script>
+</body>
+</html>
