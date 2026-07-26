@@ -2,7 +2,7 @@
   "name": "PocketPad",
   "short_name": "PocketPad",
   "description": "Mobile code editor — zero-build PWA with run, GitHub, shell, and file tree",
-  "start_url": "./index.html",
+  "start_url": "./app",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

@@ -2,7 +2,7 @@
 
 A **mobile-first code editor** that runs entirely in the browser — multi-tab editing, run consoles, GitHub, and a Termux shell — as a zero-build PWA.
 
-**[Open live demo →](https://pocketpad-gilt.vercel.app)**
+**[Open live demo →](https://pocketpad-gilt.vercel.app/app)**
 
 [![Deploy](https://img.shields.io/badge/deploy-Vercel-black)](https://pocketpad-gilt.vercel.app)
 [![Repo](https://img.shields.io/badge/github-Architect--Brad%2Fpocketpad-blue)](https://github.com/Architect-Brad/pocketpad)
@@ -44,9 +44,8 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 
 Already deployed on Vercel. Pushes to `main` redeploy automatically.
 
-```
-https://pocketpad-gilt.vercel.app
-```
+- **Landing page**: `https://pocketpad-gilt.vercel.app`
+- **Editor app**: `https://pocketpad-gilt.vercel.app/app`
 
 ### Local
 
@@ -56,7 +55,7 @@ Serve the project root with any static server (service worker needs `http://` or
 python3 -m http.server 8080
 ```
 
-Then open `http://localhost:8080`.
+Then open `http://localhost:8080` (landing page) or `http://localhost:8080/app` (editor).
 
 ### Termux shell
 
@@ -72,12 +71,14 @@ In PocketPad: **Shell → Connect** → `ws://localhost:7681`
 ## Project layout
 
 ```
-index.html              # Full app (UI + logic)
+index.html              # Landing page (marketing / SEO)
+app.html                # Full editor app (UI + logic)
 manifest.json           # PWA manifest
 sw.js                   # Service worker
 logo.svg                # App icon
 vercel.json             # Vercel headers / rewrites
 404.html                # SPA-style fallback
+lib/                    # ES modules (Intelli engine, language analyzers)
 vendor/                 # Vendored editor libs (local-first, CDN fallback)
 scripts/fetch-vendor.py # Optional: refresh vendor/ from CDN
 ```
