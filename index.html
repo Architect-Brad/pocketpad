@@ -1688,6 +1688,242 @@ body.theme-light #repl-prompt { color: #2d7a00; }
 body.theme-light #piston-stdin-wrap { background: #ebebeb; border-top-color: #ddd; }
 body.theme-light #piston-stdin { color: #222; }
 
+/* ===================== INTELLI ASSISTANT PANEL ===================== */
+#assistant-panel {
+  position: fixed; top: 0; right: 0; width: 340px; height: 100dvh;
+  background: #1a1a2e; border-left: 1px solid #2a2a4a;
+  display: flex; flex-direction: column; z-index: 900;
+  transform: translateX(100%); transition: transform 0.25s ease;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.5);
+}
+#assistant-panel.open { transform: translateX(0); }
+#assistant-header {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: linear-gradient(135deg, #16213e, #0f3460);
+  border-bottom: 1px solid #2a2a4a; flex-shrink: 0;
+}
+#assistant-header .assistant-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, #a6e22e, #66d9e8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #1a1a2e; flex-shrink: 0;
+}
+#assistant-header .assistant-title { flex: 1; }
+#assistant-header .assistant-title span { color: #f8f8f2; font-size: 13px; font-weight: 600; }
+#assistant-header .assistant-title small { display: block; color: #75715e; font-size: 10px; }
+#assistant-close {
+  background: none; border: none; color: #75715e; cursor: pointer;
+  font-size: 18px; padding: 4px; line-height: 1;
+}
+#assistant-close:hover { color: #f8f8f2; }
+#assistant-messages {
+  flex: 1; overflow-y: auto; padding: 12px; display: flex;
+  flex-direction: column; gap: 10px;
+}
+.assistant-msg {
+  display: flex; gap: 8px; max-width: 95%; animation: msgIn 0.2s ease;
+}
+.assistant-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.assistant-msg .msg-avatar {
+  width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.assistant-msg.assistant .msg-avatar { background: linear-gradient(135deg, #a6e22e, #66d9e8); color: #1a1a2e; }
+.assistant-msg.user .msg-avatar { background: #3a3a5c; color: #f8f8f2; }
+.msg-body {
+  background: #252540; border-radius: 10px; padding: 8px 12px;
+  font-size: 12.5px; line-height: 1.5; color: #f8f8f2;
+}
+.assistant-msg.user .msg-body { background: #0f3460; }
+.msg-body pre {
+  background: #0a0a1a; border: 1px solid #2a2a4a; border-radius: 6px;
+  padding: 8px; margin: 6px 0; overflow-x: auto; font-size: 11.5px;
+  line-height: 1.4; color: #a6e22e; position: relative;
+}
+.msg-body code {
+  background: rgba(166,226,46,0.1); padding: 1px 4px; border-radius: 3px;
+  font-size: 11.5px; color: #66d9e8;
+}
+.msg-body pre code { background: none; padding: 0; color: inherit; }
+.msg-body strong { color: #e6db74; }
+.msg-body ul, .msg-body ol { margin: 4px 0; padding-left: 16px; }
+.msg-body li { margin: 2px 0; }
+.msg-body .copy-code-btn {
+  position: absolute; top: 4px; right: 4px; background: #2a2a4a;
+  border: 1px solid #3a3a5c; border-radius: 4px; color: #75715e;
+  font-size: 10px; padding: 2px 6px; cursor: pointer;
+}
+.msg-body .copy-code-btn:hover { color: #a6e22e; background: #3a3a5c; }
+.msg-body .insert-code-btn {
+  display: block; width: 100%; margin-top: 6px; background: rgba(166,226,46,0.1);
+  border: 1px solid rgba(166,226,46,0.3); border-radius: 4px;
+  color: #a6e22e; font-size: 11px; padding: 4px 8px; cursor: pointer;
+  text-align: center;
+}
+.msg-body .insert-code-btn:hover { background: rgba(166,226,46,0.2); }
+.msg-time {
+  font-size: 9px; color: #555; margin-top: 3px;
+  text-align: right;
+}
+.assistant-msg.assistant .msg-time { text-align: left; }
+#assistant-suggestions {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px;
+  flex-shrink: 0;
+}
+.suggestion-chip {
+  background: #252540; border: 1px solid #3a3a5c; border-radius: 12px;
+  color: #66d9e8; font-size: 10.5px; padding: 3px 8px; cursor: pointer;
+  white-space: nowrap; transition: all 0.15s;
+}
+.suggestion-chip:hover { background: #3a3a5c; color: #a6e22e; border-color: #a6e22e; }
+#assistant-input-wrap {
+  display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid #2a2a4a;
+  background: #16213e; flex-shrink: 0;
+}
+#assistant-input {
+  flex: 1; background: #252540; border: 1px solid #3a3a5c; border-radius: 8px;
+  color: #f8f8f2; font-size: 12.5px; padding: 8px 10px; outline: none;
+  resize: none; min-height: 36px; max-height: 80px; font-family: inherit;
+}
+#assistant-input:focus { border-color: #a6e22e; }
+#assistant-send {
+  background: linear-gradient(135deg, #a6e22e, #66d9e8); border: none;
+  border-radius: 8px; width: 36px; height: 36px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+#assistant-send svg { width: 16px; height: 16px; }
+#assistant-send:hover { opacity: 0.85; }
+body.theme-light #assistant-panel { background: #f5f5f5; border-left-color: #ddd; }
+body.theme-light #assistant-header { background: linear-gradient(135deg, #e8f0fe, #d4e4ff); }
+body.theme-light .msg-body { background: #e8e8e8; color: #222; }
+body.theme-light .assistant-msg.user .msg-body { background: #d4e4ff; }
+body.theme-light #assistant-input { background: #fff; color: #222; border-color: #ccc; }
+body.theme-light #assistant-input-wrap { background: #f0f0f0; border-top-color: #ddd; }
+body.theme-light .suggestion-chip { background: #e8e8e8; color: #0f3460; border-color: #ccc; }
+@keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 480px) { #assistant-panel { width: 100%; } }
+
+/* ===================== COMMAND PALETTE ===================== */
+#cmd-palette-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 950; display: none;
+  align-items: flex-start; justify-content: center; padding-top: 20dvh;
+}
+#cmd-palette-overlay.open { display: flex; }
+#cmd-palette {
+  background: #1e1e2e; border: 1px solid #3a3a5c; border-radius: 10px;
+  width: 90%; max-width: 480px; max-height: 50dvh;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.7); animation: paletteIn 0.15s ease;
+}
+#cmd-palette-input {
+  background: transparent; border: none; border-bottom: 1px solid #2a2a4a;
+  color: #f8f8f2; font-size: 14px; padding: 12px 14px; outline: none;
+  width: 100%;
+}
+#cmd-palette-input::placeholder { color: #555; }
+#cmd-palette-list {
+  overflow-y: auto; flex: 1;
+}
+.cmd-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+  cursor: pointer; transition: background 0.1s; color: #c0c0c0; font-size: 13px;
+}
+.cmd-item:hover, .cmd-item.active { background: #2a2a4a; color: #f8f8f2; }
+.cmd-item .cmd-icon { width: 18px; text-align: center; font-size: 13px; flex-shrink: 0; color: #75715e; }
+.cmd-item .cmd-label { flex: 1; }
+.cmd-item .cmd-shortcut {
+  font-size: 10.5px; color: #555; background: #252540;
+  padding: 2px 6px; border-radius: 3px; white-space: nowrap;
+}
+body.theme-light #cmd-palette { background: #fff; border-color: #ddd; }
+body.theme-light #cmd-palette-input { color: #222; border-bottom-color: #eee; }
+body.theme-light .cmd-item { color: #555; }
+body.theme-light .cmd-item:hover, body.theme-light .cmd-item.active { background: #f0f0f0; color: #222; }
+@keyframes paletteIn { from { opacity: 0; transform: translateY(-10px) scale(0.98); } }
+
+/* ===================== GITHUB ISSUES / PR / BLAME / BRANCHES / ACTIONS ===================== */
+.gh-sheet-tabs {
+  display: flex; gap: 0; border-bottom: 1px solid #2a2a4a; margin-bottom: 8px;
+}
+.gh-sheet-tab {
+  flex: 1; text-align: center; padding: 8px 4px; font-size: 11px;
+  font-weight: 600; color: #75715e; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: all 0.15s;
+}
+.gh-sheet-tab.active { color: #a6e22e; border-bottom-color: #a6e22e; }
+.gh-sheet-tab:hover { color: #f8f8f2; }
+.gh-issue-list, .gh-pr-list, .gh-blame-list, .gh-branch-list, .gh-actions-list {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.gh-issue-item, .gh-pr-item, .gh-blame-item, .gh-branch-item, .gh-action-item {
+  background: #252540; border: 1px solid #2a2a4a; border-radius: 6px;
+  padding: 8px 10px; cursor: pointer; transition: border-color 0.15s;
+}
+.gh-issue-item:hover, .gh-pr-item:hover, .gh-blame-item:hover,
+.gh-branch-item:hover, .gh-action-item:hover { border-color: #a6e22e; }
+.gh-issue-title, .gh-pr-title { font-size: 12.5px; color: #f8f8f2; font-weight: 600; margin-bottom: 3px; }
+.gh-issue-meta, .gh-pr-meta { font-size: 10.5px; color: #75715e; display: flex; gap: 8px; align-items: center; }
+.gh-badge-open { color: #a6e22e; }
+.gh-badge-closed { color: #e74c3c; }
+.gh-badge-merged { color: #9b59b6; }
+.gh-badge-run { color: #3498db; }
+.gh-blame-line {
+  font-family: 'Courier New', monospace; font-size: 11px; padding: 2px 8px;
+  display: flex; gap: 10px; color: #c0c0c0; border-bottom: 1px solid #1a1a2a;
+}
+.gh-blame-line .blame-sha { color: #75715e; min-width: 60px; cursor: pointer; }
+.gh-blame-line .blame-sha:hover { color: #66d9e8; }
+.gh-blame-line .blame-author { color: #a6e22e; min-width: 80px; }
+.gh-blame-line .blame-code { flex: 1; }
+.gh-branch-item { display: flex; align-items: center; gap: 8px; }
+.gh-branch-item .branch-name { font-size: 12.5px; color: #f8f8f2; font-weight: 500; }
+.gh-branch-item .branch-default { font-size: 9px; color: #a6e22e; background: rgba(166,226,46,0.15); padding: 1px 5px; border-radius: 3px; }
+.gh-action-item .action-name { font-size: 12.5px; color: #f8f8f2; font-weight: 500; }
+.gh-action-item .action-meta { font-size: 10.5px; color: #75715e; margin-top: 2px; }
+.gh-action-item .action-status { font-size: 10px; font-weight: 600; }
+.gh-form-row {
+  display: flex; gap: 6px; margin-bottom: 8px; align-items: center;
+}
+.gh-form-input {
+  flex: 1; background: #1a1a2a; border: 1px solid #2a2a4a; border-radius: 6px;
+  color: #f8f8f2; font-size: 12px; padding: 6px 8px; outline: none;
+}
+.gh-form-input:focus { border-color: #a6e22e; }
+.gh-form-textarea {
+  width: 100%; background: #1a1a2a; border: 1px solid #2a2a4a; border-radius: 6px;
+  color: #f8f8f2; font-size: 12px; padding: 6px 8px; outline: none;
+  resize: vertical; min-height: 60px; font-family: inherit;
+}
+.gh-form-textarea:focus { border-color: #a6e22e; }
+body.theme-light .gh-issue-item, body.theme-light .gh-pr-item,
+body.theme-light .gh-blame-item, body.theme-light .gh-branch-item,
+body.theme-light .gh-action-item { background: #f0f0f0; border-color: #ddd; }
+body.theme-light .gh-issue-title, body.theme-light .gh-pr-title { color: #222; }
+body.theme-light .gh-blame-line { color: #333; border-bottom-color: #eee; }
+body.theme-light .gh-blame-line .blame-sha { color: #888; }
+body.theme-light .gh-blame-line .blame-code { color: #333; }
+body.theme-light .gh-form-input, body.theme-light .gh-form-textarea { background: #fff; color: #222; border-color: #ccc; }
+
+/* ===================== FILE TREE OPERATIONS ===================== */
+.ft-item { position: relative; }
+.ft-item .ft-ops {
+  display: none; position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  gap: 2px;
+}
+.ft-item:hover .ft-ops { display: flex; }
+.ft-ops-btn {
+  background: none; border: none; color: #75715e; cursor: pointer;
+  font-size: 12px; padding: 2px 4px; border-radius: 3px;
+}
+.ft-ops-btn:hover { color: #a6e22e; background: rgba(166,226,46,0.1); }
+.ft-ops-btn.danger:hover { color: #e74c3c; background: rgba(231,76,60,0.1); }
+.ft-inline-input {
+  background: #1a1a2a; border: 1px solid #a6e22e; border-radius: 3px;
+  color: #f8f8f2; font-size: 11px; padding: 1px 4px; outline: none; width: 100%;
+}
+body.theme-light .ft-inline-input { background: #fff; color: #222; }
 </style>
 </head>
 <body>
@@ -2006,6 +2242,14 @@ body.theme-light #piston-stdin { color: #222; }
     <span>GitHub</span>
   </button>
 
+  <button class="toolbar-btn" onclick="toggleAssistant()" title="Intelli Assistant">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.5 4.5-3 6h-8c-1.5-1.5-3-3.5-3-6a7 7 0 0 1 7-7z"/>
+      <path d="M9 22h6"/><path d="M10 22v-4h4v4"/><line x1="12" y1="2" x2="12" y2="5"/>
+    </svg>
+    <span>Intelli</span>
+  </button>
+
   <div class="toolbar-sep"></div>
 
   <button class="toolbar-btn" onclick="openSheet('settings-sheet')" title="Settings">
@@ -2106,6 +2350,30 @@ body.theme-light #piston-stdin { color: #222; }
         <button class="menu-item" onclick="openSheet('github-sheet');closeSheet('menu-sheet')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
           GitHub
+        </button>
+        <button class="menu-item" onclick="openSheet('gh-issues-sheet');closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          GitHub Issues
+        </button>
+        <button class="menu-item" onclick="openSheet('gh-prs-sheet');closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>
+          Pull Requests
+        </button>
+        <button class="menu-item" onclick="openSheet('gh-blame-sheet');closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Blame &amp; History
+        </button>
+        <button class="menu-item" onclick="openSheet('gh-branches-sheet');closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          Branches
+        </button>
+        <button class="menu-item" onclick="openSheet('gh-actions-sheet');closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+          Actions
+        </button>
+        <button class="menu-item" onclick="toggleAssistant();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.5 4.5-3 6h-8c-1.5-1.5-3-3.5-3-6a7 7 0 0 1 7-7z"/><path d="M9 22h6"/><path d="M10 22v-4h4v4"/></svg>
+          Intelli Assistant
         </button>
       </div>
     </div>
@@ -2391,6 +2659,198 @@ body.theme-light #piston-stdin { color: #222; }
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===================== INTELLI ASSISTANT PANEL ===================== -->
+<div id="assistant-panel">
+  <div id="assistant-header">
+    <div class="assistant-icon">P</div>
+    <div class="assistant-title">
+      <span>PocketPad Intelli</span>
+      <small>NLP-powered code assistant</small>
+    </div>
+    <button id="assistant-close" onclick="toggleAssistant()">&times;</button>
+  </div>
+  <div id="assistant-messages">
+    <div class="assistant-msg assistant">
+      <div class="msg-avatar">P</div>
+      <div>
+        <div class="msg-body">Hi! I'm <strong>PocketPad Intelli</strong> — your NLP-powered code assistant. I can explain code, find bugs, suggest refactors, generate code from natural language, and more. What can I help with?</div>
+        <div class="msg-time">just now</div>
+      </div>
+    </div>
+  </div>
+  <div id="assistant-suggestions">
+    <div class="suggestion-chip" onclick="assistantQuick('Explain this code')">Explain code</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Find bugs')">Find bugs</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Refactor this')">Refactor</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Write tests')">Write tests</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Optimize')">Optimize</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Add documentation')">Document</div>
+  </div>
+  <div id="assistant-input-wrap">
+    <textarea id="assistant-input" rows="1" placeholder="Ask about your code…"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();assistantSend()}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
+    <button id="assistant-send" onclick="assistantSend()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== COMMAND PALETTE ===================== -->
+<div id="cmd-palette-overlay" onclick="if(event.target===this)closeCmdPalette()">
+  <div id="cmd-palette">
+    <input type="text" id="cmd-palette-input" placeholder="Type a command…"
+      oninput="filterCmdPalette(this.value)" onkeydown="cmdPaletteKeydown(event)">
+    <div id="cmd-palette-list"></div>
+  </div>
+</div>
+
+<!-- ===================== GITHUB ISSUES SHEET ===================== -->
+<div class="overlay" id="gh-issues-sheet" onclick="closeSheetOutside(event,'gh-issues-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('gh-issues-sheet')">&#8592;</button>
+      <span class="sheet-title">Issues</span>
+      <div class="sheet-header-actions">
+        <button class="find-btn" onclick="ghCreateIssuePrompt()">+ New</button>
+      </div>
+    </div>
+    <div class="sheet-body" style="overflow-y:auto;max-height:70vh">
+      <div class="gh-form-row">
+        <select class="snippet-select" id="gh-issue-filter" onchange="ghLoadIssues()">
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+          <option value="all">All</option>
+        </select>
+        <button class="find-btn" onclick="ghLoadIssues()">Refresh</button>
+      </div>
+      <div class="gh-issue-list" id="gh-issue-list">
+        <div class="gh-loading">Select a repo and click Refresh</div>
+      </div>
+      <!-- Issue detail view -->
+      <div id="gh-issue-detail" style="display:none">
+        <div id="gh-issue-detail-content"></div>
+        <div style="margin-top:8px">
+          <textarea class="gh-form-textarea" id="gh-issue-comment-input" placeholder="Add a comment…"></textarea>
+          <button class="btn-primary" style="margin-top:6px;width:100%" onclick="ghCommentOnIssue()">Comment</button>
+        </div>
+        <button class="btn-secondary" style="margin-top:6px;width:100%" onclick="ghBackToIssueList()">Back to list</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== GITHUB PULL REQUESTS SHEET ===================== -->
+<div class="overlay" id="gh-prs-sheet" onclick="closeSheetOutside(event,'gh-prs-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('gh-prs-sheet')">&#8592;</button>
+      <span class="sheet-title">Pull Requests</span>
+      <div class="sheet-header-actions">
+        <button class="find-btn" onclick="ghCreatePrPrompt()">+ New</button>
+      </div>
+    </div>
+    <div class="sheet-body" style="overflow-y:auto;max-height:70vh">
+      <div class="gh-form-row">
+        <select class="snippet-select" id="gh-pr-filter" onchange="ghLoadPRs()">
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+          <option value="all">All</option>
+        </select>
+        <button class="find-btn" onclick="ghLoadPRs()">Refresh</button>
+      </div>
+      <div class="gh-pr-list" id="gh-pr-list">
+        <div class="gh-loading">Select a repo and click Refresh</div>
+      </div>
+      <div id="gh-pr-detail" style="display:none">
+        <div id="gh-pr-detail-content"></div>
+        <div style="margin-top:8px">
+          <textarea class="gh-form-textarea" id="gh-pr-comment-input" placeholder="Add a comment…"></textarea>
+          <button class="btn-primary" style="margin-top:6px;width:100%" onclick="ghCommentOnPR()">Comment</button>
+        </div>
+        <button class="btn-secondary" style="margin-top:6px;width:100%" onclick="ghBackToPRList()">Back to list</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== GITHUB BLAME / HISTORY SHEET ===================== -->
+<div class="overlay" id="gh-blame-sheet" onclick="closeSheetOutside(event,'gh-blame-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('gh-blame-sheet')">&#8592;</button>
+      <span class="sheet-title">Blame &amp; History</span>
+      <div class="sheet-header-actions">
+        <button class="find-btn" onclick="ghLoadBlame()">Refresh</button>
+      </div>
+    </div>
+    <div class="sheet-body" style="overflow-y:auto;max-height:70vh">
+      <div class="gh-form-row">
+        <input type="text" class="gh-form-input" id="gh-blame-path" placeholder="path/to/file.js">
+        <select class="snippet-select" id="gh-history-type">
+          <option value="blame">Blame</option>
+          <option value="commits">Commits</option>
+        </select>
+      </div>
+      <div id="gh-blame-list" class="gh-blame-list">
+        <div class="gh-loading">Enter a file path and click Refresh</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== GITHUB BRANCHES SHEET ===================== -->
+<div class="overlay" id="gh-branches-sheet" onclick="closeSheetOutside(event,'gh-branches-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('gh-branches-sheet')">&#8592;</button>
+      <span class="sheet-title">Branches</span>
+      <div class="sheet-header-actions">
+        <button class="find-btn" onclick="ghCreateBranchPrompt()">+ New</button>
+      </div>
+    </div>
+    <div class="sheet-body" style="overflow-y:auto;max-height:70vh">
+      <button class="find-btn" style="margin-bottom:8px" onclick="ghLoadBranchesList()">Refresh</button>
+      <div class="gh-branch-list" id="gh-branch-list">
+        <div class="gh-loading">Select a repo first</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== GITHUB ACTIONS SHEET ===================== -->
+<div class="overlay" id="gh-actions-sheet" onclick="closeSheetOutside(event,'gh-actions-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('gh-actions-sheet')">&#8592;</button>
+      <span class="sheet-title">Actions</span>
+      <div class="sheet-header-actions">
+        <button class="find-btn" onclick="ghLoadActions()">Refresh</button>
+      </div>
+    </div>
+    <div class="sheet-body" style="overflow-y:auto;max-height:70vh">
+      <div class="gh-actions-list" id="gh-actions-list">
+        <div class="gh-loading">Select a repo and click Refresh</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FILE TREE NEW FILE INPUT ===================== -->
+<div id="ft-new-file-dialog" style="display:none;position:fixed;bottom:60px;left:50%;transform:translateX(-50%);z-index:800;background:#1e1e2e;border:1px solid #3a3a5c;border-radius:8px;padding:8px;box-shadow:0 4px 20px rgba(0,0,0,0.6)">
+  <input type="text" class="ft-inline-input" id="ft-new-file-name" placeholder="filename.ext"
+    onkeydown="if(event.key==='Enter')ftConfirmNewFile();if(event.key==='Escape')ftCancelNewFile()">
+  <div style="display:flex;gap:4px;margin-top:4px">
+    <button class="btn-secondary" style="flex:1;font-size:11px;padding:4px" onclick="ftCancelNewFile()">Cancel</button>
+    <button class="btn-primary" style="flex:1;font-size:11px;padding:4px" onclick="ftConfirmNewFile()">Create</button>
   </div>
 </div>
 
@@ -2776,17 +3236,28 @@ function renderFileTree() {
   state.tabs.forEach(tab => {
     const el = document.createElement('div');
     el.className = 'ft-item' + (tab.id === state.activeTab ? ' active' : '') + (tab.modified ? ' modified' : '');
-    el.innerHTML = getTabIcon(tab.filename) + '<span class="ft-name">' + esc(tab.filename) + '</span><button class="ft-close" title="Close">×</button>';
+    el.innerHTML = getTabIcon(tab.filename) + '<span class="ft-name">' + esc(tab.filename) + '</span><div class="ft-ops"><button class="ft-ops-btn" title="Rename" onclick="event.stopPropagation();ftRenameFile(\'' + tab.id + '\')">✏</button><button class="ft-ops-btn danger" title="Close" onclick="event.stopPropagation();closeTab(\'' + tab.id + '\')">✕</button></div>';
     el.addEventListener('click', (e) => {
-      if (e.target.closest('.ft-close')) {
-        e.stopPropagation();
-        closeTab(tab.id, e);
-        return;
-      }
+      if (e.target.closest('.ft-ops')) return;
       switchTab(tab.id);
     });
     list.appendChild(el);
   });
+}
+
+function ftRenameFile(tabId) {
+  const tab = getTab(tabId);
+  if (!tab) return;
+  const newName = prompt('Rename file:', tab.filename);
+  if (!newName || newName === tab.filename) return;
+  tab.filename = newName;
+  const ext = newName.split('.').pop();
+  const lang = getLangForExt(ext);
+  if (lang) tab.lang = lang.name;
+  renderTabBar();
+  updateLangStatus();
+  markModified(tabId, true);
+  showToast(`Renamed to: ${newName}`, 'success');
 }
 
 const _origRenderTabBarFT = renderTabBar;
@@ -6435,6 +6906,1289 @@ greet("World");
   markModified(state.activeTab, false);
 }
 
+// ===================== NLP ENGINE =====================
+const NLP = (() => {
+  const STOP_WORDS = new Set([
+    'a','an','the','is','it','its','in','on','at','to','for','of','with','by',
+    'and','or','but','not','this','that','these','those','from','as','be',
+    'are','was','were','been','being','have','has','had','do','does','did',
+    'will','would','shall','should','may','might','can','could','must',
+    'i','me','my','we','our','you','your','he','she','they','them',
+    'what','which','who','whom','how','where','when','why',
+    'all','each','every','both','few','more','most','other','some','such',
+    'no','nor','too','very','just','than','also','now','here','there',
+    'if','then','else','so','up','out','about','into','through','during',
+    'before','after','above','below','between','same','own','only'
+  ]);
+
+  const STEMS = [
+    [/(ation|ment|ness|ible|able|tion|sion|ence|ance|ious|eous|ling|ment)$/,''],
+    [/(ing|ful|ish|ive|ily|aly|ize|ise|ify)$/,''],
+    [/(ies|ied|eer|ier)$/,''],
+    [/(sses|ies)$/,'s'],
+    [/([^aeiou])y$/,'$1i'],
+    [/ss$/,'s'],
+    [/s$/,'']
+  ];
+
+  function tokenize(text) {
+    return (text || '').toLowerCase()
+      .replace(/[^a-z0-9_\-\s]/g, ' ')
+      .split(/\s+/)
+      .filter(t => t.length > 1);
+  }
+
+  function stem(word) {
+    if (STOP_WORDS.has(word)) return null;
+    let w = word;
+    for (const [pat, rep] of STEMS) {
+      if (pat.test(w)) { w = w.replace(pat, rep); break; }
+    }
+    return w.length > 2 ? w : word;
+  }
+
+  function extractTokens(text) {
+    return tokenize(text).map(stem).filter(Boolean);
+  }
+
+  const INTENTS = {
+    explain: {
+      keywords: ['explain','understand','what','mean','reading','read','interpret','walk','through','overview','breakdown'],
+      boost: ['code','this','function','class','method','block','loop','line','snippet','algorithm','logic']
+    },
+    bug: {
+      keywords: ['bug','error','fix','issue','problem','wrong','broken','failing','crash','debug','troubleshoot','diagnose'],
+      boost: ['exception','undefined','null','type','runtime','syntax','memory','leak','race','condition']
+    },
+    refactor: {
+      keywords: ['refactor','clean','improve','restructure','reorganize','simplify','rewrite','modernize','optimize','enhance'],
+      boost: ['pattern','code','structure','design','performance','readability','maintainability','dRY','srp']
+    },
+    generate: {
+      keywords: ['generate','create','write','make','build','code','implement','add','function','class','module','component','snippet'],
+      boost: ['from','describe','natural','language','spec','requirement','want','need','like']
+    },
+    document: {
+      keywords: ['document','doc','comment','jsdoc','javadoc','readme','describe','explanation','annotation','note'],
+      boost: ['add','write','generate','missing','inline','header','block']
+    },
+    test: {
+      keywords: ['test','spec','unittest','assert','verify','check','coverage','jest','mocha','pytest'],
+      boost: ['write','create','add','test','case','fixture','mock','stub','assertion']
+    },
+    review: {
+      keywords: ['review','code review','audit','inspect','evaluate','assess','check','quality'],
+      boost: ['code','safety','security','performance','best','practice','standard']
+    },
+    convert: {
+      keywords: ['convert','translate','transform','change','switch','port','migrate'],
+      boost: ['to','from','language','python','javascript','java','go','rust','c','ruby']
+    },
+    complexity: {
+      keywords: ['complexity','big-o','time','space','complex','performance','slow','bottleneck','optimize'],
+      boost: ['algorithm','loop','nested','iteration','recursive','o(n)','o(1)','o(log']
+    },
+    security: {
+      keywords: ['security','vulnerable','injection','xss','csrf','sanitize','validate','safe','insecure'],
+      boost: ['input','user','data','auth','token','password','hash','encrypt']
+    }
+  };
+
+  const LANG_KEYWORDS = {
+    javascript: ['javascript','js','node','nodejs','typescript','ts'],
+    python: ['python','py','pip','conda','django','flask'],
+    html: ['html','markup','dom','element','tag'],
+    css: ['css','style','stylesheet','scss','sass','less'],
+    java: ['java','spring','maven','gradle'],
+    go: ['go','golang'],
+    rust: ['rust','cargo'],
+    c: ['c','gcc','clang','malloc'],
+    'c++': ['cpp','c++','cmake'],
+    csharp: ['c#','csharp','dotnet','.net'],
+    ruby: ['ruby','rails','gem'],
+    php: ['php','laravel','composer'],
+    swift: ['swift','ios','xcode'],
+    kotlin: ['kotlin','android'],
+    sql: ['sql','database','query','mysql','postgres','sqlite'],
+    shell: ['shell','bash','zsh','terminal','command','script']
+  };
+
+  function classifyIntent(text) {
+    const tokens = extractTokens(text);
+    const raw = text.toLowerCase();
+    let best = 'general';
+    let bestScore = 0;
+
+    for (const [intent, config] of Object.entries(INTENTS)) {
+      let score = 0;
+      for (const kw of config.keywords) {
+        if (raw.includes(kw)) score += kw.split(' ').length * 2;
+      }
+      for (const tk of tokens) {
+        for (const kw of config.keywords) {
+          if (kw.includes(tk) || tk.includes(kw)) score += 1;
+        }
+      }
+      for (const b of config.boost) {
+        if (raw.includes(b)) score += 1.5;
+      }
+      if (score > bestScore) { bestScore = score; best = intent; }
+    }
+    return bestScore >= 2 ? best : 'general';
+  }
+
+  function detectLanguage(text) {
+    const raw = text.toLowerCase();
+    for (const [lang, keywords] of Object.entries(LANG_KEYWORDS)) {
+      for (const kw of keywords) {
+        if (raw.includes(kw)) return lang;
+      }
+    }
+    const tab = getActiveTab();
+    return tab ? tab.lang.toLowerCase() : 'javascript';
+  }
+
+  function analyzeCode(code) {
+    if (!code || !code.trim()) return { empty: true };
+    const lines = code.split('\n');
+    const funcs = [];
+    const classes = [];
+    const loops = [];
+    const conditions = [];
+    const imports = [];
+    const comments = [];
+    let maxDepth = 0, depth = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (/^\/\/|^\/\*|^\*/.test(l) || /^#(?!!)/.test(l)) comments.push(i+1);
+      if (/\b(function|def|fn|func|sub|proc|lambda|=>\s*{)\b/.test(l)) funcs.push({ line: i+1, text: l });
+      if (/\b(class|struct|interface|enum|type)\s+\w+/.test(l)) classes.push({ line: i+1, text: l });
+      if (/\b(for|while|do|loop|each)\b/.test(l)) loops.push({ line: i+1, text: l });
+      if (/\b(if|else|switch|case|match|when|elif|elseif)\b/.test(l)) conditions.push({ line: i+1 });
+      if (/\b(import|from|require|include|use)\b/.test(l)) imports.push({ line: i+1, text: l });
+      depth += (l.match(/{/g)||[]).length - (l.match(/}/g)||[]).length;
+      if (depth > maxDepth) maxDepth = depth;
+    }
+
+    return {
+      empty: false,
+      lines: lines.length,
+      chars: code.length,
+      funcs, classes, loops, conditions, imports, comments,
+      maxDepth,
+      hasErrorHandling: /\b(try|catch|except|throw|raise|error)\b/.test(code),
+      hasAsync: /\b(async|await|promise|future)\b/i.test(code),
+      hasRecursion: funcs.some(f => code.includes(f.text.match(/(\w+)\s*\(/)?.[1] || '___NOMATCH___')),
+      complexity: loops.length + conditions.length + (funcs.length * 0.5)
+    };
+  }
+
+  return { tokenize, stem, extractTokens, classifyIntent, detectLanguage, analyzeCode, STOP_WORDS };
+})();
+
+// ===================== INTELLI ASSISTANT =====================
+let _assistantOpen = false;
+let _assistantHistory = [];
+
+function toggleAssistant() {
+  _assistantOpen = !_assistantOpen;
+  document.getElementById('assistant-panel').classList.toggle('open', _assistantOpen);
+  if (_assistantOpen) document.getElementById('assistant-input').focus();
+}
+
+function assistantQuick(text) {
+  document.getElementById('assistant-input').value = text;
+  assistantSend();
+}
+
+function assistantSend() {
+  const input = document.getElementById('assistant-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+
+  appendAssistantMsg('user', text);
+  _assistantHistory.push({ role: 'user', text });
+
+  setTimeout(() => {
+    const response = generateAssistantResponse(text);
+    appendAssistantMsg('assistant', response);
+    _assistantHistory.push({ role: 'assistant', text: response });
+  }, 150 + Math.random() * 200);
+}
+
+function appendAssistantMsg(role, text) {
+  const container = document.getElementById('assistant-messages');
+  const div = document.createElement('div');
+  div.className = `assistant-msg ${role}`;
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  if (role === 'assistant') {
+    div.innerHTML = `
+      <div class="msg-avatar">P</div>
+      <div>
+        <div class="msg-body">${formatAssistantResponse(text)}</div>
+        <div class="msg-time">${time}</div>
+      </div>`;
+  } else {
+    div.innerHTML = `
+      <div class="msg-avatar">U</div>
+      <div>
+        <div class="msg-body">${escapeHtml(text)}</div>
+        <div class="msg-time">${time}</div>`;
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function formatAssistantResponse(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    const id = 'code-' + Math.random().toString(36).slice(2,8);
+    return `<pre><code>${code.trim()}</code><button class="copy-code-btn" onclick="navigator.clipboard.writeText(document.getElementById('${id}').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)" id="${id}">Copy</button><button class="insert-code-btn" onclick="assistantInsertCode(this)">↓ Insert into editor</button></pre>`;
+  });
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+function assistantInsertCode(btn) {
+  const pre = btn.closest('pre');
+  const code = pre.querySelector('code').textContent;
+  const tab = getActiveTab();
+  if (tab) {
+    const cm = tab.cm;
+    const cursor = cm.getCursor();
+    cm.replaceRange(code, cursor);
+    showToast('Code inserted', 'success');
+  } else {
+    newTab('snippet.js', code, 'JavaScript');
+    showToast('Code inserted in new tab', 'success');
+  }
+}
+
+function generateAssistantResponse(input) {
+  const intent = NLP.classifyIntent(input);
+  const lang = NLP.detectLanguage(input);
+  const tab = getActiveTab();
+  const code = tab ? tab.cm.getValue() : '';
+  const analysis = NLP.analyzeCode(code);
+
+  switch (intent) {
+    case 'explain':
+      return handleExplain(code, analysis, lang, input);
+    case 'bug':
+      return handleBugFind(code, analysis, lang, input);
+    case 'refactor':
+      return handleRefactor(code, analysis, lang, input);
+    case 'generate':
+      return handleGenerate(code, analysis, lang, input);
+    case 'document':
+      return handleDocument(code, analysis, lang, input);
+    case 'test':
+      return handleTest(code, analysis, lang, input);
+    case 'review':
+      return handleReview(code, analysis, lang, input);
+    case 'convert':
+      return handleConvert(code, analysis, lang, input);
+    case 'complexity':
+      return handleComplexity(code, analysis, lang, input);
+    case 'security':
+      return handleSecurity(code, analysis, lang, input);
+    default:
+      return handleGeneral(input, code, analysis, lang);
+  }
+}
+
+function handleExplain(code, analysis, lang, input) {
+  if (analysis.empty) return "There's no code in the current tab to explain. Open a file or paste some code first, then ask me again!";
+  const parts = [];
+  parts.push(`This is a **${lang}** file with **${analysis.lines} lines** and **${analysis.funcs.length} function(s)**.\n`);
+
+  if (analysis.funcs.length) {
+    parts.push("**Functions found:**");
+    analysis.funcs.forEach(f => parts.push(`• Line ${f.line}: \`${f.text.slice(0, 80)}\``));
+  }
+  if (analysis.classes.length) {
+    parts.push("\n**Classes found:**");
+    analysis.classes.forEach(c => parts.push(`• Line ${c.line}: \`${c.text.slice(0, 80)}\``));
+  }
+  if (analysis.loops.length) {
+    parts.push(`\n**${analysis.loops.length} loop(s)** detected — these are likely where iteration/processing happens.`);
+  }
+  if (analysis.hasAsync) parts.push("\nThe code uses **async/await or Promises** for asynchronous operations.");
+  if (analysis.hasErrorHandling) parts.push("Error handling is present with **try/catch** blocks.");
+  if (analysis.hasRecursion) parts.push("A **recursive** pattern was detected.");
+  if (analysis.imports.length) {
+    parts.push(`\n**${analysis.imports.length} import(s)/require(s)** — dependencies are being loaded.`);
+  }
+  parts.push(`\n**Estimated complexity:** ${analysis.complexity > 10 ? 'High' : analysis.complexity > 5 ? 'Medium' : 'Low'} (${analysis.complexity.toFixed(1)} points)`);
+
+  if (analysis.lines > 50) {
+    parts.push("\n**Tip:** This file is moderately long. I'd suggest breaking large functions into smaller, focused ones.");
+  }
+  return parts.join('\n');
+}
+
+function handleBugFind(code, analysis, lang, input) {
+  if (analysis.empty) return "No code to analyze. Open a file first!";
+  const issues = [];
+  const lines = code.split('\n');
+
+  lines.forEach((line, i) => {
+    const l = line.trim();
+    if (/==(?!=)/.test(l) && !/===/.test(l) && lang === 'javascript') issues.push(`Line ${i+1}: Loose equality \`==\` — use \`===\` instead`);
+    if (/\beval\b/.test(l)) issues.push(`Line ${i+1}: \`eval()\` usage detected — potential security risk`);
+    if (/console\.(log|debug|info)\b/.test(l)) issues.push(`Line ${i+1}: Console statement left in code`);
+    if (/TODO|FIXME|HACK|XXX/i.test(l)) issues.push(`Line ${i+1}: Unresolved TODO/FIXME comment`);
+    if (l.length > 120) issues.push(`Line ${i+1}: Very long line (${l.length} chars) — consider breaking it up`);
+    if (/\bvar\b/.test(l) && lang === 'javascript') issues.push(`Line ${i+1}: \`var\` usage — prefer \`const\` or \`let\``);
+    if (/catch\s*\(\s*\w*\s*\)\s*\{\s*\}/.test(l)) issues.push(`Line ${i+1}: Empty catch block — errors are being swallowed`);
+  });
+
+  if (!analysis.hasErrorHandling && analysis.lines > 20) {
+    issues.push("No error handling (try/catch) found in a non-trivial file");
+  }
+  if (analysis.funcs.some(f => f.text.split(',').length > 4)) {
+    issues.push("Some functions have many parameters (>4) — consider using an options object");
+  }
+  if (analysis.maxDepth > 4) {
+    issues.push(`Deep nesting detected (depth: ${analysis.maxDepth}) — consider extracting inner logic`);
+  }
+
+  if (issues.length === 0) return "No obvious issues found! The code looks clean. Here are some things I'd still check:\n• Edge cases in input handling\n• Memory leaks in async operations\n• Proper resource cleanup\n• Race conditions in concurrent code";
+
+  return `Found **${issues.length} potential issue(s):**\n\n${issues.slice(0, 15).join('\n')}${issues.length > 15 ? `\n\n...and ${issues.length - 15} more` : ''}`;
+}
+
+function handleRefactor(code, analysis, lang, input) {
+  if (analysis.empty) return "No code to refactor. Open a file first!";
+  const suggestions = [];
+
+  if (analysis.funcs.length > 5) {
+    suggestions.push("**Split large module:** You have " + analysis.funcs.length + " functions. Consider grouping related ones into separate files or modules.");
+  }
+  if (analysis.maxDepth > 3) {
+    suggestions.push("**Reduce nesting:** Use early returns, guard clauses, or extract inner logic into helper functions.");
+  }
+  if (analysis.loops.length > 3) {
+    suggestions.push("**Consolidate loops:** Multiple loops over similar data could potentially be merged into one pass.");
+  }
+  if (!analysis.hasErrorHandling && analysis.lines > 30) {
+    suggestions.push("**Add error handling:** Wrap risky operations (API calls, file I/O, parsing) in try/catch blocks.");
+  }
+  if (analysis.funcs.some(f => f.text.length > 100)) {
+    suggestions.push("**Long function signatures:** Break long parameter lists into destructured objects or configuration structs.");
+  }
+
+  if (lang === 'javascript' || lang === 'typescript') {
+    suggestions.push("**Use const/let:** Ensure all variables use \`const\` by default, \`let\` only when reassignment is needed.");
+    suggestions.push("**Prefer arrow functions:** Use \`const fn = () => {}\` for anonymous callbacks and short functions.");
+  }
+  if (lang === 'python') {
+    suggestions.push("**Use list comprehensions:** Replace simple for-loops with list comprehensions where possible.");
+    suggestions.push("**Type hints:** Add type hints to function signatures for better documentation and IDE support.");
+  }
+
+  if (suggestions.length === 0) return "The code structure looks solid! Minor optimizations:\n• Add JSDoc/docstrings to public functions\n• Ensure consistent naming conventions\n• Consider adding input validation";
+
+  return "**Refactoring suggestions:**\n\n" + suggestions.join('\n\n');
+}
+
+function handleGenerate(code, analysis, lang, input) {
+  const lower = input.toLowerCase();
+
+  if (/\b(class|struct)\b/.test(lower)) {
+    if (lang === 'javascript') return `Here's a JavaScript class template:\n\`\`\`javascript\nclass MyClass {\n  constructor(options = {}) {\n    this.options = options;\n    this.init();\n  }\n\n  init() {\n    // Initialization logic\n  }\n\n  method() {\n    // Method logic\n  }\n}\n\nexport default MyClass;\n\`\`\`\nCustomize the name and methods for your use case.`;
+    if (lang === 'python') return `Here's a Python class template:\n\`\`\`python\nclass MyClass:\n    def __init__(self, **kwargs):\n        self.options = kwargs\n        self.init()\n\n    def init(self):\n        pass\n\n    def method(self):\n        pass\n\n    def __repr__(self):\n        return f"MyClass({self.options})"\n\`\`\``;
+    return `Here's a basic class structure for ${lang}:\n\`\`\`\nclass MyClass {\n  // constructor and methods\n}\n\`\`\``;
+  }
+
+  if (/\b(function|func|fn|def)\b/.test(lower)) {
+    if (lang === 'javascript') return `Here's a JavaScript function template:\n\`\`\`javascript\n/**\n * Description of what this function does\n * @param {type} param - Description\n * @returns {type} Description\n */\nfunction myFunction(param) {\n  // Validate input\n  if (!param) throw new Error('param is required');\n\n  // Main logic\n  const result = process(param);\n\n  return result;\n}\n\`\`\``;
+    if (lang === 'python') return `Here's a Python function template:\n\`\`\`python\ndef my_function(param: type) -> type:\n    """Description of what this function does.\n\n    Args:\n        param: Description\n\n    Returns:\n        Description\n    """\n    if param is None:\n        raise ValueError("param is required")\n\n    result = process(param)\n    return result\n\`\`\``;
+    return `Here's a function template:\n\`\`\`\nfunction myFunction(param) {\n  // logic\n  return result;\n}\n\`\`\``;
+  }
+
+  if (/\b(api|endpoint|route|http|fetch|request)\b/.test(lower)) {
+    return `Here's an API handler template:\n\`\`\`javascript\nasync function handleRequest(url, options = {}) {\n  const { method = 'GET', headers = {}, body } = options;\n\n  const config = {\n    method,\n    headers: {\n      'Content-Type': 'application/json',\n      ...headers\n    }\n  };\n  if (body) config.body = JSON.stringify(body);\n\n  try {\n    const res = await fetch(url, config);\n    if (!res.ok) throw new Error(\`HTTP \${res.status}\`);\n    return await res.json();\n  } catch (err) {\n    console.error('Request failed:', err.message);\n    throw err;\n  }\n}\n\`\`\``;
+  }
+
+  if (/\b(test|spec|assert)\b/.test(lower)) {
+    return handleTest(code, analysis, lang, input);
+  }
+
+  return `I can generate code for you! Try asking me to create:\n• A **class** or **struct**\n• A **function** with a specific purpose\n• An **API endpoint** or **route handler**\n• **Tests** for existing code\n• A **component** (React, Vue, etc.)\n• A **utility function** (validation, formatting, etc.)\n\nJust describe what you need, and I'll generate it for **${lang}**.`;
+}
+
+function handleDocument(code, analysis, lang, input) {
+  if (analysis.empty) return "No code to document. Open a file first!";
+  if (analysis.funcs.length === 0) return "No functions found to document. The code may already be well-structured, or functions could use different naming.";
+
+  const func = analysis.funcs[0];
+  const name = func.text.match(/(?:function|def|fn|func)\s+(\w+)/)?.[1] || 'myFunction';
+  let doc = '';
+
+  if (lang === 'javascript' || lang === 'typescript') {
+    doc = `Here's a JSDoc comment for \`${name}\`:\n\`\`\`javascript\n/**\n * TODO: Describe what ${name} does.\n *\n * @param {type} param1 - Description of param1\n * @param {type} param2 - Description of param2\n * @returns {type} Description of return value\n * @throws {Error} When something goes wrong\n * @example\n * const result = ${name}(arg1, arg2);\n */\n\`\`\`\n**All ${analysis.funcs.length} function(s) found:**\n${analysis.funcs.map(f => `• \`${f.text.match(/(?:function|const\s+\w+\s*=\s*(?:function|\()|def|fn|func)\s+(\w+)/)?.[1] || 'unnamed'}\` at line ${f.line}`).join('\n')}`;
+  } else if (lang === 'python') {
+    doc = `Here's a docstring for \`${name}\`:\n\`\`\`python\ndef ${name}(param1, param2):\n    """TODO: Describe what ${name} does.\n\n    Args:\n        param1: Description of param1\n        param2: Description of param2\n\n    Returns:\n        type: Description of return value\n\n    Raises:\n        Error: When something goes wrong\n\n    Example:\n        >>> result = ${name}(arg1, arg2)\n    """\n\`\`\``;
+  } else {
+    doc = `Documentation pattern for \`${name}\` (line ${func.line}):\n\`\`\`\n// ${name} - TODO: Description\n// @param param1 - Description\n// @returns Description\n// @throws Error description\n\`\`\``;
+  }
+
+  return doc;
+}
+
+function handleTest(code, analysis, lang, input) {
+  if (analysis.empty) return "No code to test. Open a file first!";
+  if (analysis.funcs.length === 0) return "No functions found to test.";
+
+  const func = analysis.funcs[0];
+  const name = func.text.match(/(?:function|def|fn|func)\s+(\w+)/)?.[1] || 'myFunction';
+
+  if (lang === 'javascript' || lang === 'typescript') {
+    return `Here are test templates for \`${name}\`:\n\`\`\`javascript\ndescribe('${name}', () => {\n  test('should handle normal input', () => {\n    const result = ${name}(/* normal input */);\n    expect(result).toBeDefined();\n    // expect(result).toBe(expected);\n  });\n\n  test('should handle edge cases', () => {\n    // Test with null/undefined\n    // expect(() => ${name}(null)).toThrow();\n  });\n\n  test('should handle empty input', () => {\n    // expect(() => ${name}('')).toThrow();\n  });\n});\n\`\`\`\nAdapt the assertions to match the expected behavior of your function.`;
+  }
+  if (lang === 'python') {
+    return `Here are test templates for \`${name}\`:\n\`\`\`python\nimport pytest\n\nclass Test${name.charAt(0).toUpperCase() + name.slice(1)}:\n    def test_normal_input(self):\n        result = ${name}(/* normal input */)\n        assert result is not None\n        # assert result == expected\n\n    def test_edge_cases(self):\n        with pytest.raises(Exception):\n            ${name}(None)\n\n    def test_empty_input(self):\n        with pytest.raises(Exception):\n            ${name}('')\n\`\`\``;
+  }
+  return `Test template for \`${name}\`:\n\`\`\`\n// Write tests for ${name} with:\n// 1. Normal/expected inputs\n// 2. Edge cases (null, empty, boundary values)\n// 3. Error cases (invalid inputs)\n// 4. Performance (if applicable)\n\`\`\``;
+}
+
+function handleReview(code, analysis, lang, input) {
+  if (analysis.empty) return "No code to review. Open a file first!";
+  const findings = [];
+  let score = 10;
+
+  if (analysis.lines > 100) { findings.push("📁 **Large file** (" + analysis.lines + " lines) — consider splitting"); score -= 1; }
+  if (analysis.maxDepth > 4) { findings.push("🔍 **Deep nesting** (depth " + analysis.maxDepth + ") — reduce complexity"); score -= 2; }
+  if (analysis.funcs.length > 8) { findings.push("📦 **Many functions** (" + analysis.funcs.length + ") — group into modules"); score -= 1; }
+  if (!analysis.hasErrorHandling && analysis.lines > 30) { findings.push("⚠️ **No error handling** — add try/catch blocks"); score -= 2; }
+  if (analysis.comments.length < analysis.lines * 0.1 && analysis.lines > 20) { findings.push("📝 **Sparse comments** — add documentation to key functions"); score -= 1; }
+  if (analysis.imports.length > 5) { findings.push("🔗 **Many imports** (" + analysis.imports.length + ") — check for unused dependencies"); score -= 1; }
+
+  const lines = code.split('\n');
+  const longLines = lines.filter(l => l.length > 120).length;
+  if (longLines > 3) { findings.push("📏 **Long lines** (" + longLines + " lines >120 chars)"); score -= 1; }
+
+  score = Math.max(1, Math.min(10, score));
+  const grade = score >= 8 ? '🟢 Good' : score >= 5 ? '🟡 Fair' : '🔴 Needs work';
+
+  return `**Code Review — ${grade}** (${score}/10)\n\n**Stats:** ${analysis.lines} lines, ${analysis.funcs.length} functions, ${analysis.classes.length} classes, ${analysis.loops.length} loops\n\n${findings.length ? findings.join('\n') : '✅ No significant issues found!'}`;
+}
+
+function handleConvert(code, analysis, lang, input) {
+  if (analysis.empty) return "No code to convert. Open a file first!";
+  const lower = input.toLowerCase();
+  let targetLang = 'javascript';
+  for (const [l, keywords] of Object.entries(NLP.STOP_WORDS ? {} : {})) {}
+  if (/python|py\b/.test(lower)) targetLang = 'python';
+  else if (/javascript|js\b/.test(lower)) targetLang = 'javascript';
+  else if (/typescript|ts\b/.test(lower)) targetLang = 'typescript';
+  else if (/go|golang/.test(lower)) targetLang = 'go';
+  else if (/rust/.test(lower)) targetLang = 'rust';
+  else if (/java\b/.test(lower)) targetLang = 'java';
+
+  if (targetLang === lang) return `The code is already in ${lang}. Did you mean to convert to a different language?`;
+
+  return `I can help convert this ${lang} code to **${targetLang}**. Since full automatic conversion requires understanding context, here's what I'd approach:\n\n1. **Syntax mapping:** ${lang} → ${targetLang}\n2. **API translation:** Map equivalent libraries/functions\n3. **Idiom adaptation:** Use ${targetLang}-native patterns\n\n**Key differences to handle:**\n• ${lang === 'javascript' ? 'Async/await patterns differ' : 'Function definitions'}\n• Error handling: ${lang === 'python' ? 'try/except → try/catch' : 'Different syntax'}\n• ${targetLang === 'go' ? 'Go uses error values, not exceptions' : targetLang === 'rust' ? 'Rust uses Result<T,E> for error handling' : 'Standard patterns apply'}\n\nWould you like me to convert a specific function? Select the code and ask again.`;
+}
+
+function handleComplexity(code, analysis, lang, input) {
+  if (analysis.empty) return "No code to analyze. Open a file first!";
+
+  const parts = [];
+  parts.push("**Complexity Analysis:**\n");
+  parts.push(`• **Lines of code:** ${analysis.lines}`);
+  parts.push(`• **Functions:** ${analysis.funcs.length}`);
+  parts.push(`• **Nesting depth:** ${analysis.maxDepth}`);
+  parts.push(`• **Loops:** ${analysis.loops.length}`);
+  parts.push(`• **Conditions:** ${analysis.conditions.length}`);
+  parts.push(`• **Estimated complexity score:** ${analysis.complexity.toFixed(1)}`);
+
+  const lines = code.split('\n');
+  let nestedLoops = 0;
+  let depth = 0;
+  for (const line of lines) {
+    depth += (line.match(/{/g)||[]).length - (line.match(/}/g)||[]).length;
+    if (/\b(for|while|do)\b/.test(line) && depth > 1) nestedLoops++;
+  }
+  if (nestedLoops > 0) parts.push(`• **Nested loops:** ${nestedLoops} — potential O(n²) or worse`);
+
+  parts.push("\n**Big-O estimate:**");
+  if (nestedLoops > 0) parts.push("⚠️ O(n²) or worse — consider using hash maps or reducing nesting");
+  else if (analysis.loops.length > 2) parts.push("🟡 O(n·m) — multiple sequential loops, could merge");
+  else if (analysis.loops.length > 0) parts.push("🟢 O(n) — linear complexity");
+  else parts.push("🟢 O(1) — no loops detected (verify manually)");
+
+  return parts.join('\n');
+}
+
+function handleSecurity(code, analysis, lang, input) {
+  if (analysis.empty) return "No code to analyze. Open a file first!";
+  const findings = [];
+  const lines = code.split('\n');
+
+  lines.forEach((line, i) => {
+    const l = line.trim();
+    if (/eval\s*\(/.test(l)) findings.push(`🔴 Line ${i+1}: \`eval()\` — code injection risk`);
+    if (/innerHTML\s*=/.test(l)) findings.push(`🟠 Line ${i+1}: \`innerHTML\` assignment — XSS risk`);
+    if (/document\.write/.test(l)) findings.push(`🟠 Line ${i+1}: \`document.write\` — injection risk`);
+    if (/\.exec\s*\(/.test(l) && /child_process/.test(code)) findings.push(`🔴 Line ${i+1}: \`exec()\` — command injection risk`);
+    if (/password|secret|api.?key/i.test(l) && /['"]/.test(l)) findings.push(`🟡 Line ${i+1}: Possible hardcoded credential`);
+    if (/http:\/\//.test(l) && !/localhost|127\.0\.0/.test(l)) findings.push(`🟡 Line ${i+1}: HTTP (not HTTPS) — insecure connection`);
+    if (/dangerouslySetInnerHTML/.test(l)) findings.push(`🟠 Line ${i+1}: React \`dangerouslySetInnerHTML\` — XSS risk`);
+    if (/__html/.test(l)) findings.push(`🟠 Line ${i+1}: \`__html\` injection — sanitize first`);
+  });
+
+  if (!analysis.hasErrorHandling) {
+    findings.push("🟡 No error handling — unhandled exceptions may leak sensitive info");
+  }
+
+  if (findings.length === 0) return "No obvious security issues found! ✅\n\n**Still recommended:**\n• Validate all user inputs\n• Use parameterized queries for DB access\n• Apply Content Security Policy headers\n• Use HTTPS everywhere";
+
+  return `**Security Audit — ${findings.length} finding(s):**\n\n${findings.join('\n')}`;
+}
+
+function handleGeneral(input, code, analysis, lang) {
+  const lower = input.toLowerCase();
+
+  if (/^(hi|hello|hey|howdy|sup|yo)\b/.test(lower)) {
+    return "Hey there! 👋 I'm PocketPad Intelli. I can analyze your code, find bugs, suggest refactors, generate code from natural language, and more. What would you like help with?";
+  }
+  if (/help|what can you do|commands|features/.test(lower)) {
+    return "**Here's what I can do:**\n\n🔍 **Explain code** — Understand what code does\n🐛 **Find bugs** — Detect issues and anti-patterns\n♻️ **Refactor** — Get improvement suggestions\n⚡ **Generate** — Create code from descriptions\n📝 **Document** — Add JSDoc/docstrings\n🧪 **Test** — Generate test templates\n👁️ **Review** — Code quality assessment\n🔄 **Convert** — Language translation guidance\n📊 **Complexity** — Big-O analysis\n🔒 **Security** — Vulnerability scan\n\nJust type naturally or use the suggestion chips below!";
+  }
+
+  if (!code || analysis.empty) {
+    return `I'd love to help! For the best results, open a code file first. Right now I can:\n• **Generate code** — describe what you need\n• **Answer questions** about programming concepts\n• **Help debug** — paste error messages or describe the issue\n\nWhat can I help with?`;
+  }
+
+  return `I see you're working with **${lang}** code (${analysis.lines} lines). Here are some things I can do:\n\n• Say **"explain this"** for a code overview\n• Say **"find bugs"** for issue detection\n• Say **"refactor this"** for improvement suggestions\n• Say **"write tests"** for test templates\n• Say **"review code"** for a quality check\n• Say **"optimize"** for performance analysis\n• Or just describe what you need in natural language!`;
+}
+
+// ===================== COMMAND PALETTE =====================
+const COMMANDS = [
+  { id: 'new-file', label: 'New File', shortcut: 'Ctrl+N', icon: '📄', fn: () => newTab() },
+  { id: 'open-file', label: 'Open File', shortcut: 'Ctrl+O', icon: '📂', fn: () => openFile() },
+  { id: 'open-folder', label: 'Open Folder', icon: '📁', fn: () => openFolder() },
+  { id: 'save', label: 'Save File', shortcut: 'Ctrl+S', icon: '💾', fn: () => saveFile() },
+  { id: 'export-zip', label: 'Export All as ZIP', icon: '📦', fn: () => exportZip() },
+  { id: 'close-tab', label: 'Close Tab', shortcut: 'Ctrl+W', icon: '✕', fn: () => { const t = getActiveTab(); if (t) closeTab(t.id); } },
+  { id: 'find', label: 'Find / Replace', shortcut: 'Ctrl+F', icon: '🔍', fn: () => toggleFind() },
+  { id: 'goto-line', label: 'Go To Line', icon: '➡️', fn: () => jumpToLine() },
+  { id: 'toggle-filetree', label: 'Toggle File Tree', shortcut: 'Ctrl+B', icon: '🗂️', fn: () => toggleFileTree() },
+  { id: 'toggle-docmap', label: 'Toggle Document Map', shortcut: 'Ctrl+M', icon: '🗺️', fn: () => toggleDocMap() },
+  { id: 'toggle-console', label: 'Toggle Console', shortcut: 'Enter', icon: '▶️', fn: () => toggleConsole() },
+  { id: 'toggle-shell', label: 'Toggle Shell', shortcut: 'Ctrl+`', icon: '💻', fn: () => { switchConsolePane('shell'); if (!state.consoleOpen) toggleConsole(); } },
+  { id: 'toggle-wrap', label: 'Toggle Word Wrap', icon: '↩️', fn: () => toggleWrap() },
+  { id: 'toggle-assistant', label: 'Toggle Intelli Assistant', icon: '🤖', fn: () => toggleAssistant() },
+  { id: 'run-code', label: 'Run Code', shortcut: 'Ctrl+Enter', icon: '▶️', fn: () => runCode() },
+  { id: 'duplicate-line', label: 'Duplicate Line', icon: '📋', fn: () => duplicateLine() },
+  { id: 'delete-line', label: 'Delete Line', icon: '🗑️', fn: () => deleteLine() },
+  { id: 'uppercase', label: 'UPPERCASE', icon: '🔤', fn: () => toUppercase() },
+  { id: 'lowercase', label: 'lowercase', icon: '🔡', fn: () => toLowercase() },
+  { id: 'toggle-comment', label: 'Toggle Comment', icon: '💬', fn: () => doComment() },
+  { id: 'indent', label: 'Indent', icon: '→', fn: () => doIndent() },
+  { id: 'settings', label: 'Open Settings', icon: '⚙️', fn: () => openSheet('settings-sheet') },
+  { id: 'snippets', label: 'Snippet Library', icon: '📝', fn: () => openSheet('snippet-sheet') },
+  { id: 'github', label: 'GitHub Browser', icon: '🐙', fn: () => openSheet('github-sheet') },
+  { id: 'gh-issues', label: 'GitHub Issues', icon: '🐛', fn: () => openSheet('gh-issues-sheet') },
+  { id: 'gh-prs', label: 'Pull Requests', icon: '🔀', fn: () => openSheet('gh-prs-sheet') },
+  { id: 'gh-blame', label: 'Blame & History', icon: '📜', fn: () => openSheet('gh-blame-sheet') },
+  { id: 'gh-branches', label: 'Branches', icon: '🌿', fn: () => openSheet('gh-branches-sheet') },
+  { id: 'gh-actions', label: 'Actions', icon: '⚡', fn: () => openSheet('gh-actions-sheet') },
+  { id: 'spell-toggle', label: 'Toggle Spell Check', icon: '📖', fn: () => toggleSpellCheck() },
+  { id: 'format-code', label: 'Format / Prettify Code', icon: '✨', fn: () => formatCurrentCode() },
+  { id: 'multi-cursor', label: 'Add Cursor Below', icon: '↔️', fn: () => addCursorBelow() },
+  { id: 'rename-symbol', label: 'Rename Symbol Under Cursor', icon: '✏️', fn: () => renameSymbol() },
+  { id: 'new-file-tree', label: 'New File (in tree)', icon: '📄', fn: () => ftPromptNewFile() },
+  { id: 'clear-session', label: 'Clear Session', icon: '🧹', fn: () => { if (confirm('Clear all saved data?')) clearSession(); } },
+  { id: 'export-clipboard', label: 'Copy File to Clipboard', icon: '📋', fn: () => { const t = getActiveTab(); if (t) { navigator.clipboard.writeText(t.cm.getValue()).then(() => showToast('Copied to clipboard', 'success')); } } },
+  { id: 'sort-lines', label: 'Sort Lines', icon: '🔤', fn: () => sortLines() },
+  { id: 'trim-trailing', label: 'Trim Trailing Whitespace', icon: '✂️', fn: () => trimTrailing() },
+  { id: 'toggle-fullscreen', label: 'Toggle Fullscreen', icon: '⛶', fn: () => { const el = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else el.requestFullscreen?.(); } },
+];
+
+let _cmdPaletteActive = -1;
+
+function openCmdPalette() {
+  const overlay = document.getElementById('cmd-palette-overlay');
+  overlay.classList.add('open');
+  const input = document.getElementById('cmd-palette-input');
+  input.value = '';
+  input.focus();
+  _cmdPaletteActive = -1;
+  filterCmdPalette('');
+}
+
+function closeCmdPalette() {
+  document.getElementById('cmd-palette-overlay').classList.remove('open');
+}
+
+function filterCmdPalette(query) {
+  const list = document.getElementById('cmd-palette-list');
+  const q = query.toLowerCase();
+  const filtered = COMMANDS.filter(cmd => cmd.label.toLowerCase().includes(q) || cmd.id.includes(q));
+  _cmdPaletteActive = filtered.length > 0 ? 0 : -1;
+
+  list.innerHTML = filtered.map((cmd, i) => `
+    <div class="cmd-item${i===0?' active':''}" data-idx="${i}" onclick="executeCmdPaletteItem('${cmd.id}')"
+      onmouseenter="highlightCmdItem(${i})">
+      <span class="cmd-icon">${cmd.icon}</span>
+      <span class="cmd-label">${escapeHtml(cmd.label)}</span>
+      ${cmd.shortcut ? `<span class="cmd-shortcut">${cmd.shortcut}</span>` : ''}
+    </div>
+  `).join('');
+}
+
+function highlightCmdItem(idx) {
+  document.querySelectorAll('.cmd-item').forEach((el, i) => el.classList.toggle('active', i === idx));
+  _cmdPaletteActive = idx;
+}
+
+function cmdPaletteKeydown(e) {
+  const items = document.querySelectorAll('.cmd-item');
+  if (e.key === 'Escape') { closeCmdPalette(); return; }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _cmdPaletteActive = Math.min(_cmdPaletteActive + 1, items.length - 1);
+    highlightCmdItem(_cmdPaletteActive);
+    items[_cmdPaletteActive]?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _cmdPaletteActive = Math.max(_cmdPaletteActive - 1, 0);
+    highlightCmdItem(_cmdPaletteActive);
+    items[_cmdPaletteActive]?.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (_cmdPaletteActive >= 0) {
+      const item = items[_cmdPaletteActive];
+      if (item) {
+        const id = item.getAttribute('onclick').match(/'(.+?)'/)?.[1];
+        if (id) executeCmdPaletteItem(id);
+      }
+    }
+  }
+}
+
+function executeCmdPaletteItem(id) {
+  const cmd = COMMANDS.find(c => c.id === id);
+  if (cmd) { closeCmdPalette(); cmd.fn(); }
+}
+
+// ===================== GITHUB EXTENDED: ISSUES =====================
+async function ghLoadIssues() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  if (!repo || !_gh.token) { showToast('Connect to GitHub first', 'error'); return; }
+  const filter = document.getElementById('gh-issue-filter')?.value || 'open';
+  const list = document.getElementById('gh-issue-list');
+  const detail = document.getElementById('gh-issue-detail');
+  list.style.display = '';
+  detail.style.display = 'none';
+  list.innerHTML = '<div class="gh-loading"><div class="gh-spinner"></div> Loading issues…</div>';
+
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/issues?state=${filter}&per_page=30&sort=updated`);
+    if (!res.ok) throw new Error((await res.json()).message);
+    const issues = await res.json();
+    if (issues.length === 0) { list.innerHTML = '<div class="gh-loading">No issues found</div>'; return; }
+    list.innerHTML = issues.filter(i => !i.pull_request).map(i => `
+      <div class="gh-issue-item" onclick="ghShowIssue(${i.number})">
+        <div class="gh-issue-title">${escapeHtml(i.title)}</div>
+        <div class="gh-issue-meta">
+          <span class="${i.state==='open'?'gh-badge-open':'gh-badge-closed'}">#${i.number}</span>
+          <span>${i.user?.login || 'unknown'}</span>
+          <span>${new Date(i.updated_at).toLocaleDateString()}</span>
+          <span>${i.comments} comment(s)</span>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function ghShowIssue(num) {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  const list = document.getElementById('gh-issue-list');
+  const detail = document.getElementById('gh-issue-detail');
+  const content = document.getElementById('gh-issue-detail-content');
+  list.style.display = 'none';
+  detail.style.display = '';
+  content.innerHTML = '<div class="gh-loading"><div class="gh-spinner"></div> Loading…</div>';
+
+  try {
+    const [issueRes, commentsRes] = await Promise.all([
+      ghFetch(`https://api.github.com/repos/${repo}/issues/${num}`),
+      ghFetch(`https://api.github.com/repos/${repo}/issues/${num}/comments?per_page=20`)
+    ]);
+    const issue = await issueRes.json();
+    const comments = await commentsRes.json();
+
+    let html = `<div class="gh-issue-title" style="font-size:14px;margin-bottom:6px">${escapeHtml(issue.title)}</div>`;
+    html += `<div class="gh-issue-meta" style="margin-bottom:8px"><span class="${issue.state==='open'?'gh-badge-open':'gh-badge-closed'}">#${issue.number} ${issue.state}</span> <span>${issue.user?.login}</span> <span>${new Date(issue.created_at).toLocaleDateString()}</span></div>`;
+    if (issue.body) html += `<div style="background:#1a1a2a;padding:8px;border-radius:4px;font-size:12px;margin-bottom:8px;white-space:pre-wrap;color:#c0c0c0">${escapeHtml(issue.body)}</div>`;
+
+    if (comments.length) {
+      html += '<div style="font-weight:600;margin-bottom:4px;color:#a6e22e">Comments:</div>';
+      comments.forEach(c => {
+        html += `<div style="background:#1a1a2a;padding:6px;border-radius:4px;margin-bottom:4px;font-size:11.5px"><strong style="color:#66d9e8">${escapeHtml(c.user?.login)}</strong> <span style="color:#555">${new Date(c.created_at).toLocaleDateString()}</span><div style="margin-top:4px;white-space:pre-wrap;color:#c0c0c0">${escapeHtml(c.body || '')}</div></div>`;
+      });
+    }
+    content.innerHTML = html;
+  } catch (e) {
+    content.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function ghCommentOnIssue() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  const num = document.querySelector('#gh-issue-detail-content .gh-issue-title')?.textContent?.match(/#(\d+)/)?.[1];
+  const body = document.getElementById('gh-issue-comment-input')?.value?.trim();
+  if (!repo || !num || !body || !_gh.token) return;
+
+  try {
+    await ghFetch(`https://api.github.com/repos/${repo}/issues/${num}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body })
+    });
+    document.getElementById('gh-issue-comment-input').value = '';
+    showToast('Comment posted', 'success');
+    ghShowIssue(parseInt(num));
+  } catch (e) {
+    showToast(`Comment failed: ${e.message}`, 'error');
+  }
+}
+
+function ghBackToIssueList() {
+  document.getElementById('gh-issue-list').style.display = '';
+  document.getElementById('gh-issue-detail').style.display = 'none';
+}
+
+async function ghCreateIssuePrompt() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  if (!repo || !_gh.token) { showToast('Connect to GitHub first', 'error'); return; }
+  const title = prompt('Issue title:');
+  if (!title) return;
+  const body = prompt('Issue body (optional):') || '';
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/issues`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body })
+    });
+    if (!res.ok) throw new Error((await res.json()).message);
+    showToast('Issue created!', 'success');
+    ghLoadIssues();
+  } catch (e) {
+    showToast(`Failed: ${e.message}`, 'error');
+  }
+}
+
+// ===================== GITHUB EXTENDED: PULL REQUESTS =====================
+async function ghLoadPRs() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  if (!repo || !_gh.token) { showToast('Connect to GitHub first', 'error'); return; }
+  const filter = document.getElementById('gh-pr-filter')?.value || 'open';
+  const list = document.getElementById('gh-pr-list');
+  const detail = document.getElementById('gh-pr-detail');
+  list.style.display = '';
+  detail.style.display = 'none';
+  list.innerHTML = '<div class="gh-loading"><div class="gh-spinner"></div> Loading PRs…</div>';
+
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/pulls?state=${filter}&per_page=20&sort=updated`);
+    if (!res.ok) throw new Error((await res.json()).message);
+    const prs = await res.json();
+    if (prs.length === 0) { list.innerHTML = '<div class="gh-loading">No pull requests found</div>'; return; }
+    list.innerHTML = prs.map(pr => `
+      <div class="gh-pr-item" onclick="ghShowPR(${pr.number})">
+        <div class="gh-pr-title">${escapeHtml(pr.title)}</div>
+        <div class="gh-pr-meta">
+          <span class="${pr.state==='open'?'gh-badge-open':'gh-badge-closed'}">#${pr.number}</span>
+          <span class="${pr.merged_at?'gh-badge-merged':''}">${pr.merged_at ? 'Merged' : pr.state}</span>
+          <span>${pr.user?.login}</span>
+          <span>${pr.head?.ref} → ${pr.base?.ref}</span>
+          <span>${new Date(pr.updated_at).toLocaleDateString()}</span>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function ghShowPR(num) {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  const list = document.getElementById('gh-pr-list');
+  const detail = document.getElementById('gh-pr-detail');
+  const content = document.getElementById('gh-pr-detail-content');
+  list.style.display = 'none';
+  detail.style.display = '';
+  content.innerHTML = '<div class="gh-loading"><div class="gh-spinner"></div> Loading…</div>';
+
+  try {
+    const [prRes, commentsRes, reviewRes] = await Promise.all([
+      ghFetch(`https://api.github.com/repos/${repo}/pulls/${num}`),
+      ghFetch(`https://api.github.com/repos/${repo}/issues/${num}/comments?per_page=10`),
+      ghFetch(`https://api.github.com/repos/${repo}/pulls/${num}/reviews?per_page=10`)
+    ]);
+    const pr = await prRes.json();
+    const comments = await commentsRes.json();
+    const reviews = await reviewRes.json();
+
+    let html = `<div class="gh-pr-title" style="font-size:14px;margin-bottom:6px">${escapeHtml(pr.title)}</div>`;
+    html += `<div class="gh-pr-meta" style="margin-bottom:8px"><span class="${pr.state==='open'?'gh-badge-open':'gh-badge-closed'}">#${pr.number} ${pr.state}</span> <span>${pr.user?.login}</span> <span>${pr.head?.ref} → ${pr.base?.ref}</span></div>`;
+    if (pr.body) html += `<div style="background:#1a1a2a;padding:8px;border-radius:4px;font-size:12px;margin-bottom:8px;white-space:pre-wrap;color:#c0c0c0">${escapeHtml(pr.body)}</div>`;
+    html += `<div style="font-size:11px;color:#75715e;margin-bottom:6px">+${pr.additions} −${pr.deletions} · ${pr.changed_files} file(s) · ${pr.commits} commit(s)</div>`;
+
+    if (reviews.length) {
+      html += '<div style="font-weight:600;margin-bottom:4px;color:#a6e22e">Reviews:</div>';
+      reviews.forEach(r => {
+        const color = r.state === 'APPROVED' ? '#a6e22e' : r.state === 'CHANGES_REQUESTED' ? '#e74c3c' : '#66d9e8';
+        html += `<div style="font-size:11px;color:${color};margin-bottom:2px">${r.user?.login}: ${r.state}</div>`;
+      });
+    }
+    if (comments.length) {
+      html += '<div style="font-weight:600;margin:8px 0 4px;color:#a6e22e">Comments:</div>';
+      comments.slice(0, 10).forEach(c => {
+        html += `<div style="background:#1a1a2a;padding:6px;border-radius:4px;margin-bottom:4px;font-size:11.5px"><strong style="color:#66d9e8">${escapeHtml(c.user?.login)}</strong><div style="margin-top:4px;white-space:pre-wrap;color:#c0c0c0">${escapeHtml(c.body || '')}</div></div>`;
+      });
+    }
+    content.innerHTML = html;
+  } catch (e) {
+    content.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function ghCommentOnPR() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  const num = document.querySelector('#gh-pr-detail-content .gh-pr-title')?.textContent?.match(/#(\d+)/)?.[1];
+  const body = document.getElementById('gh-pr-comment-input')?.value?.trim();
+  if (!repo || !num || !body || !_gh.token) return;
+
+  try {
+    await ghFetch(`https://api.github.com/repos/${repo}/issues/${num}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body })
+    });
+    document.getElementById('gh-pr-comment-input').value = '';
+    showToast('Comment posted', 'success');
+    ghShowPR(parseInt(num));
+  } catch (e) {
+    showToast(`Comment failed: ${e.message}`, 'error');
+  }
+}
+
+function ghBackToPRList() {
+  document.getElementById('gh-pr-list').style.display = '';
+  document.getElementById('gh-pr-detail').style.display = 'none';
+}
+
+async function ghCreatePrPrompt() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  if (!repo || !_gh.token) { showToast('Connect to GitHub first', 'error'); return; }
+  const title = prompt('PR title:');
+  if (!title) return;
+  const head = prompt('Head branch (your changes):', _gh.branch);
+  if (!head) return;
+  const base = prompt('Base branch (target):', 'main') || 'main';
+  const body = prompt('PR description (optional):') || '';
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/pulls`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, head, base, body })
+    });
+    if (!res.ok) throw new Error((await res.json()).message);
+    showToast('PR created!', 'success');
+    ghLoadPRs();
+  } catch (e) {
+    showToast(`Failed: ${e.message}`, 'error');
+  }
+}
+
+// ===================== GITHUB EXTENDED: BLAME & HISTORY =====================
+async function ghLoadBlame() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  if (!repo || !_gh.token) { showToast('Connect to GitHub first', 'error'); return; }
+  const filePath = document.getElementById('gh-blame-path')?.value?.trim();
+  if (!filePath) { showToast('Enter a file path', 'error'); return; }
+  const type = document.getElementById('gh-history-type')?.value || 'blame';
+  const list = document.getElementById('gh-blame-list');
+  list.innerHTML = '<div class="gh-loading"><div class="gh-spinner"></div> Loading…</div>';
+
+  try {
+    if (type === 'blame') {
+      const res = await ghFetch(`https://api.github.com/repos/${repo}/contents/${filePath}?ref=${encodeURIComponent(_gh.branch)}`);
+      if (!res.ok) throw new Error((await res.json()).message);
+      const commitRes = await ghFetch(`https://api.github.com/repos/${repo}/commits?path=${encodeURIComponent(filePath)}&per_page=15&sha=${encodeURIComponent(_gh.branch)}`);
+      const commits = await commitRes.json();
+
+      list.innerHTML = commits.map(c => `
+        <div class="gh-blame-line">
+          <span class="blame-sha" title="${escapeHtml(c.commit.message)}">${c.sha?.slice(0,7)}</span>
+          <span class="blame-author">${escapeHtml(c.commit.author?.name || 'unknown')}</span>
+          <span class="blame-code">${escapeHtml(c.commit.message?.split('\n')[0] || '')}</span>
+        </div>
+      `).join('');
+    } else {
+      const res = await ghFetch(`https://api.github.com/repos/${repo}/commits?path=${encodeURIComponent(filePath)}&per_page=30&sha=${encodeURIComponent(_gh.branch)}`);
+      if (!res.ok) throw new Error((await res.json()).message);
+      const commits = await res.json();
+
+      list.innerHTML = commits.map(c => `
+        <div class="gh-blame-line" style="flex-direction:column;padding:6px 8px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="blame-sha">${c.sha?.slice(0,7)}</span>
+            <span class="blame-author">${escapeHtml(c.commit.author?.name || 'unknown')}</span>
+            <span style="color:#555;font-size:10px">${new Date(c.commit.author?.date).toLocaleDateString()}</span>
+          </div>
+          <div style="font-size:11.5px;color:#c0c0c0;margin-top:2px;white-space:pre-wrap">${escapeHtml(c.commit.message || '')}</div>
+        </div>
+      `).join('');
+    }
+  } catch (e) {
+    list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// ===================== GITHUB EXTENDED: BRANCHES =====================
+async function ghLoadBranchesList() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  if (!repo || !_gh.token) { showToast('Connect to GitHub first', 'error'); return; }
+  const list = document.getElementById('gh-branch-list');
+  list.innerHTML = '<div class="gh-loading"><div class="gh-spinner"></div> Loading…</div>';
+
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/branches?per_page=50`);
+    if (!res.ok) throw new Error((await res.json()).message);
+    const branches = await res.json();
+    list.innerHTML = branches.map(b => `
+      <div class="gh-branch-item" onclick="ghSwitchToBranch('${escapeHtml(b.name)}')">
+        <span class="branch-name">${escapeHtml(b.name)}</span>
+        ${b.name === _gh.branch ? '<span class="branch-default">current</span>' : ''}
+        ${b.protected ? '<span style="font-size:9px;color:#e6db74">🔒 protected</span>' : ''}
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function ghSwitchToBranch(name) {
+  _gh.branch = name;
+  const sel = document.getElementById('gh-branch-select');
+  if (sel) { sel.value = name; sel.onchange?.(); }
+  saveGhState();
+  showToast(`Switched to branch: ${name}`, 'success');
+  ghBrowse(_ghCurrentPath || '');
+}
+
+async function ghCreateBranchPrompt() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  if (!repo || !_gh.token) { showToast('Connect to GitHub first', 'error'); return; }
+  const name = prompt('New branch name:');
+  if (!name) return;
+  try {
+    const mainRes = await ghFetch(`https://api.github.com/repos/${repo}/git/refs/heads/${_gh.branch}`);
+    const mainData = await mainRes.json();
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/git/refs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: `refs/heads/${name}`, sha: mainData.object.sha })
+    });
+    if (!res.ok) throw new Error((await res.json()).message);
+    showToast(`Branch "${name}" created!`, 'success');
+    ghLoadBranchesList();
+    ghLoadBranches(repo);
+  } catch (e) {
+    showToast(`Failed: ${e.message}`, 'error');
+  }
+}
+
+// ===================== GITHUB EXTENDED: ACTIONS =====================
+async function ghLoadActions() {
+  const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
+  if (!repo || !_gh.token) { showToast('Connect to GitHub first', 'error'); return; }
+  const list = document.getElementById('gh-actions-list');
+  list.innerHTML = '<div class="gh-loading"><div class="gh-spinner"></div> Loading…</div>';
+
+  try {
+    const res = await ghFetch(`https://api.github.com/repos/${repo}/actions/runs?per_page=20&branch=${encodeURIComponent(_gh.branch)}`);
+    if (!res.ok) throw new Error((await res.json()).message);
+    const data = await res.json();
+    if (!data.workflow_runs?.length) { list.innerHTML = '<div class="gh-loading">No workflow runs found</div>'; return; }
+
+    list.innerHTML = data.workflow_runs.map(run => {
+      const statusColors = { success: '#a6e22e', failure: '#e74c3c', cancelled: '#75715e', in_progress: '#66d9e8', queued: '#e6db74' };
+      const color = statusColors[run.conclusion || run.status] || '#75715e';
+      return `
+        <div class="gh-action-item">
+          <div class="action-name">${escapeHtml(run.name)}</div>
+          <div class="action-meta">
+            <span class="action-status" style="color:${color}">${run.conclusion || run.status}</span>
+            · ${escapeHtml(run.head_branch)}
+            · ${new Date(run.updated_at).toLocaleDateString()}
+            · ${run.display_title || ''}
+          </div>
+          <div style="font-size:10px;color:#555;margin-top:2px">by ${escapeHtml(run.actor?.login || 'unknown')} · ${run.run_attempt || 1} attempt(s)</div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// ===================== FILE TREE OPERATIONS =====================
+function ftPromptNewFile() {
+  const dialog = document.getElementById('ft-new-file-dialog');
+  dialog.style.display = 'block';
+  const input = document.getElementById('ft-new-file-name');
+  input.value = '';
+  input.focus();
+}
+
+function ftConfirmNewFile() {
+  const name = document.getElementById('ft-new-file-name').value.trim();
+  if (!name) { ftCancelNewFile(); return; }
+  const ext = name.split('.').pop();
+  const lang = getLangForExt(ext);
+  newTab(name, '', lang.name);
+  ftCancelNewFile();
+  showToast(`Created: ${name}`, 'success');
+}
+
+function ftCancelNewFile() {
+  document.getElementById('ft-new-file-dialog').style.display = 'none';
+}
+
+// ===================== MULTI-CURSOR EDITING =====================
+function addCursorBelow() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const cursor = cm.getCursor();
+  const line = cursor.line + 1;
+  if (line >= cm.lineCount()) return;
+
+  cm.addLineClass(line, 'background', 'cm-cursor-line-highlight');
+  cm.setCursor(line, cursor.ch);
+  cm.focus();
+  showToast('Cursor added. Use Alt+Click for more cursors.', 'success');
+}
+
+(function initMultiCursor() {
+  document.addEventListener('click', function(e) {
+    if (!e.altKey) return;
+    const tab = getActiveTab();
+    if (!tab) return;
+    const cm = tab.cm;
+    const rect = cm.getWrapperElement().getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const pos = cm.coordsChar({ left: x, top: y });
+
+    cm.setCursor(pos);
+    cm.focus();
+    e.preventDefault();
+  });
+})();
+
+// ===================== SYMBOL RENAME =====================
+function renameSymbol() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const cursor = cm.getCursor();
+  const token = cm.getTokenAt(cursor);
+  if (!token || !token.string || token.type === 'comment' || token.type === 'string') {
+    showToast('Place cursor on a symbol to rename', 'error');
+    return;
+  }
+  const oldName = token.string;
+  if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(oldName)) {
+    showToast('Not a valid symbol name', 'error');
+    return;
+  }
+  const newName = prompt(`Rename "${oldName}" to:`, oldName);
+  if (!newName || newName === oldName) return;
+  if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(newName)) {
+    showToast('Invalid symbol name', 'error');
+    return;
+  }
+  const doc = cm.getDoc();
+  const cursorOrig = doc.getCursor();
+  let count = 0;
+  const re = new RegExp('\\b' + oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g');
+  const content = doc.getValue();
+  const matches = content.match(re);
+  count = matches ? matches.length : 0;
+
+  if (count === 0) { showToast('Symbol not found', 'error'); return; }
+  if (!confirm(`Rename "${oldName}" → "${newName}" (${count} occurrences)?`)) return;
+
+  doc.setValue(content.replace(re, newName));
+  doc.setCursor(cursorOrig);
+  showToast(`Renamed ${count} occurrence(s)`, 'success');
+  markModified(state.activeTab, true);
+}
+
+// ===================== CODE FORMATTING =====================
+function formatCurrentCode() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const code = cm.getValue();
+  const lang = tab.lang?.toLowerCase() || '';
+
+  if (lang === 'json') {
+    try {
+      cm.setValue(JSON.stringify(JSON.parse(code), null, state.tabSize || 2));
+      showToast('JSON formatted', 'success');
+    } catch (e) {
+      showToast(`Invalid JSON: ${e.message}`, 'error');
+    }
+    return;
+  }
+
+  if (lang === 'css' || lang === 'scss' || lang === 'less') {
+    const formatted = formatCSS(code, state.tabSize || 2);
+    cm.setValue(formatted);
+    showToast('CSS formatted', 'success');
+    return;
+  }
+
+  if (lang === 'html' || lang === 'xml') {
+    const formatted = formatHTML(code, state.tabSize || 2);
+    cm.setValue(formatted);
+    showToast('HTML formatted', 'success');
+    return;
+  }
+
+  const formatted = formatGeneric(code, state.tabSize || 2);
+  cm.setValue(formatted);
+  showToast('Code formatted (basic)', 'success');
+}
+
+function formatCSS(code, indent) {
+  const sp = ' '.repeat(indent);
+  let depth = 0;
+  return code
+    .replace(/\s*{\s*/g, ' {\n')
+    .replace(/\s*}\s*/g, '\n}\n')
+    .replace(/;\s*/g, ';\n')
+    .split('\n')
+    .filter(l => l.trim())
+    .map(line => {
+      const l = line.trim();
+      if (l === '}') depth = Math.max(0, depth - 1);
+      const result = sp.repeat(depth) + l;
+      if (l.endsWith('{')) depth++;
+      return result;
+    })
+    .join('\n');
+}
+
+function formatHTML(code, indent) {
+  const sp = ' '.repeat(indent);
+  let depth = 0;
+  const tokens = code.replace(/>\s*</g, '>\n<').split('\n');
+  return tokens.map(line => {
+    const l = line.trim();
+    if (!l) return '';
+    if (l.startsWith('</')) depth = Math.max(0, depth - 1);
+    const result = sp.repeat(depth) + l;
+    if (l.startsWith('<') && !l.startsWith('</') && !l.startsWith('<!') && !l.endsWith('/>') && !/<\//.test(l)) depth++;
+    return result;
+  }).filter(Boolean).join('\n');
+}
+
+function formatGeneric(code, indent) {
+  const sp = ' '.repeat(indent);
+  let depth = 0;
+  return code.split('\n').map(line => {
+    const l = line.trim();
+    if (!l) return '';
+    let adjustedDepth = depth;
+    const closeCount = (l.match(/^[}\])]+/g) || [''])[0].length;
+    adjustedDepth = Math.max(0, depth - closeCount);
+    const result = sp.repeat(adjustedDepth) + l;
+    const openExtra = (l.match(/[{\[(]+/g) || []).length - (l.match(/[}\])]+/g) || []).length;
+    depth = Math.max(0, adjustedDepth + openExtra);
+    return result;
+  }).join('\n');
+}
+
+// ===================== EXTRA EDIT OPERATIONS =====================
+function sortLines() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const sel = cm.somethingSelected();
+  const from = sel ? cm.getCursor('from') : { line: 0, ch: 0 };
+  const to = sel ? cm.getCursor('to') : { line: cm.lineCount() - 1, ch: cm.getLine(cm.lineCount()-1).length };
+  const text = cm.getRange(from, to);
+  const sorted = text.split('\n').sort().join('\n');
+  cm.replaceRange(sorted, from, to);
+  showToast('Lines sorted', 'success');
+}
+
+function trimTrailing() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const cm = tab.cm;
+  const doc = cm.getDoc();
+  let count = 0;
+  for (let i = 0; i < doc.lineCount(); i++) {
+    const line = doc.getLine(i);
+    const trimmed = line.replace(/\s+$/, '');
+    if (trimmed !== line) {
+      doc.replaceRange(trimmed, { line: i, ch: 0 }, { line: i, ch: line.length });
+      count++;
+    }
+  }
+  showToast(`Trimmed ${count} line(s)`, 'success');
+}
+
+// ===================== KEYBOARD SHORTCUT: COMMAND PALETTE =====================
+(function pp_cmdpalette_shortcut() {
+  window.addEventListener('keydown', function(e) {
+    var mod = e.ctrlKey || e.metaKey;
+    if (mod && e.shiftKey && (e.key.toLowerCase() === 'p' || e.key === 'P')) {
+      e.preventDefault();
+      openCmdPalette();
+    }
+  });
+})();
+
+// ===================== PERSISTENCE PATCH FOR ASSISTANT =====================
+(function persistAssistantState() {
+  const _origPersist = typeof persistSession === 'function' ? persistSession : null;
+  if (_origPersist) {
+    const wrappedPersist = function() {
+      try {
+        localStorage.setItem('npp_assistant_history', JSON.stringify(_assistantHistory.slice(-50)));
+      } catch {}
+      return _origPersist();
+    };
+    persistSession = wrappedPersist;
+  }
+  try {
+    const saved = JSON.parse(localStorage.getItem('npp_assistant_history') || '[]');
+    if (saved.length) _assistantHistory = saved;
+  } catch {}
+})();
+
 // ===================== INIT =====================
 
 // ===================== KEYBOARD SHORTCUTS =====================
@@ -6449,6 +8203,7 @@ greet("World");
     else if (k === 'b') { e.preventDefault(); toggleFileTree(); }
     else if (k === 'm') { e.preventDefault(); toggleDocMap(); }
     else if (k === 'n') { e.preventDefault(); newTab(); }
+    else if (k === 'p' && e.shiftKey) { e.preventDefault(); openCmdPalette(); }
     else if (k === '`') {
       e.preventDefault();
       switchConsolePane('shell');
