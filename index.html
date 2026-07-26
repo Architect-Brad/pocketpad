@@ -77,6 +77,9 @@ window.__ppLoadFallback = function(el) {
 <script src="./vendor/cdnjs/codemirror/5.65.16/addon/selection/active-line.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js" onerror="__ppLoadFallback(this)"></script>
 <script src="./vendor/cdnjs/codemirror/5.65.16/addon/display/fullscreen.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/fullscreen.min.js" onerror="__ppLoadFallback(this)"></script>
 
+<!-- CodeMirror Simple Mode (required by Rust, VHDL modes) -->
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/mode/simple.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js" onerror="__ppLoadFallback(this)"></script>
+
 <!-- CodeMirror Lint (Spell Check) -->
 <link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/addon/lint/lint.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.css" onerror="__ppLoadFallback(this)">
 <script src="./vendor/cdnjs/codemirror/5.65.16/addon/lint/lint.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.js" onerror="__ppLoadFallback(this)"></script>
@@ -7045,7 +7048,11 @@ const NLP = (() => {
       }
     }
     const tab = getActiveTab();
-    return tab ? tab.lang.toLowerCase() : 'javascript';
+    if (!tab) return 'javascript';
+    const langVal = tab.lang;
+    if (typeof langVal === 'string') return langVal.toLowerCase();
+    if (langVal && langVal.name) return langVal.name.toLowerCase();
+    return 'javascript';
   }
 
   function analyzeCode(code) {
