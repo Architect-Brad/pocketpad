@@ -1814,7 +1814,7 @@ body.theme-light #piston-stdin { color: #222; }
         <label class="md-live-label"><input type="checkbox" id="md-live-toggle" checked onchange="setMdLive(this.checked)"> Live</label>
         <button type="button" class="console-btn" onclick="runCode()" style="margin-left:auto">Refresh</button>
       </div>
-      <iframe id="preview-iframe" sandbox="allow-scripts allow-same-origin allow-modals allow-popups" title="Preview"></iframe>
+      <iframe id="preview-iframe" sandbox="allow-scripts allow-modals allow-popups" title="Preview"></iframe>
     </div>
     <div class="console-pane" id="pane-shell">
       <div class="terminal-ws-bar" style="padding:6px 8px">
@@ -4133,7 +4133,7 @@ function conLine(text, type = 'log', badge = null) {
   const b = badge || badges[type] || 'LOG';
   const line = document.createElement('div');
   line.className = `con-line con-${type}`;
-  line.innerHTML = `<span class="con-badge">${b}</span><span class="con-text">${escapeHtml(String(text))}</span>`;
+  line.innerHTML = `<span class="con-badge">${escapeHtml(b)}</span><span class="con-text">${escapeHtml(String(text))}</span>`;
   return line;
 }
 
@@ -4162,7 +4162,7 @@ function clearConsole() {
 function runJS(code, targetEl = null) {
   return new Promise(resolve => {
     const append = targetEl ? (el => targetEl.appendChild(el)) : appendToOutput;
-    const msgId  = Math.random().toString(36).slice(2);
+    const msgId  = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
     let   done   = false;
 
     function handler(e) {
@@ -4181,22 +4181,24 @@ function runJS(code, targetEl = null) {
 
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;left:-9999px;top:-9999px';
-    // allow-scripts only → null origin → postMessage with '*' is safe
+    // allow-scripts only → null origin → postMessage with parent origin
     iframe.sandbox = 'allow-scripts';
 
     const esc4json  = JSON.stringify(code);
     const esc4msgId = JSON.stringify(msgId);
+    const parentOrigin = JSON.stringify(window.location.origin);
 
     iframe.srcdoc = `<!DOCTYPE html><html><body><script>
 (function(){
   var _id = ${esc4msgId};
   var _p  = window.parent;
+  var _o  = ${parentOrigin};
   function _post(type) {
     return function() {
       var args = Array.prototype.slice.call(arguments).map(function(a){
         try { return typeof a==='object' ? JSON.stringify(a,null,2) : String(a); } catch(e){ return String(a); }
       });
-      _p.postMessage({msgId:_id, type:type, args:args}, '*');
+      _p.postMessage({msgId:_id, type:type, args:args}, _o);
     };
   }
   window.console = {
@@ -4214,7 +4216,7 @@ function runJS(code, targetEl = null) {
   } catch(e) {
     _post('error')(e.name + ': ' + e.message);
   } finally {
-    _p.postMessage({msgId:_id, done:true}, '*');
+    _p.postMessage({msgId:_id, done:true}, _o);
   }
 })();
 <\/script></body></html>`;
@@ -4705,11 +4707,16 @@ function renderMarkdownHtml(src) {
       marked.setOptions({ gfm: true, breaks: true, headerIds: true, mangle: false });
     }
     var raw = marked.parse(src || '');
-    // light sanitize: drop scripts / on* handlers
+    // Sanitize: strip dangerous tags and attributes
+    var DANGEROUS_TAGS = /<(script|iframe|object|embed|base|form|input|link|meta|style|applet|action)\b[^>]*>[\s\S]*?<\/\1>/gi;
+    var SELF_CLOSING_DANGEROUS = /<(script|iframe|object|embed|base|form|input|link|meta|style|applet|action)\b[^>]*\/?>/gi;
     raw = String(raw)
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-      .replace(/javascript:/gi, '');
+      .replace(DANGEROUS_TAGS, '')
+      .replace(SELF_CLOSING_DANGEROUS, '')
+      .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replace(/javascript\s*:/gi, '')
+      .replace(/vbscript\s*:/gi, '')
+      .replace(/data\s*:\s*text\/html/gi, '');
     return raw;
   } catch (e) {
     return '<p style="color:#f92672">Render error: ' + escapeHtml(e.message) + '</p>';
@@ -4731,6 +4738,8 @@ function openPreviewPanel() {
 
 function runMarkdown(code) {
   const iframe = document.getElementById('preview-iframe');
+  // Markdown preview uses restricted sandbox — no allow-same-origin
+  iframe.sandbox = 'allow-scripts allow-modals allow-popups';
   const light = document.body.classList.contains('theme-light');
   const bodyClass = light ? 'light' : '';
   const body = renderMarkdownHtml(code);
@@ -4760,6 +4769,7 @@ function scheduleMdLivePreview() {
   _mdLiveTimer = setTimeout(() => {
     const iframe = document.getElementById('preview-iframe');
     if (!iframe) return;
+    iframe.sandbox = 'allow-scripts allow-modals allow-popups';
     const light = document.body.classList.contains('theme-light');
     const body = renderMarkdownHtml(tab.cm.getValue());
     iframe.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
@@ -4801,7 +4811,11 @@ function wireMdLiveOnCm(cm) {
 // ---- HTML Preview — covers 80% of screen ----
 function runHTML(code) {
   const iframe = document.getElementById('preview-iframe');
+  // HTML preview needs allow-same-origin for full functionality (forms, storage, etc.)
+  // This is intentional — user is previewing their own code
+  iframe.sandbox = 'allow-scripts allow-same-origin allow-modals allow-popups';
   iframe.srcdoc = code;
+  appendToOutput(conLine('HTML preview runs with full page privileges — only preview trusted code', 'warn', 'SEC'));
   const pane = document.getElementById('pane-preview');
   if (pane) pane.classList.remove('md-mode');
   openPreviewPanel();
@@ -5290,6 +5304,9 @@ function loadGhState() {
   try { Object.assign(_gh, JSON.parse(localStorage.getItem(LS_GH) || '{}')); } catch {}
 }
 
+// SECURITY: GitHub PAT is stored in localStorage for convenience.
+// This is accessible to any JS running in this origin (XSS risk).
+// Users should use fine-scoped tokens and sign out on shared devices.
 function saveGhState() {
   localStorage.setItem(LS_GH, JSON.stringify({
     token: _gh.token, repo: _gh.repo, branch: _gh.branch
@@ -5406,7 +5423,7 @@ async function ghBrowse(path) {
     const res = await ghFetch(url);
     if (!res.ok) {
       const err = await res.json();
-      list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${err.message || 'Error'}</div>`;
+      list.innerHTML = `<div class="gh-loading" style="color:var(--npp-danger)">${escapeHtml(err.message || 'Error')}</div>`;
       return;
     }
     const data = await res.json();
@@ -5436,8 +5453,11 @@ async function ghBrowse(path) {
     sorted.forEach(item => {
       const el = document.createElement('div');
       el.className = `github-file-item${item.type==='dir'?' is-dir':''}`;
-      const icon = item.type === 'dir' ? '📁' : (getTabIcon(item.name).match(/background:([^;]+)/)?.[1] ? getTabIcon(item.name) : '📄');
-      el.innerHTML = `<span class="gh-file-icon">${item.type==='dir'?'📁':''}</span>${item.name}`;
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'gh-file-icon';
+      iconSpan.textContent = item.type === 'dir' ? '📁' : '';
+      el.appendChild(iconSpan);
+      el.appendChild(document.createTextNode(item.name));
       if (item.type === 'dir') {
         el.onclick = () => ghBrowse(item.path);
       } else {
@@ -5843,6 +5863,17 @@ function wsConnect() {
   const url = (document.getElementById('ws-url-input')?.value || 'ws://localhost:8080').trim();
   if (!url) return;
 
+  // Validate WebSocket URL protocol
+  if (!/^wss?:\/\//i.test(url)) {
+    initXterm();
+    _xtermInst?.write('\r\n\x1b[31mInvalid URL — must start with ws:// or wss://\x1b[0m\r\n');
+    return;
+  }
+  if (/^ws:\/\//i.test(url) && url.indexOf('localhost') === -1 && url.indexOf('127.0.0.1') === -1) {
+    initXterm();
+    _xtermInst?.write('\r\n\x1b[33mWarning: unencrypted ws:// connection — use wss:// for remote hosts\x1b[0m\r\n');
+  }
+
   initXterm();
   wsDisconnect(); // close any existing connection
 
@@ -5998,6 +6029,8 @@ function collectSettings() {
     spellCheck:            _spellEnabled,
         execEngine:            state.execEngine || 'auto',
         pistonBase:            state.pistonBase || 'https://emkc.org/api/v2/piston',
+        // SECURITY: pistonToken persists in localStorage/IndexedDB.
+        // Consider using sessionStorage for sensitive tokens on shared devices.
         pistonToken:           state.pistonToken || '',
   };
 }
