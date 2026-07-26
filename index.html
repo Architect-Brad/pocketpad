@@ -2673,6 +2673,7 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
       <span>PocketPad Intelli</span>
       <small>NLP-powered code assistant</small>
     </div>
+    <button id="assistant-clear" onclick="clearAssistantHistory()" title="Clear history" style="background:none;border:none;color:#75715e;cursor:pointer;font-size:14px;padding:4px 8px;">Clear</button>
     <button id="assistant-close" onclick="toggleAssistant()">&times;</button>
   </div>
   <div id="assistant-messages">
@@ -2691,6 +2692,10 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
     <div class="suggestion-chip" onclick="assistantQuick('Write tests')">Write tests</div>
     <div class="suggestion-chip" onclick="assistantQuick('Optimize')">Optimize</div>
     <div class="suggestion-chip" onclick="assistantQuick('Add documentation')">Document</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Review code')">Review</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Security scan')">Security</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Generate a class')">Generate class</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Generate API endpoint')">Generate API</div>
   </div>
   <div id="assistant-input-wrap">
     <textarea id="assistant-input" rows="1" placeholder="Ask about your code…"
@@ -4357,14 +4362,19 @@ function acCollectSnippets(lang, prefix) {
 }
 
 function hybridCompletionHint(cm) {
+  // If Intelli engine is ready, use enhanced completions
+  if (window._intelliReady && window._intelli) {
+    const tab = state.tabs.find(t => t.cm === cm) || getActiveTab();
+    if (tab) {
+      window._intelli.docs.update(tab.id, tab.cm.getValue());
+    }
+  }
+
   const cur = cm.getCursor();
   const token = cm.getTokenAt(cur);
-  // Allow completion after . for member-ish (still treat last identifier)
   const raw = token.string || '';
   const prefixMatch = raw.match(/[A-Za-z_$#][A-Za-z0-9_$#]*$/);
-  // Also allow empty prefix only on explicit Ctrl-Space (handled by completeSingle path via trigger)
   let prefix = prefixMatch ? prefixMatch[0] : '';
-  // For HTML tags after <
   if (!prefix && /<$/.test(cm.getRange({ line: cur.line, ch: Math.max(0, cur.ch - 1) }, cur))) {
     prefix = '';
   }
@@ -4374,7 +4384,6 @@ function hybridCompletionHint(cm) {
   const lang = acLangName(cm);
   const items = [];
 
-  // Priority: snippets → keywords → builtins → words
   const snips = acCollectSnippets(lang, prefix || '');
   const keys = acCollectKeywords(lang, prefix || '');
   const builtins = acCollectBuiltins(lang, prefix || '');
@@ -4385,7 +4394,6 @@ function hybridCompletionHint(cm) {
     arr.forEach(it => {
       const key = (it.acType || '') + ':' + it.text;
       if (seen.has(key)) return;
-      // allow same text different types once — prefer earlier
       if (seen.has('T:' + it.text) && it.acType === 'w') return;
       seen.add(key);
       seen.add('T:' + it.text);
@@ -4399,7 +4407,6 @@ function hybridCompletionHint(cm) {
 
   if (!items.length) return null;
 
-  // Sort within merged list: type rank then match quality
   const typeRank = { s: 0, k: 1, b: 2, w: 3 };
   items.sort((a, b) => {
     const tr = (typeRank[a.acType] ?? 9) - (typeRank[b.acType] ?? 9);
@@ -4543,6 +4550,25 @@ function adjustWcMinChars(delta) {
     body.theme-light .CodeMirror-hint { color: #222; }
     body.theme-light .CodeMirror-hint-active { background: #e4f0dc !important; color: #2d7a00 !important; }
     body.theme-light .cm-hint-detail { color: #888; }
+  `;
+  document.head.appendChild(s);
+})();
+
+// ===================== INTELLI STYLES =====================
+(function injectIntelliStyles() {
+  if (document.getElementById('pp-intelli-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'pp-intelli-styles';
+  s.textContent = `
+    .cm-hint-badge-f { background: rgba(166,226,46,0.15); color: #a6e22e; border: 1px solid rgba(166,226,46,0.4); }
+    .cm-hint-badge-c { background: rgba(102,217,232,0.15); color: #66d9e8; border: 1px solid rgba(102,217,232,0.4); }
+    .cm-hint-badge-p { background: rgba(249,38,114,0.15); color: #f92672; border: 1px solid rgba(249,38,114,0.4); }
+    .cm-hint-badge-v { background: rgba(174,129,255,0.15); color: #ae81ff; border: 1px solid rgba(174,129,255,0.4); }
+    .intelli-diag-error { border-bottom: 2px wavy #f92672; }
+    .intelli-diag-warning { border-bottom: 2px wavy #fd971f; }
+    .intelli-diag-hint { border-bottom: 1px dotted #75715e; }
+    .intelli-hover-tooltip code { background: rgba(166,226,46,0.1); padding: 1px 4px; border-radius: 3px; }
+    .intelli-outline-panel { font-family: 'Courier New', ui-monospace, monospace; }
   `;
   document.head.appendChild(s);
 })();
@@ -7109,6 +7135,21 @@ function assistantQuick(text) {
   assistantSend();
 }
 
+function clearAssistantHistory() {
+  _assistantHistory = [];
+  const container = document.getElementById('assistant-messages');
+  container.innerHTML = `
+    <div class="assistant-msg assistant">
+      <div class="msg-avatar">P</div>
+      <div>
+        <div class="msg-body">History cleared! I'm ready to help with your code. What would you like to do?</div>
+        <div class="msg-time">${new Date().getHours().toString().padStart(2,'0')}:${new Date().getMinutes().toString().padStart(2,'0')}</div>
+      </div>
+    </div>`;
+  if (window._intelliAssistant) window._intelliAssistant.clearHistory();
+  showToast('Assistant history cleared', 'success');
+}
+
 function assistantSend() {
   const input = document.getElementById('assistant-input');
   const text = input.value.trim();
@@ -7184,6 +7225,22 @@ function generateAssistantResponse(input) {
   const tab = getActiveTab();
   const code = tab ? tab.cm.getValue() : '';
   const analysis = NLP.analyzeCode(code);
+
+  // Expose handlers for enhanced assistant engine
+  window._ppExplainHandler = handleExplain;
+  window._ppBugHandler = handleBugFind;
+  window._ppRefactorHandler = handleRefactor;
+  window._ppDocumentHandler = handleDocument;
+  window._ppTestHandler = handleTest;
+  window._ppReviewHandler = handleReview;
+  window._ppConvertHandler = handleConvert;
+  window._ppComplexityHandler = handleComplexity;
+  window._ppSecurityHandler = handleSecurity;
+
+  // Use enhanced assistant engine if available
+  if (window._intelliReady && window._intelliAssistant) {
+    return window._intelliAssistant.generate(input, code, lang);
+  }
 
   switch (intent) {
     case 'explain':
@@ -8220,6 +8277,56 @@ function trimTrailing() {
   });
 })();
 
+// ===================== POCKETPAD INTELLI KEYBOARD SHORTCUTS =====================
+(function pp_intelli_shortcuts() {
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      (async () => {
+        if (!window._intelliReady) return showToast('Intelli loading...', '');
+        const mod = await import('./lib/intelli/bridge.js');
+        const tab = getActiveTab();
+        if (tab) {
+          const def = await mod.intelliGoToDefinition(tab.cm);
+          if (!def) showToast('No definition found', '');
+        }
+      })();
+    }
+    else if (e.key === 'F12' && e.shiftKey) {
+      e.preventDefault();
+      (async () => {
+        if (!window._intelliReady) return showToast('Intelli loading...', '');
+        const mod = await import('./lib/intelli/bridge.js');
+        const tab = getActiveTab();
+        if (tab) {
+          const refs = await mod.intelliFindReferences(tab.cm);
+          showToast(refs.length ? `${refs.length} reference(s) found` : 'No references found', refs.length ? 'success' : '');
+        }
+      })();
+    }
+    else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+      e.preventDefault();
+      (async () => {
+        if (!window._intelliReady) return showToast('Intelli loading...', '');
+        const mod = await import('./lib/intelli/bridge.js');
+        const tab = getActiveTab();
+        if (tab) mod.intelliHover(tab.cm);
+      })();
+    }
+    else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'o') {
+      e.preventDefault();
+      (async () => {
+        if (!window._intelliReady) return showToast('Intelli loading...', '');
+        const mod = await import('./lib/intelli/bridge.js');
+        await mod.showSymbolOutline();
+      })();
+    }
+    else if (e.key === 'Escape' && window._intelliReady) {
+      import('./lib/intelli/bridge.js').then(mod => mod.removeHoverTooltip());
+    }
+  });
+})();
+
 (async function init() {
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
@@ -8256,6 +8363,28 @@ function trimTrailing() {
     if (window.innerWidth >= 500) toggleFileTree(true);
   }
   renderFileTree();
+
+  // Expose state for Intelli bridge
+  window._ppState = state;
+  window._ppGetActiveTab = getActiveTab;
+  window._ppSwitchTab = typeof switchTab === 'function' ? switchTab : null;
+
+  // Lazy-load Intelli engine on first user interaction
+  let _intelliTriggered = false;
+  function triggerIntelli() {
+    if (_intelliTriggered) return;
+    _intelliTriggered = true;
+    document.removeEventListener('keydown', triggerIntelli);
+    document.removeEventListener('click', triggerIntelli);
+    import('./lib/intelli/bridge.js').then(mod => {
+      mod.installIntelli();
+      showToast('PocketPad Intelli loaded', 'success');
+    }).catch(err => {
+      console.warn('[Intelli] Failed to load:', err);
+    });
+  }
+  document.addEventListener('keydown', triggerIntelli, { once: false });
+  document.addEventListener('click', triggerIntelli, { once: false });
 })();
 </script>
 </body>
