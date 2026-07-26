@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download CDN assets referenced by app.html into vendor/."""
+"""Download CDN assets referenced by index.html into vendor/."""
 from __future__ import annotations
 
 import json
@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
-HTML = ROOT / "app.html"
+HTML = ROOT / "index.html"
 VENDOR = ROOT / "vendor"
 
 

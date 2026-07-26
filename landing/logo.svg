@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="88" fill="#1e1f1b"/>
+  <!-- Document base -->
+  <rect x="96" y="72" width="260" height="340" rx="18" fill="#272822"/>
+  <rect x="96" y="72" width="260" height="340" rx="18" fill="none" stroke="#3a3b36" stroke-width="4"/>
+  <!-- Folded corner -->
+  <path d="M296 72 L356 72 L356 132 Z" fill="#3a3b36"/>
+  <path d="M296 72 L296 132 L356 132" fill="none" stroke="#3a3b36" stroke-width="4"/>
+  <!-- Code lines -->
+  <rect x="130" y="168" width="120" height="14" rx="7" fill="#f92672" opacity="0.9"/>
+  <rect x="130" y="200" width="90" height="12" rx="6" fill="#a6e22e" opacity="0.8"/>
+  <rect x="145" y="228" width="140" height="12" rx="6" fill="#e6db74" opacity="0.8"/>
+  <rect x="145" y="256" width="100" height="12" rx="6" fill="#66d9e8" opacity="0.8"/>
+  <rect x="130" y="284" width="130" height="12" rx="6" fill="#ae81ff" opacity="0.8"/>
+  <rect x="130" y="312" width="80" height="12" rx="6" fill="#f92672" opacity="0.7"/>
+  <!-- >_< badge -->
+  <circle cx="360" cy="360" r="96" fill="#a6e22e"/>
+  <text x="360" y="378" font-family="'Courier New', monospace" font-size="52" font-weight="bold" text-anchor="middle" fill="#1e1f1b">&gt;_&lt;</text>
+  <!-- Line number gutter -->
+  <rect x="96" y="72" width="30" height="340" rx="18" fill="#1a1b18"/>
+  <rect x="108" y="168" width="14" height="8" rx="4" fill="#75715e" opacity="0.6"/>
+  <rect x="108" y="200" width="14" height="8" rx="4" fill="#75715e" opacity="0.5"/>
+  <rect x="108" y="228" width="14" height="8" rx="4" fill="#75715e" opacity="0.5"/>
+  <rect x="108" y="256" width="14" height="8" rx="4" fill="#75715e" opacity="0.5"/>
+  <rect x="108" y="284" width="14" height="8" rx="4" fill="#75715e" opacity="0.5"/>
+  <rect x="108" y="312" width="14" height="8" rx="4" fill="#75715e" opacity="0.5"/>
+</svg>

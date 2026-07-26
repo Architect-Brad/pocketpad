@@ -3,7 +3,6 @@ const CACHE = 'pocketpad-v1';
 const PRECACHE = [
   './',
   './index.html',
-  './app.html',
   './manifest.json',
   './logo.svg',
 ];
@@ -47,15 +46,7 @@ self.addEventListener('fetch', (event) => {
           return res;
         })
         .catch(() =>
-          caches.match(req).then((cached) => {
-            if (cached) return cached;
-            // Fallback to landing page for /, app page for /app
-            const path = new URL(req.url).pathname;
-            if (path === '/app' || path.startsWith('/app/')) {
-              return caches.match('./app.html');
-            }
-            return caches.match('./index.html');
-          })
+          caches.match(req).then((cached) => cached || caches.match('./index.html'))
         )
     );
     return;

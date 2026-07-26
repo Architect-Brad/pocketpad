@@ -40,7 +40,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/app", "destination": "/app.html" },
     { "source": "/((?!vendor|assets|.*\\..*).*)", "destination": "/index.html" }
   ]
 }
