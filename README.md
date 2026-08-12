@@ -44,8 +44,15 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 
 Already deployed on Vercel. Pushes to `main` redeploy automatically.
 
-```
-https://pocketpad-gilt.vercel.app
+- **Editor**: `https://pocketpad-gilt.vercel.app`
+- **Landing page**: `https://pocketpad-landing.vercel.app` (separate `landing/` project)
+
+### Landing page deployment
+
+The landing page is a separate Vercel project deployed from the `landing/` directory:
+
+```bash
+cd landing && vercel --prod
 ```
 
 ### Local
@@ -78,6 +85,7 @@ sw.js                   # Service worker
 logo.svg                # App icon
 vercel.json             # Vercel headers / rewrites
 404.html                # SPA-style fallback
+landing/                # Separate landing page project (pocketpad-landing.vercel.app)
 lib/                    # ES modules (Intelli engine, language analyzers)
 vendor/                 # Vendored editor libs (local-first, CDN fallback)
 scripts/fetch-vendor.py # Optional: refresh vendor/ from CDN
