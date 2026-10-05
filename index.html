@@ -2535,6 +2535,32 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
         <input type="password" class="snippet-form-input" id="piston-token-input" placeholder="Piston token / Authorization (optional)" onchange="savePistonSettings()" autocomplete="off">
         <div class="settings-sublabel" id="exec-engine-hint">emkc.org Piston is whitelist-only; use your own instance or Judge0.</div>
       </div>
+      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div>
+          <div class="settings-label">LLM Assistant</div>
+          <div class="settings-sublabel">Optional. Off uses the built-in offline assistant.</div>
+        </div>
+        <label class="toggle" style="align-self:flex-start">
+          <input type="checkbox" id="toggle-llm" onchange="toggleLlmEnabled()">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <select id="select-llm-provider" class="snippet-select" onchange="onLlmProviderChange()" style="width:100%">
+          <option value="">Not set</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="openai">OpenAI-compatible</option>
+          <option value="custom">Custom endpoint (Ollama, LM Studio…)</option>
+          <option value="google">Google AI Studio</option>
+          <option value="groq">Groq</option>
+          <option value="openrouter">OpenRouter</option>
+        </select>
+        <input type="url" class="snippet-form-input" id="llm-endpoint-input" placeholder="Endpoint URL" onchange="saveLlmSettings()" autocomplete="off" style="display:none">
+        <input type="password" class="snippet-form-input" id="llm-key-input" placeholder="API key" onchange="saveLlmSettings()" autocomplete="off">
+        <input type="text" class="snippet-form-input" id="llm-model-input" placeholder="Model name" onchange="saveLlmSettings()" autocomplete="off" list="llm-model-list">
+        <datalist id="llm-model-list"></datalist>
+        <button class="menu-item" onclick="refreshLlmModels(this)" style="align-self:flex-start;padding:6px 12px">Load available models</button>
+        <div class="settings-sublabel" id="llm-hint">Stored in this browser only. Never sent anywhere except your chosen provider.</div>
+      </div>
       <div class="settings-row">
         <div>
           <div class="settings-label">Font Size</div>
@@ -2986,6 +3012,7 @@ const state = {
   judge0Base: 'https://ce.judge0.com',
   eol: 'LF',
   fileTreeFilter: '',
+  llm: { enabled: false, provider: '', endpoint: '', apiKey: '', model: '' },
 };
 
 // ===================== LANGUAGE CONFIG =====================
@@ -4228,7 +4255,7 @@ function longPressHandler(tabId) {
 // ===================== SHEETS =====================
 function openSheet(id) {
   if (id === 'lang-sheet') buildLangGrid();
-  if (id === 'settings-sheet') buildThemeOptions();
+  if (id === 'settings-sheet') { buildThemeOptions(); hydrateLlmSettings(); }
   document.getElementById(id).classList.add('open');
 }
 
@@ -6779,6 +6806,7 @@ function collectSettings() {
         // Consider using sessionStorage for sensitive tokens on shared devices.
         pistonToken:           state.pistonToken || '',
     eol:                   state.eol || 'LF',
+    llm:                   state.llm || { enabled: false, provider: '', endpoint: '', apiKey: '', model: '' },
   };
 }
 
@@ -6882,6 +6910,16 @@ function applySettingsObject(s) {
   if (s.eol === 'CRLF' || s.eol === 'LF' || s.eol === 'CR') {
     state.eol = s.eol;
     updateEolStatus();
+  }
+
+  if (s.llm && typeof s.llm === 'object') {
+    state.llm = {
+      enabled: !!s.llm.enabled,
+      provider: typeof s.llm.provider === 'string' ? s.llm.provider : '',
+      endpoint: typeof s.llm.endpoint === 'string' ? s.llm.endpoint : '',
+      apiKey: typeof s.llm.apiKey === 'string' ? s.llm.apiKey : '',
+      model: typeof s.llm.model === 'string' ? s.llm.model : '',
+    };
   }
 }
 
@@ -7413,11 +7451,70 @@ function assistantSend() {
   appendAssistantMsg('user', text);
   _assistantHistory.push({ role: 'user', text });
 
-  setTimeout(() => {
+  loadLlmModule().then(m => {
+    if (m.isConfigured(state.llm)) {
+      assistantSendLlm(m, text);
+    } else {
+      setTimeout(() => {
+        const response = generateAssistantResponse(text);
+        appendAssistantMsg('assistant', response);
+        _assistantHistory.push({ role: 'assistant', text: response });
+      }, 150 + Math.random() * 200);
+    }
+  }).catch(() => {
     const response = generateAssistantResponse(text);
     appendAssistantMsg('assistant', response);
     _assistantHistory.push({ role: 'assistant', text: response });
-  }, 150 + Math.random() * 200);
+  });
+}
+
+async function assistantSendLlm(mod, text) {
+  const tab = getActiveTab();
+  const code = tab ? tab.cm.getValue() : '';
+  const lang = tab ? (tab.lang?.name || '') : '';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'assistant-msg assistant';
+  bubble.innerHTML = `
+    <div class="msg-avatar">P</div>
+    <div>
+      <div class="msg-body" id="llm-stream-target"><span style="opacity:.6">Thinking…</span></div>
+      <div class="msg-time">${new Date().getHours().toString().padStart(2,'0')}:${new Date().getMinutes().toString().padStart(2,'0')}</div>
+    </div>`;
+  const container = document.getElementById('assistant-messages');
+  container.appendChild(bubble);
+  container.scrollTop = container.scrollHeight;
+
+  const target = bubble.querySelector('#llm-stream-target');
+  let out = '';
+  let failed = false;
+
+  try {
+    const stream = mod.streamCompletion(state.llm, {
+      history: _assistantHistory,
+      input: text,
+      code,
+      lang,
+    });
+    for await (const chunk of stream) {
+      out += chunk;
+      target.innerHTML = formatAssistantResponse(out);
+      container.scrollTop = container.scrollHeight;
+    }
+  } catch (err) {
+    failed = true;
+    const msg = err && err.message ? err.message : 'LLM request failed.';
+    out = out ? `${out}\n\n**Request failed:** ${msg}` : `**Request failed:** ${msg}`;
+    target.innerHTML = formatAssistantResponse(out);
+    showToast(msg, 'error');
+  }
+
+  if (!failed && !out.trim()) {
+    out = 'The provider returned an empty response. Try rephrasing, or check the model name in Settings.';
+    target.innerHTML = formatAssistantResponse(out);
+  }
+
+  _assistantHistory.push({ role: 'assistant', text: out });
 }
 
 function appendAssistantMsg(role, text) {
@@ -7787,6 +7884,109 @@ function handleGeneral(input, code, analysis, lang) {
   }
 
   return `I see you're working with **${lang}** code (${analysis.lines} lines). Here are some things I can do:\n\n• Say **"explain this"** for a code overview\n• Say **"find bugs"** for issue detection\n• Say **"refactor this"** for improvement suggestions\n• Say **"write tests"** for test templates\n• Say **"review code"** for a quality check\n• Say **"optimize"** for performance analysis\n• Or just describe what you need in natural language!`;
+}
+
+// ===================== LLM ASSISTANT =====================
+let _llmModule = null;
+
+function loadLlmModule() {
+  if (!_llmModule) _llmModule = import('./lib/intelli/llm.js');
+  return _llmModule;
+}
+
+function saveLlmSettings() {
+  state.llm.enabled = document.getElementById('toggle-llm').checked;
+  state.llm.provider = document.getElementById('select-llm-provider').value;
+  state.llm.endpoint = document.getElementById('llm-endpoint-input').value.trim();
+  state.llm.apiKey = document.getElementById('llm-key-input').value.trim();
+  state.llm.model = document.getElementById('llm-model-input').value.trim();
+  persistSession();
+  updateLlmHint();
+}
+
+function onLlmProviderChange() {
+  const sel = document.getElementById('select-llm-provider');
+  const provider = sel.value;
+  const epInput = document.getElementById('llm-endpoint-input');
+  const modelInput = document.getElementById('llm-model-input');
+  if (provider && !modelInput.value.trim()) {
+    const mod = loadLlmModule();
+    mod.then(m => {
+      const d = m.providerDefaults(provider);
+      if (d) {
+        if (d.endpoint) epInput.value = d.endpoint;
+        modelInput.value = d.model;
+        saveLlmSettings();
+      }
+    });
+  }
+  if (provider === 'custom') epInput.style.display = '';
+  else epInput.style.display = 'none';
+  persistSession();
+  updateLlmHint();
+}
+
+function toggleLlmEnabled() {
+  saveLlmSettings();
+  showToast(state.llm.enabled ? 'LLM assistant enabled' : 'Using offline assistant');
+}
+
+function updateLlmHint() {
+  const hint = document.getElementById('llm-hint');
+  if (!hint) return;
+  if (!state.llm.provider) {
+    hint.textContent = 'Pick a provider. Stored in this browser only.';
+    return;
+  }
+  if (state.llm.provider === 'custom' && !state.llm.endpoint) {
+    hint.textContent = 'Enter the endpoint URL for your local or proxy server.';
+    return;
+  }
+  if (state.llm.provider !== 'custom' && !state.llm.apiKey) {
+    hint.textContent = 'Enter an API key to enable this provider.';
+    return;
+  }
+  const label = { anthropic: 'Anthropic', openai: 'OpenAI', custom: 'Custom endpoint' }[state.llm.provider] || state.llm.provider;
+  hint.textContent = `Ready — ${label}${state.llm.model ? ' · ' + state.llm.model : ''}`;
+}
+
+async function refreshLlmModels(btn) {
+  const original = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  try {
+    const m = await loadLlmModule();
+    saveLlmSettings();
+    const models = await m.listModels(state.llm);
+    const dl = document.getElementById('llm-model-list');
+    dl.innerHTML = models.map(id => `<option value="${esc(id)}"></option>`).join('');
+    const input = document.getElementById('llm-model-input');
+    if (!state.llm.model && models.length) {
+      input.value = models[0];
+      saveLlmSettings();
+    }
+    showToast(`${models.length} models loaded`, 'success');
+  } catch (err) {
+    showToast(err?.message || 'Could not load models', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = original; }
+  }
+}
+
+function hydrateLlmSettings() {
+  const cfg = state.llm || {};
+  document.getElementById('toggle-llm').checked = !!cfg.enabled;
+  document.getElementById('select-llm-provider').value = cfg.provider || '';
+  document.getElementById('llm-endpoint-input').value = cfg.endpoint || '';
+  document.getElementById('llm-key-input').value = cfg.apiKey || '';
+  document.getElementById('llm-model-input').value = cfg.model || '';
+  document.getElementById('llm-endpoint-input').style.display = cfg.provider === 'custom' ? '' : 'none';
+  updateLlmHint();
+}
+
+function providerDefaults(name) {
+  const p = PROVIDERS[name];
+  if (!p) return null;
+  return { endpoint: p.endpoint, model: p.defaultModel };
 }
 
 // ===================== COMMAND PALETTE =====================
