@@ -1,7 +1,7 @@
 /* PocketPad service worker — full offline precaching */
 importScripts('./sw-cache.js');
 
-const CACHE = 'pocketpad-v2';
+const CACHE = 'pocketpad-v3';
 const CDN_CACHE = 'pocketpad-cdn-v1';
 
 self.addEventListener('install', (event) => {
@@ -36,7 +36,35 @@ self.addEventListener('fetch', (event) => {
   const sameOrigin = url.origin === self.location.origin;
 
   if (sameOrigin) {
-    // Cache-first for all same-origin assets
+    const path = url.pathname;
+    const isAppShell =
+      req.mode === 'navigate' ||
+      path === '/' ||
+      path.endsWith('.html') ||
+      path.endsWith('/sw.js') ||
+      path.endsWith('/sw-cache.js') ||
+      path.endsWith('/manifest.json') ||
+      path.startsWith('/lib/');
+
+    if (isAppShell) {
+      // Network-first so deploys aren't stuck behind a stale PWA cache
+      event.respondWith(
+        fetch(req)
+          .then((res) => {
+            if (res && res.status === 200) {
+              const copy = res.clone();
+              caches.open(CACHE).then((cache) => cache.put(req, copy));
+            }
+            return res;
+          })
+          .catch(() =>
+            caches.match(req).then((cached) => cached || caches.match('./index.html'))
+          )
+      );
+      return;
+    }
+
+    // Cache-first for hashed / versioned vendor assets
     event.respondWith(
       caches.match(req).then((cached) => {
         if (cached) return cached;

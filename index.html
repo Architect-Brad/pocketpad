@@ -287,8 +287,8 @@ body {
 }
 .tab.active .tab-name { color: var(--npp-text); }
 .tab-close {
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -364,15 +364,16 @@ body {
   gap: 4px;
 }
 .find-btn {
-  padding: 5px 10px;
+  padding: 6px 12px;
   background: var(--npp-toolbar-btn);
   border: 1px solid var(--npp-border2);
   color: var(--npp-text2);
   border-radius: var(--radius);
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s, color 0.15s;
+  min-height: 32px;
 }
 .find-btn:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
 .find-btn.accent { background: var(--npp-accent); color: #272822; border-color: var(--npp-accent); font-weight: bold; }
@@ -416,6 +417,8 @@ body {
   font-family: var(--font-editor) !important;
   font-size: var(--font-size) !important;
   line-height: 1.6 !important;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 /* PocketPad custom CM theme */
@@ -517,6 +520,10 @@ body.theme-light {
   color: var(--npp-border2);
   flex-shrink: 0;
 }
+.status-item.save-saved { color: var(--npp-accent); }
+.status-item.save-modified { color: var(--npp-modified); }
+.status-item.clickable { cursor: pointer; }
+.status-item.clickable:hover { color: var(--npp-accent); }
 
 /* ===================== BOTTOM TOOLBAR ===================== */
 #bottombar {
@@ -722,8 +729,8 @@ body.theme-light {
   overflow: hidden;
 }
 .stepper-btn {
-  width: 32px;
-  height: 30px;
+  width: 40px;
+  height: 36px;
   background: var(--npp-toolbar-btn);
   border: none;
   color: var(--npp-text);
@@ -752,13 +759,14 @@ body.theme-light {
   flex-wrap: wrap;
 }
 .theme-opt {
-  padding: 5px 10px;
+  padding: 6px 12px;
   background: var(--npp-toolbar-btn);
   border: 1px solid var(--npp-border);
   border-radius: var(--radius);
   color: var(--npp-text2);
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
+  min-height: 32px;
 }
 .theme-opt.active { border-color: var(--npp-accent); color: var(--npp-accent); }
 
@@ -810,6 +818,7 @@ body.theme-light {
 }
 .ctx-item:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-text); }
 .ctx-item.danger:hover { color: var(--npp-danger); }
+.ctx-sep { height: 1px; background: var(--npp-border); margin: 4px 6px; }
 
 /* Rename input inline */
 .tab-name input {
@@ -1063,18 +1072,19 @@ body.theme-light {
   gap: 4px;
 }
 .console-btn {
-  padding: 3px 8px;
+  padding: 5px 10px;
   background: transparent;
   border: 1px solid #333;
   border-radius: 3px;
   color: #666;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+  min-height: 32px;
 }
 .console-btn:hover { border-color: #555; color: #aaa; }
 .console-btn.run-btn { border-color: #a6e22e44; color: #a6e22e; }
@@ -1082,7 +1092,7 @@ body.theme-light {
 .console-btn.run-btn.running { border-color: #e6db74; color: #e6db74; animation: pulse 0.8s infinite; }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
 .console-btn.clear-btn { color: #555; }
-.console-btn.close-btn { color: #555; font-size: 14px; padding: 3px 6px; }
+.console-btn.close-btn { color: #555; font-size: 14px; padding: 5px 8px; min-height: 32px; }
 
 #console-body {
   flex: 1;
@@ -1538,7 +1548,7 @@ body.theme-light #repl-prompt { color: #2d7a00; }
   display: flex;
   flex-direction: column;
 }
-#filetree-panel.open { width: 180px; }
+#filetree-panel.open { width: 210px; }
 #filetree-header {
   display: flex;
   align-items: center;
@@ -1566,6 +1576,39 @@ body.theme-light #repl-prompt { color: #2d7a00; }
   justify-content: center;
 }
 #filetree-header button:hover { background: var(--npp-toolbar-btn-hover); color: var(--npp-accent); }
+#filetree-filter-wrap {
+  padding: 4px 6px 6px;
+  flex-shrink: 0;
+}
+#filetree-filter {
+  width: 100%;
+  background: var(--npp-bg3);
+  border: 1px solid var(--npp-border);
+  color: var(--npp-text);
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  outline: none;
+  font-family: var(--font-ui);
+}
+#filetree-filter:focus { border-color: var(--npp-accent); }
+#drop-overlay {
+  display: none;
+  position: fixed;
+  inset: 8px;
+  z-index: 900;
+  background: rgba(166, 226, 46, 0.14);
+  border: 2px dashed var(--npp-accent);
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--npp-accent);
+  letter-spacing: 0.3px;
+}
+#drop-overlay.show { display: flex; }
 #filetree-list {
   flex: 1;
   overflow-y: auto;
@@ -1918,7 +1961,8 @@ body.theme-light .gh-form-input, body.theme-light .gh-form-textarea { background
 .ft-item:hover .ft-ops { display: flex; }
 .ft-ops-btn {
   background: none; border: none; color: #75715e; cursor: pointer;
-  font-size: 12px; padding: 2px 4px; border-radius: 3px;
+  font-size: 12px; padding: 4px 6px; border-radius: 3px;
+  min-width: 28px; min-height: 28px; display: flex; align-items: center; justify-content: center;
 }
 .ft-ops-btn:hover { color: #a6e22e; background: rgba(166,226,46,0.1); }
 .ft-ops-btn.danger:hover { color: #e74c3c; background: rgba(231,76,60,0.1); }
@@ -1946,13 +1990,19 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
   </div>
   <div class="title-text" id="titlebar-filename">untitled</div>
   <div class="title-actions">
-    <button class="icon-btn" id="btn-find" title="Find/Replace" onclick="toggleFind()">
+    <button class="icon-btn" id="btn-find" title="Find/Replace" aria-label="Find and replace" onclick="toggleFind()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="7"/>
         <path d="m21 21-4.35-4.35"/>
       </svg>
     </button>
-    <button class="icon-btn" id="btn-menu" title="Menu" onclick="openSheet('menu-sheet')">
+    <button class="icon-btn" id="btn-cmd" title="Command Palette (Ctrl+Shift+P)" aria-label="Command palette" onclick="openCmdPalette()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="5" width="18" height="14" rx="2"/>
+        <path d="M7 10h.01M11 10h.01M15 10h2M8 14h8"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="btn-menu" title="Menu" aria-label="Menu" onclick="openSheet('menu-sheet')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M4 6h16M4 12h16M4 18h16"/>
       </svg>
@@ -2003,9 +2053,12 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
   <div id="filetree-panel">
     <div id="filetree-header">
       <span>Files</span>
-      <button type="button" title="New file" onclick="newTab()">+</button>
-      <button type="button" title="Open folder" onclick="openFolder()">📁</button>
-      <button type="button" title="Export ZIP" onclick="exportZip()">⬇</button>
+      <button type="button" title="New file" aria-label="New file" onclick="newTab()">+</button>
+      <button type="button" title="Open folder" aria-label="Open folder" onclick="openFolder()">📁</button>
+      <button type="button" title="Export ZIP" aria-label="Export ZIP" onclick="exportZip()">⬇</button>
+    </div>
+    <div id="filetree-filter-wrap">
+      <input type="search" id="filetree-filter" placeholder="Filter files…" aria-label="Filter files" oninput="filterFileTree(this.value)">
     </div>
     <div id="filetree-list"></div>
   </div>
@@ -2080,16 +2133,21 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
 <!-- ===================== STATUS BAR ===================== -->
 <div id="statusbar">
   <div class="status-group">
-    <span class="status-item lang" id="status-lang" onclick="openSheet('lang-sheet')">Plain Text</span>
+    <span class="status-item lang" id="status-lang" onclick="openSheet('lang-sheet')" title="Change language">Plain Text</span>
     <span class="status-sep">│</span>
-    <span class="status-item" id="status-pos">Ln 1, Col 1</span>
+    <span class="status-item clickable" id="status-pos" onclick="jumpToLine()" title="Go to line">Ln 1, Col 1</span>
+    <span class="status-sep">│</span>
+    <span class="status-item" id="status-lines">0 lines</span>
   </div>
   <div class="status-group">
     <span class="status-item" id="status-chars">0 chars</span>
     <span class="status-sep">│</span>
-    <span class="status-item" id="status-encoding">UTF-8</span>
+    <span class="status-item" id="status-encoding" title="Character encoding">UTF-8</span>
     <span class="status-sep">│</span>
-    <span class="status-item" id="status-eol">CRLF</span>
+    <span class="status-item clickable" id="status-eol" onclick="toggleEol()" title="Toggle LF / CRLF">LF</span>
+  </div>
+  <div class="status-group">
+    <span class="status-item clickable save-saved" id="status-save" onclick="statusSaveClick()" title="Save file">Saved</span>
   </div>
 </div>
 
@@ -2270,7 +2328,13 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
 <div id="ctx-menu">
   <div class="ctx-item" onclick="ctxRename()">✏️ Rename tab</div>
   <div class="ctx-item" onclick="ctxDuplicate()">📋 Duplicate</div>
-  <div class="ctx-item danger" onclick="ctxClose()">✕ Close tab</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxClose()">✕ Close tab</div>
+  <div class="ctx-item" onclick="ctxCloseOthers()">✕ Close others</div>
+  <div class="ctx-item" onclick="ctxCloseRight()">✕ Close to the right</div>
+  <div class="ctx-item danger" onclick="ctxCloseAll()">✕ Close all</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxReopenClosed()">↩ Reopen closed tab</div>
 </div>
 
 <!-- Menu Sheet -->
@@ -2303,6 +2367,17 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           Save / Download
         </button>
+        <button class="menu-item" onclick="openCmdPalette();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h2M8 14h8"/></svg>
+          Command Palette <span class="menu-item-shortcut">Ctrl+Shift+P</span>
+        </button>
+        <button class="menu-item" onclick="reopenClosedTab();closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Reopen Closed Tab <span class="menu-item-shortcut">Ctrl+Shift+T</span>
+        </button>
+        <div class="menu-divider"></div>
+        <div class="menu-section">Recent</div>
+        <div id="recent-files-list"></div>
         <div class="menu-divider"></div>
         <div class="menu-section">Edit</div>
         <button class="menu-item" onclick="selectAll();closeSheet('menu-sheet')">
@@ -2378,7 +2453,25 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.5 4.5-3 6h-8c-1.5-1.5-3-3.5-3-6a7 7 0 0 1 7-7z"/><path d="M9 22h6"/><path d="M10 22v-4h4v4"/></svg>
           Intelli Assistant
         </button>
+        <button class="menu-item" onclick="openSheet('shortcuts-sheet');closeSheet('menu-sheet')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>
+          Keyboard Shortcuts
+        </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Keyboard Shortcuts Sheet -->
+<div class="overlay" id="shortcuts-sheet" onclick="closeSheetOutside(event, 'shortcuts-sheet')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <button class="sheet-back-btn" onclick="closeSheet('shortcuts-sheet')">&#8592;</button>
+      <span class="sheet-title">Keyboard Shortcuts</span>
+    </div>
+    <div class="sheet-body" style="padding: 16px;">
+      <div id="shortcuts-list"></div>
     </div>
   </div>
 </div>
@@ -2563,6 +2656,7 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
 
 <!-- Toast -->
 <div id="toast"></div>
+<div id="drop-overlay">Drop files to open</div>
 
 <!-- ===================== SNIPPET LIBRARY SHEET ===================== -->
 <div class="overlay" id="snippet-sheet" onclick="closeSheetOutside(event,'snippet-sheet')">
@@ -2890,6 +2984,8 @@ const state = {
   pistonBase: 'https://emkc.org/api/v2/piston',
   pistonToken: '',
   judge0Base: 'https://ce.judge0.com',
+  eol: 'LF',
+  fileTreeFilter: '',
 };
 
 // ===================== LANGUAGE CONFIG =====================
@@ -3021,6 +3117,7 @@ function newTab(name = null, content = '', langName = 'Plain Text') {
   cm.on('change', () => {
     markModified(id, true);
     updateStatus();
+    persistSession();
     // Large-file mode: disable expensive features above 3000 lines
     const lineCount = cm.lineCount();
     if (lineCount > 3000 && !container.classList.contains('large-file')) {
@@ -3051,6 +3148,7 @@ function newTab(name = null, content = '', langName = 'Plain Text') {
 
   renderTabBar();
   switchTab(id);
+  persistSession();
   setTimeout(() => cm.refresh(), 50);
   return tab;
 }
@@ -3082,6 +3180,19 @@ function getActiveTab() {
   return getTab(state.activeTab);
 }
 
+const _closedTabs = [];
+const MAX_CLOSED_TABS = 20;
+
+function snapshotTab(tab) {
+  return {
+    filename: tab.filename,
+    langName: tab.lang?.name || 'Plain Text',
+    content: tab.cm.getValue(),
+    cursor: tab.cm.getCursor(),
+    scrollY: tab.cm.getScrollInfo().top,
+  };
+}
+
 function closeTab(id, e) {
   if (e) e.stopPropagation();
   const idx = state.tabs.findIndex(t => t.id === id);
@@ -3091,6 +3202,9 @@ function closeTab(id, e) {
   if (tab.modified) {
     if (!confirm(`"${tab.filename}" has unsaved changes. Close anyway?`)) return;
   }
+
+  _closedTabs.unshift(snapshotTab(tab));
+  if (_closedTabs.length > MAX_CLOSED_TABS) _closedTabs.pop();
   
   tab.container.remove();
   state.tabs.splice(idx, 1);
@@ -3106,6 +3220,30 @@ function closeTab(id, e) {
   }
   
   renderTabBar();
+}
+
+function reopenClosedTabAt(index) {
+  const snap = _closedTabs.splice(index, 1)[0];
+  if (!snap) {
+    showToast('No closed tabs to reopen');
+    return;
+  }
+  const tab = newTab(snap.filename, snap.content, snap.langName);
+  markModified(tab.id, false);
+  if (snap.cursor) tab.cm.setCursor(snap.cursor);
+  if (snap.scrollY) tab.cm.scrollTo(null, snap.scrollY);
+  showToast(`Reopened ${snap.filename}`, 'success');
+}
+
+function reopenClosedTab() {
+  reopenClosedTabAt(0);
+}
+
+function cycleTab(dir) {
+  if (!state.tabs.length) return;
+  const idx = state.tabs.findIndex(t => t.id === state.activeTab);
+  const next = (idx + dir + state.tabs.length) % state.tabs.length;
+  switchTab(state.tabs[next].id);
 }
 
 function markModified(id, val) {
@@ -3206,6 +3344,46 @@ function updateStatus() {
   
   document.getElementById('status-pos').textContent = `Ln ${cursor.line+1}, Col ${cursor.ch+1}`;
   document.getElementById('status-chars').textContent = `${content.length} chars`;
+  document.getElementById('status-lines').textContent = `${cm.lineCount()} lines`;
+  const saveEl = document.getElementById('status-save');
+  if (tab.modified) {
+    saveEl.textContent = 'Modified';
+    saveEl.className = 'status-item clickable save-modified';
+  } else {
+    saveEl.textContent = 'Saved';
+    saveEl.className = 'status-item clickable save-saved';
+  }
+  updateEolStatus();
+}
+
+function updateEolStatus() {
+  const el = document.getElementById('status-eol');
+  if (el) el.textContent = state.eol || 'LF';
+}
+
+function toggleEol() {
+  state.eol = state.eol === 'CRLF' ? 'LF' : 'CRLF';
+  updateEolStatus();
+  persistSession();
+  showToast(`Line endings: ${state.eol}`);
+}
+
+function statusSaveClick() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  if (tab.modified) saveFile();
+  else showToast('Already saved');
+}
+
+function detectEol(text) {
+  if (typeof text !== 'string') return state.eol || 'LF';
+  if (text.indexOf('\r\n') !== -1) return 'CRLF';
+  if (text.indexOf('\r') !== -1) return 'CR';
+  return 'LF';
+}
+
+function normalizeNewlines(text) {
+  return String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 }
 
 function updateTitleBar() {
@@ -3233,6 +3411,11 @@ function toggleFileTree(force) {
   try { localStorage.setItem('pp_filetree', _fileTreeOpen ? '1' : '0'); } catch (e) {}
 }
 
+function filterFileTree(q) {
+  state.fileTreeFilter = q || '';
+  renderFileTree();
+}
+
 function renderFileTree() {
   const list = document.getElementById('filetree-list');
   if (!list) return;
@@ -3241,7 +3424,13 @@ function renderFileTree() {
     list.innerHTML = '<div class="ft-empty">No open files</div>';
     return;
   }
-  state.tabs.forEach(tab => {
+  const q = (state.fileTreeFilter || '').toLowerCase();
+  const tabs = q ? state.tabs.filter(t => t.filename.toLowerCase().includes(q)) : state.tabs;
+  if (!tabs.length) {
+    list.innerHTML = '<div class="ft-empty">No matches</div>';
+    return;
+  }
+  tabs.forEach(tab => {
     const el = document.createElement('div');
     el.className = 'ft-item' + (tab.id === state.activeTab ? ' active' : '') + (tab.modified ? ' modified' : '');
     el.innerHTML = getTabIcon(tab.filename) + '<span class="ft-name">' + esc(tab.filename) + '</span><div class="ft-ops"><button class="ft-ops-btn" title="Rename" onclick="event.stopPropagation();ftRenameFile(\'' + tab.id + '\')">✏</button><button class="ft-ops-btn danger" title="Close" onclick="event.stopPropagation();closeTab(\'' + tab.id + '\')">✕</button></div>';
@@ -3261,8 +3450,12 @@ function ftRenameFile(tabId) {
   tab.filename = newName;
   const ext = newName.split('.').pop();
   const lang = getLangForExt(ext);
-  if (lang) tab.lang = lang.name;
+  if (lang) {
+    tab.lang = lang;
+    tab.cm.setOption('mode', lang.mode);
+  }
   renderTabBar();
+  updateTitleBar();
   updateLangStatus();
   markModified(tabId, true);
   showToast(`Renamed to: ${newName}`, 'success');
@@ -3369,13 +3562,7 @@ async function openFolder() {
             const file = await ent.getFile();
             if (file.size > 2000000) continue;
             const text = await file.text();
-            const ext = ent.name.split('.').pop();
-            const lang = getLangForExt(ext);
-            const tab = newTab(path, text, lang.name);
-            tab.lang = lang;
-            tab.cm.setOption('mode', lang.mode);
-            tab.fileHandle = ent;
-            markModified(tab.id, false);
+            ingestTextFile(path, text, ent);
             count++;
           } catch (e) { console.warn('skip', path, e); }
         } else if (ent.kind === 'directory') {
@@ -3444,6 +3631,51 @@ function loadTemplate(kind) {
 // ===================== FILE OPERATIONS =====================
 const HAS_FS_ACCESS = typeof window.showOpenFilePicker === 'function';
 
+function ingestTextFile(name, text, fileHandle) {
+  state.eol = detectEol(text);
+  const normalized = normalizeNewlines(text);
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const lang = getLangForExt(ext);
+  const tab = newTab(name, normalized, lang.name);
+  tab.lang = lang;
+  tab.cm.setOption('mode', lang.mode);
+  if (fileHandle) tab.fileHandle = fileHandle;
+  markModified(tab.id, false);
+  updateLangStatus();
+  updateEolStatus();
+  return tab;
+}
+
+function openFilesFromList(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  const readable = files.filter(file => {
+    if (file.size > 8 * 1024 * 1024) {
+      showToast(`${file.name} is too large (>8MB)`, 'error');
+      return false;
+    }
+    return true;
+  });
+  if (!readable.length) return;
+  let opened = 0;
+  readable.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      ingestTextFile(file.name, ev.target.result);
+      opened++;
+      if (opened === readable.length) showToast(`Opened ${opened} file(s)`);
+    };
+    reader.onerror = () => showToast(`Failed to read ${file.name}`, 'error');
+    reader.readAsText(file);
+  });
+}
+
+function fileContentForSave(text) {
+  if (state.eol === 'CRLF') return String(text || '').replace(/\n/g, '\r\n');
+  if (state.eol === 'CR') return String(text || '').replace(/\n/g, '\r');
+  return text;
+}
+
 async function openFile() {
   if (HAS_FS_ACCESS) {
     try {
@@ -3451,14 +3683,7 @@ async function openFile() {
       for (const handle of handles) {
         const file = await handle.getFile();
         const text = await file.text();
-        const ext = file.name.split('.').pop();
-        const lang = getLangForExt(ext);
-        const tab = newTab(file.name, text, lang.name);
-        tab.lang = lang;
-        tab.cm.setOption('mode', lang.mode);
-        tab.fileHandle = handle;
-        markModified(tab.id, false);
-        updateLangStatus();
+        ingestTextFile(file.name, text, handle);
       }
       showToast(`Opened ${handles.length} file(s)`);
       return;
@@ -3470,20 +3695,7 @@ async function openFile() {
 }
 
 document.getElementById('file-open-input').addEventListener('change', function(e) {
-  const files = Array.from(e.target.files);
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const ext = file.name.split('.').pop();
-      const lang = getLangForExt(ext);
-      const tab = newTab(file.name, ev.target.result, lang.name);
-      tab.lang = lang;
-      tab.cm.setOption('mode', lang.mode);
-      markModified(tab.id, false);
-      updateLangStatus();
-    };
-    reader.readAsText(file);
-  });
+  openFilesFromList(e.target.files);
   this.value = '';
 });
 
@@ -3499,7 +3711,7 @@ function downloadBlob(filename, content) {
 async function saveFile() {
   const tab = getActiveTab();
   if (!tab) return;
-  const content = tab.cm.getValue();
+  const content = fileContentForSave(tab.cm.getValue());
 
   if (HAS_FS_ACCESS && tab.fileHandle) {
     try {
@@ -3934,8 +4146,8 @@ function showCtxMenu(e, tabId) {
   ctxTabId = tabId;
   const menu = document.getElementById('ctx-menu');
   menu.classList.add('open');
-  const x = Math.min(e.clientX, window.innerWidth - 180);
-  const y = Math.min(e.clientY, window.innerHeight - 120);
+  const x = Math.min(e.clientX, window.innerWidth - 220);
+  const y = Math.min(e.clientY, window.innerHeight - 320);
   menu.style.left = x + 'px';
   menu.style.top = y + 'px';
 }
@@ -3975,6 +4187,29 @@ function ctxDuplicate() {
 function ctxClose() {
   document.getElementById('ctx-menu').classList.remove('open');
   closeTab(ctxTabId);
+}
+
+function ctxCloseOthers() {
+  document.getElementById('ctx-menu').classList.remove('open');
+  const keep = ctxTabId;
+  [...state.tabs].forEach(t => { if (t.id !== keep) closeTab(t.id); });
+}
+
+function ctxCloseRight() {
+  document.getElementById('ctx-menu').classList.remove('open');
+  const idx = state.tabs.findIndex(t => t.id === ctxTabId);
+  if (idx === -1) return;
+  [...state.tabs.slice(idx + 1)].forEach(t => closeTab(t.id));
+}
+
+function ctxCloseAll() {
+  document.getElementById('ctx-menu').classList.remove('open');
+  [...state.tabs].forEach(t => closeTab(t.id));
+}
+
+function ctxReopenClosed() {
+  document.getElementById('ctx-menu').classList.remove('open');
+  reopenClosedTab();
 }
 
 // Long press for context menu on mobile
@@ -5998,11 +6233,8 @@ async function ghOpenFile(item) {
     return;
   }
 
-  const ext  = item.name.split('.').pop();
-  const lang = getLangForExt(ext);
-  const tab  = newTab(`[GH] ${item.name}`, content, lang.name);
+  const tab = ingestTextFile(`[GH] ${item.name}`, content);
   tab.ghMeta = { repo, branch, path: item.path, sha: item.sha };
-  markModified(tab.id, false);
   closeSheet('github-sheet');
   showToast(`Opened: ${item.name}`);
 
@@ -6045,8 +6277,22 @@ async function ghCommitFile() {
 const _origOpenSheet2 = openSheet;
 openSheet = function(id) {
   if (id === 'github-sheet') openSheet_github();
+  if (id === 'shortcuts-sheet') buildShortcutsList();
+  if (id === 'menu-sheet') renderRecentFiles();
   _origOpenSheet2(id);
 };
+
+function renderRecentFiles() {
+  const el = document.getElementById('recent-files-list');
+  if (!el) return;
+  if (!_closedTabs.length) {
+    el.innerHTML = '<div class="menu-item" style="opacity:.5;pointer-events:none">No recently closed tabs</div>';
+    return;
+  }
+  el.innerHTML = _closedTabs.slice(0, 8).map((t, i) =>
+    `<button class="menu-item" onclick="reopenClosedTabAt(${i});closeSheet('menu-sheet')">${esc(t.filename)}</button>`
+  ).join('');
+}
 
 // ===================== DOCUMENT MAP =====================
 
@@ -6532,6 +6778,7 @@ function collectSettings() {
         // SECURITY: pistonToken persists in localStorage/IndexedDB.
         // Consider using sessionStorage for sensitive tokens on shared devices.
         pistonToken:           state.pistonToken || '',
+    eol:                   state.eol || 'LF',
   };
 }
 
@@ -6630,6 +6877,11 @@ function applySettingsObject(s) {
   if (s.uiLight) {
     document.body.classList.add('theme-light');
     document.getElementById('toggle-ui-theme').checked = true;
+  }
+
+  if (s.eol === 'CRLF' || s.eol === 'LF' || s.eol === 'CR') {
+    state.eol = s.eol;
+    updateEolStatus();
   }
 }
 
@@ -6908,20 +7160,21 @@ newTab = function(name, content, langName) {
 // ===================== WELCOME TAB =====================
 function loadWelcomeTab() {
   const welcome = `// Welcome to PocketPad
-// Mobile code editor — zero-build PWA. Open, edit, run, ship.
+// Mobile-first code editor — zero-build PWA. Open, edit, run, ship.
 //
-// Quick start:
-//   • Files toolbar — file tree of open tabs
-//   • Open Folder (Chrome) or Open files
-//   • Export All as ZIP from Menu
-//   • Run JS / Python / HTML; C/C++/Rust via Piston
-//   • Shell → Termux: ttyd -p 8080 -W bash
-//   • GitHub browse / commit (Auth with PAT)
+// Quick start
+//   • Drop files onto the editor, or Open / Open Folder
+//   • Files panel — filter, rename, close open tabs
+//   • Run JS / Python locally; C, Go, Rust via Judge0 / Piston
+//   • GitHub: browse, commit, issues, PRs (PAT in Settings)
+//   • Shell → Termux: ttyd -p 7681 -W bash
 //
-// Tips:
-//   Ctrl/Cmd+S save · Ctrl/Cmd+F find · Ctrl/Cmd+M map
-//   Session auto-saves to IndexedDB
-//   Add to Home Screen for app-like install
+// Shortcuts (Ctrl on Windows/Linux, Cmd on Mac)
+//   Ctrl+S save     Ctrl+F find      Ctrl+Shift+P commands
+//   Ctrl+Enter run  Ctrl+W close tab Ctrl+Shift+T reopen
+//   Ctrl+B files    F1 shortcuts     Ctrl+\` shell
+//
+// Session auto-saves to IndexedDB. Add to Home Screen to install.
 
 function greet(name) {
   const msg = "Hello, " + name + "! Welcome to PocketPad.";
@@ -7548,8 +7801,12 @@ const COMMANDS = [
   { id: 'goto-line', label: 'Go To Line', icon: '➡️', fn: () => jumpToLine() },
   { id: 'toggle-filetree', label: 'Toggle File Tree', shortcut: 'Ctrl+B', icon: '🗂️', fn: () => toggleFileTree() },
   { id: 'toggle-docmap', label: 'Toggle Document Map', shortcut: 'Ctrl+M', icon: '🗺️', fn: () => toggleDocMap() },
-  { id: 'toggle-console', label: 'Toggle Console', shortcut: 'Enter', icon: '▶️', fn: () => toggleConsole() },
+  { id: 'toggle-console', label: 'Toggle Console', icon: '▶️', fn: () => toggleConsole() },
   { id: 'toggle-shell', label: 'Toggle Shell', shortcut: 'Ctrl+`', icon: '💻', fn: () => { switchConsolePane('shell'); if (!state.consoleOpen) toggleConsole(); } },
+  { id: 'command-palette', label: 'Command Palette', shortcut: 'Ctrl+Shift+P', icon: '⌘', fn: () => openCmdPalette() },
+  { id: 'reopen-tab', label: 'Reopen Closed Tab', shortcut: 'Ctrl+Shift+T', icon: '↩', fn: () => reopenClosedTab() },
+  { id: 'next-tab', label: 'Next Tab', shortcut: 'Ctrl+PageDown', icon: '→', fn: () => cycleTab(1) },
+  { id: 'prev-tab', label: 'Previous Tab', shortcut: 'Ctrl+PageUp', icon: '←', fn: () => cycleTab(-1) },
   { id: 'toggle-wrap', label: 'Toggle Word Wrap', icon: '↩️', fn: () => toggleWrap() },
   { id: 'toggle-assistant', label: 'Toggle Intelli Assistant', icon: '🤖', fn: () => toggleAssistant() },
   { id: 'run-code', label: 'Run Code', shortcut: 'Ctrl+Enter', icon: '▶️', fn: () => runCode() },
@@ -7577,7 +7834,37 @@ const COMMANDS = [
   { id: 'sort-lines', label: 'Sort Lines', icon: '🔤', fn: () => sortLines() },
   { id: 'trim-trailing', label: 'Trim Trailing Whitespace', icon: '✂️', fn: () => trimTrailing() },
   { id: 'toggle-fullscreen', label: 'Toggle Fullscreen', icon: '⛶', fn: () => { const el = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else el.requestFullscreen?.(); } },
+  { id: 'shortcuts-help', label: 'Keyboard Shortcuts', shortcut: 'F1', icon: '⌨', fn: () => openSheet('shortcuts-sheet') },
 ];
+
+function buildShortcutsList() {
+  const el = document.getElementById('shortcuts-list');
+  if (!el) return;
+  const groups = [
+    { title: 'File', ids: ['new-file', 'open-file', 'open-folder', 'save', 'export-zip', 'close-tab', 'reopen-tab'] },
+    { title: 'Edit', ids: ['find', 'goto-line', 'duplicate-line', 'delete-line', 'uppercase', 'lowercase', 'toggle-comment', 'indent', 'format-code', 'multi-cursor', 'sort-lines', 'trim-trailing'] },
+    { title: 'View', ids: ['toggle-filetree', 'toggle-docmap', 'toggle-wrap', 'toggle-console', 'toggle-shell', 'toggle-fullscreen', 'next-tab', 'prev-tab', 'command-palette'] },
+    { title: 'Run', ids: ['run-code'] },
+    { title: 'Tools', ids: ['toggle-assistant', 'snippets', 'settings', 'spell-toggle', 'rename-symbol', 'export-clipboard'] },
+    { title: 'GitHub', ids: ['github', 'gh-issues', 'gh-prs', 'gh-blame', 'gh-branches', 'gh-actions'] },
+  ];
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const fmt = s => s ? s.replace('Ctrl', isMac ? 'Cmd' : 'Ctrl') : '';
+  let html = '';
+  for (const g of groups) {
+    html += `<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:bold;color:var(--npp-accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">${g.title}</div>`;
+    for (const id of g.ids) {
+      const cmd = COMMANDS.find(c => c.id === id);
+      if (!cmd) continue;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--npp-border2)">
+        <span style="font-size:13px;color:var(--npp-text)">${cmd.icon} ${cmd.label}</span>
+        ${cmd.shortcut ? `<kbd style="font-size:11px;padding:3px 8px;border-radius:4px;background:var(--npp-toolbar-btn);border:1px solid var(--npp-border2);color:var(--npp-text2);font-family:monospace;white-space:nowrap">${fmt(cmd.shortcut)}</kbd>` : '<span style="font-size:11px;color:var(--npp-text3)">—</span>'}
+      </div>`;
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
 
 let _cmdPaletteActive = -1;
 
@@ -7695,7 +7982,7 @@ async function ghShowIssue(num) {
     const issue = await issueRes.json();
     const comments = await commentsRes.json();
 
-    let html = `<div class="gh-issue-title" style="font-size:14px;margin-bottom:6px">${escapeHtml(issue.title)}</div>`;
+    let html = `<div class="gh-issue-title" data-num="${issue.number}" style="font-size:14px;margin-bottom:6px">${escapeHtml(issue.title)}</div>`;
     html += `<div class="gh-issue-meta" style="margin-bottom:8px"><span class="${issue.state==='open'?'gh-badge-open':'gh-badge-closed'}">#${issue.number} ${issue.state}</span> <span>${issue.user?.login}</span> <span>${new Date(issue.created_at).toLocaleDateString()}</span></div>`;
     if (issue.body) html += `<div style="background:#1a1a2a;padding:8px;border-radius:4px;font-size:12px;margin-bottom:8px;white-space:pre-wrap;color:#c0c0c0">${escapeHtml(issue.body)}</div>`;
 
@@ -7713,7 +8000,8 @@ async function ghShowIssue(num) {
 
 async function ghCommentOnIssue() {
   const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
-  const num = document.querySelector('#gh-issue-detail-content .gh-issue-title')?.textContent?.match(/#(\d+)/)?.[1];
+  const titleEl = document.querySelector('#gh-issue-detail-content .gh-issue-title');
+  const num = titleEl?.dataset?.num || titleEl?.textContent?.match(/#(\d+)/)?.[1];
   const body = document.getElementById('gh-issue-comment-input')?.value?.trim();
   if (!repo || !num || !body || !_gh.token) return;
 
@@ -7808,7 +8096,7 @@ async function ghShowPR(num) {
     const comments = await commentsRes.json();
     const reviews = await reviewRes.json();
 
-    let html = `<div class="gh-pr-title" style="font-size:14px;margin-bottom:6px">${escapeHtml(pr.title)}</div>`;
+    let html = `<div class="gh-pr-title" data-num="${pr.number}" style="font-size:14px;margin-bottom:6px">${escapeHtml(pr.title)}</div>`;
     html += `<div class="gh-pr-meta" style="margin-bottom:8px"><span class="${pr.state==='open'?'gh-badge-open':'gh-badge-closed'}">#${pr.number} ${pr.state}</span> <span>${pr.user?.login}</span> <span>${pr.head?.ref} → ${pr.base?.ref}</span></div>`;
     if (pr.body) html += `<div style="background:#1a1a2a;padding:8px;border-radius:4px;font-size:12px;margin-bottom:8px;white-space:pre-wrap;color:#c0c0c0">${escapeHtml(pr.body)}</div>`;
     html += `<div style="font-size:11px;color:#75715e;margin-bottom:6px">+${pr.additions} −${pr.deletions} · ${pr.changed_files} file(s) · ${pr.commits} commit(s)</div>`;
@@ -7834,7 +8122,8 @@ async function ghShowPR(num) {
 
 async function ghCommentOnPR() {
   const repo = document.getElementById('gh-repo-input')?.value?.trim() || _gh.repo;
-  const num = document.querySelector('#gh-pr-detail-content .gh-pr-title')?.textContent?.match(/#(\d+)/)?.[1];
+  const titleEl = document.querySelector('#gh-pr-detail-content .gh-pr-title');
+  const num = titleEl?.dataset?.num || titleEl?.textContent?.match(/#(\d+)/)?.[1];
   const body = document.getElementById('gh-pr-comment-input')?.value?.trim();
   if (!repo || !num || !body || !_gh.token) return;
 
@@ -8258,6 +8547,11 @@ function trimTrailing() {
 // ===================== KEYBOARD SHORTCUTS =====================
 (function pp_shortcuts() {
   window.addEventListener('keydown', function(e) {
+    if (e.key === 'F1') {
+      e.preventDefault();
+      openSheet('shortcuts-sheet');
+      return;
+    }
     var mod = e.ctrlKey || e.metaKey;
     if (!mod) return;
     var k = e.key.toLowerCase();
@@ -8267,13 +8561,53 @@ function trimTrailing() {
     else if (k === 'b') { e.preventDefault(); toggleFileTree(); }
     else if (k === 'm') { e.preventDefault(); toggleDocMap(); }
     else if (k === 'n') { e.preventDefault(); newTab(); }
+    else if (k === 'w') { e.preventDefault(); if (state.activeTab) closeTab(state.activeTab); }
     else if (k === 'p' && e.shiftKey) { e.preventDefault(); openCmdPalette(); }
+    else if (k === 't' && e.shiftKey) { e.preventDefault(); reopenClosedTab(); }
+    else if (k === 'tab') { e.preventDefault(); cycleTab(e.shiftKey ? -1 : 1); }
+    else if (e.key === 'PageDown') { e.preventDefault(); cycleTab(1); }
+    else if (e.key === 'PageUp') { e.preventDefault(); cycleTab(-1); }
     else if (k === '`') {
       e.preventDefault();
       switchConsolePane('shell');
       if (!state.consoleOpen) toggleConsole();
     }
     else if (e.key === 'Enter') { e.preventDefault(); runCode(); }
+  });
+})();
+
+(function pp_dnd_and_unload() {
+  let dragDepth = 0;
+  const overlay = () => document.getElementById('drop-overlay');
+  const isFileDrag = (e) => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
+
+  window.addEventListener('dragenter', (e) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    dragDepth++;
+    overlay()?.classList.add('show');
+  });
+  window.addEventListener('dragover', (e) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  window.addEventListener('dragleave', () => {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) overlay()?.classList.remove('show');
+  });
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    overlay()?.classList.remove('show');
+    if (e.dataTransfer?.files?.length) openFilesFromList(e.dataTransfer.files);
+  });
+
+  window.addEventListener('beforeunload', (e) => {
+    if (state.tabs.some(t => t.modified)) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
   });
 })();
 

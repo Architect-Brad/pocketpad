@@ -14,11 +14,11 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 | Area | What you get |
 |------|----------------|
 | **Editor** | Multi-tab CodeMirror, 20+ languages, find/replace, **hybrid autocomplete** (keywords · builtins · snippets · doc words), themes |
-| **Files** | File tree, open folder (Chromium), save via File System Access, export ZIP |
+| **Files** | File tree with filter, drag-and-drop open, open folder (Chromium), save via File System Access, export ZIP |
 | **Run** | Remote code execution via **Judge0 CE** (default) + **Piston API** (custom URL/token) · local JS/Python fallback · HTML & Markdown preview |
 | **GitHub** | Browse repos, open files, commit & push, simple diff |
 | **Shell** | xterm + WebSocket (Termux + `ttyd`) |
-| **Extras** | Document map, snippets, spell check |
+| **Extras** | Document map, snippets, spell check, command palette, keyboard shortcuts sheet |
 | **Session** | Auto-save to IndexedDB (localStorage fallback) |
 | **Install** | PWA — Add to Home Screen on HTTPS |
 
@@ -32,9 +32,14 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 | `Ctrl/Cmd + B` | Toggle file tree |
 | `Ctrl/Cmd + M` | Document map |
 | `Ctrl/Cmd + N` | New tab |
+| `Ctrl/Cmd + W` | Close tab |
+| `Ctrl/Cmd + Shift + T` | Reopen closed tab |
+| `Ctrl/Cmd + PageUp / PageDown` | Previous / next tab |
+| `Ctrl/Cmd + Shift + P` | Command palette |
 | `Ctrl/Cmd + \`` | Shell pane |
 | `Ctrl/Cmd + Enter` | Run |
 | `Ctrl/Cmd + Space` | Autocomplete |
+| `F1` | Keyboard shortcuts |
 
 ---
 
