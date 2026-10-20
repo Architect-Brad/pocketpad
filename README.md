@@ -81,12 +81,23 @@ In PocketPad: **Shell → Connect** → `ws://localhost:7681`
 
 ---
 
+## Notes
+
+- **Code execution** defaults to the public [Piston](https://emkc.org/api/v2/piston) API (`emkc.org`). Requires network. Toggle **Settings → Run via Piston API** off to use the in-browser JS/Python sandboxes instead.
+- Optional **stdin** appears in the console when Piston is active.
+- The **spell-check dictionary is vendored** (`vendor/jsdelivr/dictionary-en@4/`) and precached, so spell check works offline.
+- **GitHub PAT** is stored in the browser for the GitHub panel — use a fine-scoped token and sign out on shared devices.
+- **Open folder** and native save need a secure context (HTTPS or localhost) and a Chromium-based browser.
+
+---
+
 ## Project layout
 
 ```
 index.html              # Full app (UI + logic)
 manifest.json           # PWA manifest
 sw.js                   # Service worker
+sw-cache.js             # AUTO-GENERATED precache manifest (scripts/gen-sw-cache.py)
 logo.svg                # App icon
 vercel.json             # Vercel headers / rewrites
 404.html                # SPA-style fallback
@@ -94,25 +105,25 @@ landing/                # Separate landing page project (pocketpad-landing.verce
 lib/                    # ES modules (Intelli engine, language analyzers)
 vendor/                 # Vendored editor libs (local-first, CDN fallback)
 scripts/fetch-vendor.py # Optional: refresh vendor/ from CDN
+scripts/gen-sw-cache.py # Regenerate sw-cache.js after changing local assets
 ```
 
-Libraries load from `vendor/` first; if a file is missing, they fall back to CDN. To re-download vendor assets:
+Libraries load from `vendor/` first; if a file is missing, they fall back to CDN.
+The app waits for any in-flight CDN fallback before booting, so a missing local
+asset can no longer abort start-up. To re-download vendor assets:
 
 ```bash
 python3 scripts/fetch-vendor.py
 ```
 
----
+After adding or removing a local asset, regenerate the offline precache list:
 
-## Notes
+```bash
+python3 scripts/gen-sw-cache.py
+```
 
-- **Code execution** defaults to the public [Piston](https://emkc.org/api/v2/piston) API (`emkc.org`). Requires network. Toggle **Settings → Run via Piston API** off to use the in-browser JS/Python sandboxes instead.
-- Optional **stdin** appears in the console when Piston is active.
-
-
-- **GitHub PAT** is stored in the browser for the GitHub panel — use a fine-scoped token and sign out on shared devices.
-- **Open folder** and native save need a secure context (HTTPS or localhost) and a Chromium-based browser.
-- Spell-check dictionary still loads from the network on first use.
+> **Note:** `sw-cache.js` is only re-installed by the browser when `sw.js`
+> changes. Bump `CACHE` in `sw.js` when the precache manifest changes.
 
 ---
 

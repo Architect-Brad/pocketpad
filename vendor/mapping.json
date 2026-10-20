@@ -1,5 +1,7 @@
 {
   "https://cdn.jsdelivr.net/npm/dictionary-en@4": "vendor/jsdelivr/dictionary-en@4",
+  "https://cdn.jsdelivr.net/npm/dictionary-en@4/index.aff": "vendor/jsdelivr/dictionary-en@4/index.aff",
+  "https://cdn.jsdelivr.net/npm/dictionary-en@4/index.dic": "vendor/jsdelivr/dictionary-en@4/index.dic",
   "https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js": "vendor/jsdelivr/skulpt@1.2.0/dist/skulpt-stdlib.js",
   "https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js": "vendor/jsdelivr/skulpt@1.2.0/dist/skulpt.min.js",
   "https://cdn.jsdelivr.net/npm/typo-js@1.2.3/typo.js": "vendor/jsdelivr/typo-js@1.2.3/typo.js",

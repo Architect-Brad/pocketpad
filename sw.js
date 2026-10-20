@@ -1,7 +1,9 @@
 /* PocketPad service worker — full offline precaching */
 importScripts('./sw-cache.js');
 
-const CACHE = 'pocketpad-v3';
+// Bump the cache name when the precache manifest (sw-cache.js) changes —
+// the browser only reinstalls the worker when sw.js itself changes.
+const CACHE = 'pocketpad-v4';
 const CDN_CACHE = 'pocketpad-cdn-v1';
 
 self.addEventListener('install', (event) => {

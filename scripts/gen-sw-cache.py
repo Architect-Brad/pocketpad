@@ -7,8 +7,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "sw-cache.js"
 
-EXTENSIONS = {".js", ".css", ".svg", ".json", ".html", ".png", ".ico"}
+EXTENSIONS = {".js", ".css", ".svg", ".json", ".html", ".png", ".ico", ".aff", ".dic"}
 IGNORE_DIRS = {".git", ".vercel", "landing", "scripts", "node_modules"}
+# Files that are not runtime resources of the app.
+IGNORE_FILES = {"vercel.json"}
 
 
 def find_local_assets() -> list[str]:
@@ -17,6 +19,8 @@ def find_local_assets() -> list[str]:
         if path.is_dir():
             continue
         if any(d in path.parts for d in IGNORE_DIRS):
+            continue
+        if path.name in IGNORE_FILES:
             continue
         if path.suffix not in EXTENSIONS:
             continue

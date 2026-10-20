@@ -14,6 +14,28 @@
 
 <!-- Local-first assets: vendor/* with CDN fallback (see vendor/README) -->
 <script>
+// Vendor assets load local-first; if a local file is missing we fall back to the
+// CDN. A dynamically-inserted <script> executes asynchronously, so the app boot
+// must WAIT for any in-flight fallback instead of assuming CodeMirror exists.
+// This tracks pending fallbacks and lets the app defer boot until they settle.
+window.__ppFallbackPending = 0;
+window.__ppFallbackWaiters = [];
+
+window.__ppFallbackDone = function () {
+  if (window.__ppFallbackPending > 0) window.__ppFallbackPending--;
+  if (window.__ppFallbackPending > 0) return;
+  const waiters = window.__ppFallbackWaiters;
+  window.__ppFallbackWaiters = [];
+  waiters.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
+};
+
+// Run `fn` now if every vendor library is present, otherwise once the pending
+// CDN fallbacks have loaded (or failed).
+window.__ppWhenLibsReady = function (fn) {
+  if (window.__ppFallbackPending <= 0) { fn(); return; }
+  window.__ppFallbackWaiters.push(fn);
+};
+
 window.__ppLoadFallback = function(el) {
   var cdn = el.getAttribute('data-cdn');
   if (!cdn || el.dataset.fallbackApplied) return;
@@ -21,10 +43,11 @@ window.__ppLoadFallback = function(el) {
   if (el.tagName === 'LINK') {
     el.href = cdn;
   } else if (el.tagName === 'SCRIPT') {
+    window.__ppFallbackPending++;
     var s = document.createElement('script');
     s.src = cdn;
     s.async = false;
-    if (el.getAttribute('data-cdn')) s.setAttribute('data-from-cdn', '1');
+    s.onload = s.onerror = function () { window.__ppFallbackDone(); };
     el.parentNode.insertBefore(s, el.nextSibling);
   }
 };
@@ -34,6 +57,11 @@ window.__ppLoadFallback = function(el) {
 <!-- CodeMirror Core -->
 <link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/codemirror.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" onerror="__ppLoadFallback(this)">
 <script src="./vendor/cdnjs/codemirror/5.65.16/codemirror.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" onerror="__ppLoadFallback(this)"></script>
+
+<!-- CodeMirror Simple Mode — MUST load before any mode that calls
+     CodeMirror.defineSimpleMode (Rust). Previously it was loaded after the
+     mode files, so the Rust mode threw "defineSimpleMode is not a function". -->
+<script src="./vendor/cdnjs/codemirror/5.65.16/addon/mode/simple.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js" onerror="__ppLoadFallback(this)"></script>
 
 <!-- CodeMirror Modes -->
 <script src="./vendor/cdnjs/codemirror/5.65.16/mode/javascript/javascript.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js" onerror="__ppLoadFallback(this)"></script>
@@ -76,9 +104,6 @@ window.__ppLoadFallback = function(el) {
 <script src="./vendor/cdnjs/codemirror/5.65.16/addon/fold/brace-fold.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js" onerror="__ppLoadFallback(this)"></script>
 <script src="./vendor/cdnjs/codemirror/5.65.16/addon/selection/active-line.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js" onerror="__ppLoadFallback(this)"></script>
 <script src="./vendor/cdnjs/codemirror/5.65.16/addon/display/fullscreen.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/fullscreen.min.js" onerror="__ppLoadFallback(this)"></script>
-
-<!-- CodeMirror Simple Mode (required by Rust, VHDL modes) -->
-<script src="./vendor/cdnjs/codemirror/5.65.16/addon/mode/simple.min.js" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js" onerror="__ppLoadFallback(this)"></script>
 
 <!-- CodeMirror Lint (Spell Check) -->
 <link rel="stylesheet" href="./vendor/cdnjs/codemirror/5.65.16/addon/lint/lint.min.css" data-cdn="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/lint/lint.min.css" onerror="__ppLoadFallback(this)">
@@ -3051,20 +3076,29 @@ const LANGUAGES = [
   { name: 'Binary',     mode: 'binary',                       ext: ['bin', 'bits'],          pistonLang: null },
 ];
 
-// Register custom Binary mode
-CodeMirror.defineMode('binary', () => ({
-  token(stream) {
-    if (stream.eat('0')) return 'number';
-    if (stream.eat('1')) return 'keyword';
-    if (stream.match(/\s+/)) return null;
-    if (stream.match(/[01]{8}/)) return 'string';
-    stream.next();
-    return 'comment';
-  }
-}));
+// Register custom modes. Deferred until the editor library is confirmed loaded
+// (see __ppWhenLibsReady) so a failed vendor asset can't abort app boot.
+let _customModesRegistered = false;
+function registerCustomModes() {
+  if (_customModesRegistered) return;
+  if (typeof CodeMirror === 'undefined') return;
+  _customModesRegistered = true;
 
-// Register VHDL mode alias (uses verilog highlighter as approximation)
-CodeMirror.defineMode('vhdl', () => CodeMirror.getMode({}, 'verilog'));
+  // Register custom Binary mode
+  CodeMirror.defineMode('binary', () => ({
+    token(stream) {
+      if (stream.eat('0')) return 'number';
+      if (stream.eat('1')) return 'keyword';
+      if (stream.match(/\s+/)) return null;
+      if (stream.match(/[01]{8}/)) return 'string';
+      stream.next();
+      return 'comment';
+    }
+  }));
+
+  // Register VHDL mode alias (uses verilog highlighter as approximation)
+  CodeMirror.defineMode('vhdl', () => CodeMirror.getMode({}, 'verilog'));
+}
 
 const THEMES = [
   { id: 'npp', name: 'Npp' },
@@ -3085,6 +3119,19 @@ function getLangForExt(ext) {
 }
 
 // ===================== TAB MANAGEMENT =====================
+// Files above this line count drop the expensive per-line editor features.
+const LARGE_FILE_LINES = 3000;
+
+/** Toggle the "large file" degradation for a CodeMirror instance. */
+function applyLargeFileMode(cm, container) {
+  if (!cm || !container) return;
+  const large = cm.lineCount() > LARGE_FILE_LINES;
+  if (large === container.classList.contains('large-file')) return;
+  container.classList.toggle('large-file', large);
+  cm.setOption('matchBrackets', large ? false : state.matchBrackets);
+  cm.setOption('styleActiveLine', large ? false : state.styleActiveLine);
+}
+
 function newTab(name = null, content = '', langName = 'Plain Text') {
   state.tabCounter++;
   const id = `tab-${state.tabCounter}`;
@@ -3143,19 +3190,14 @@ function newTab(name = null, content = '', langName = 'Plain Text') {
   wireMdLiveOnCm(cm);
   cm.on('change', () => {
     markModified(id, true);
+    const t = getTab(id);
+    if (t) {
+      t._ver = (t._ver || 0) + 1;   // content version — used to cache derived data
+      t._contentDirty = true;
+    }
     updateStatus();
     persistSession();
-    // Large-file mode: disable expensive features above 3000 lines
-    const lineCount = cm.lineCount();
-    if (lineCount > 3000 && !container.classList.contains('large-file')) {
-      container.classList.add('large-file');
-      cm.setOption('matchBrackets', false);
-      cm.setOption('styleActiveLine', false);
-    } else if (lineCount <= 3000 && container.classList.contains('large-file')) {
-      container.classList.remove('large-file');
-      cm.setOption('matchBrackets', state.matchBrackets);
-      cm.setOption('styleActiveLine', state.styleActiveLine);
-    }
+    applyLargeFileMode(cm, container);
     scheduleDocMapUpdate();
   });
 
@@ -3170,8 +3212,12 @@ function newTab(name = null, content = '', langName = 'Plain Text') {
   const tab = {
     id, filename, lang, cm, modified: false,
     container,
+    _ver: 0,
+    _contentDirty: true,
+    _cachedContent: content,
   };
   state.tabs.push(tab);
+  applyLargeFileMode(cm, container);
 
   renderTabBar();
   switchTab(id);
@@ -3235,6 +3281,7 @@ function closeTab(id, e) {
   
   tab.container.remove();
   state.tabs.splice(idx, 1);
+  _acWordCache.delete(id);
   
   if (state.tabs.length === 0) {
     newTab();
@@ -3276,7 +3323,11 @@ function cycleTab(dir) {
 function markModified(id, val) {
   const tab = getTab(id);
   if (!tab) return;
-  tab.modified = val;
+  const next = !!val;
+  // Only rebuild the tab bar when the flag actually flips — this runs on every
+  // keystroke, and a full DOM rebuild per character is very expensive on mobile.
+  if (tab.modified === next) return;
+  tab.modified = next;
   renderTabBar();
 }
 
@@ -3362,15 +3413,33 @@ function esc(s) {
 }
 
 // ===================== STATUS BAR =====================
+// The status bar updates on every keystroke and cursor move. The character
+// count needs cm.getValue() (O(file size)), so it is debounced and cached
+// against the tab's content version instead of running on the hot path.
+let _charCountTimer = null;
+let _charCountVer   = -1;
+
+function scheduleCharCount() {
+  const tab = getActiveTab();
+  if (!tab) return;
+  const ver = tab._ver || 0;
+  if (ver === _charCountVer) return;      // content unchanged since last count
+  clearTimeout(_charCountTimer);
+  _charCountTimer = setTimeout(() => {
+    const t = getActiveTab();
+    if (!t) return;
+    _charCountVer = t._ver || 0;
+    document.getElementById('status-chars').textContent = `${t.cm.getValue().length} chars`;
+  }, 400);
+}
+
 function updateStatus() {
   const tab = getActiveTab();
   if (!tab) return;
   const cm = tab.cm;
   const cursor = cm.getCursor();
-  const content = cm.getValue();
-  
+
   document.getElementById('status-pos').textContent = `Ln ${cursor.line+1}, Col ${cursor.ch+1}`;
-  document.getElementById('status-chars').textContent = `${content.length} chars`;
   document.getElementById('status-lines').textContent = `${cm.lineCount()} lines`;
   const saveEl = document.getElementById('status-save');
   if (tab.modified) {
@@ -3381,6 +3450,7 @@ function updateStatus() {
     saveEl.className = 'status-item clickable save-saved';
   }
   updateEolStatus();
+  scheduleCharCount();
 }
 
 function updateEolStatus() {
@@ -4541,6 +4611,12 @@ function acMakeItem(text, type, detail, extra) {
   return item;
 }
 
+// Per-tab word index cache. Inactive tabs are scanned once and reused until
+// their content version changes; the active tab is scanned as a bounded window
+// around the cursor so it stays fresh without rescanning the whole file.
+const _acWordCache = new Map();   // tabId -> { ver, words:Set }
+const AC_ACTIVE_WINDOW = 400;     // lines scanned either side of the cursor
+
 function acCollectWords(cm, prefix) {
   if (!state.acWords) return [];
   const wordSet = new Set();
@@ -4548,16 +4624,37 @@ function acCollectWords(cm, prefix) {
   const pl = prefix.toLowerCase();
 
   state.tabs.forEach(t => {
-    const lineCount = t.cm.lineCount();
+    if (!t || !t.cm) return;
+    const isActive = t.cm === cm;
     let text;
-    if (lineCount > 2500) {
-      const vp = t.cm.getViewport();
-      const from = Math.max(0, vp.from - 80);
-      const to = Math.min(lineCount, vp.to + 80);
+
+    if (isActive) {
+      // Active tab: bounded window around the cursor — always current.
+      const lineCount = t.cm.lineCount();
+      const cur = t.cm.getCursor();
+      const from = Math.max(0, cur.line - AC_ACTIVE_WINDOW);
+      const to = Math.min(lineCount, cur.line + AC_ACTIVE_WINDOW);
       text = t.cm.getRange({ line: from, ch: 0 }, { line: to, ch: 0 });
     } else {
-      text = t.cm.getValue();
+      // Inactive tabs: reuse the cached index, rebuild only when content changed.
+      const cached = _acWordCache.get(t.id);
+      let words;
+      if (cached && cached.ver === (t._ver || 0)) {
+        words = cached.words;
+      } else {
+        words = new Set();
+        const all = t.cm.getValue();
+        wordRe.lastIndex = 0;
+        let m;
+        while ((m = wordRe.exec(all)) !== null) words.add(m[0]);
+        _acWordCache.set(t.id, { ver: t._ver || 0, words });
+      }
+      words.forEach((w) => {
+        if (w.length > prefix.length && w.toLowerCase().startsWith(pl)) wordSet.add(w);
+      });
+      return;
     }
+
     let m;
     wordRe.lastIndex = 0;
     while ((m = wordRe.exec(text)) !== null) {
@@ -4692,13 +4789,49 @@ function hybridCompletionHint(cm) {
 // Back-compat alias
 function wordCompletionHint(cm) { return hybridCompletionHint(cm); }
 
+/**
+ * Completion source used once the Intelli engine is loaded. It merges the
+ * engine's richer results (language snippets, member properties, document
+ * symbols) with the inline keyword/builtin/word sources. Returns a Promise —
+ * CodeMirror's show-hint handles a thenable result.
+ */
+async function mergedCompletionHint(cm) {
+  // Capture the explicit flag NOW: the await below resolves after
+  // triggerWordCompletion has already reset cm.state._acExplicit.
+  const explicit = !!cm.state?._acExplicit;
+  const inline = hybridCompletionHint(cm);
+  if (!window._intelliReady) return inline;
+  try {
+    const mod = await import('./lib/intelli/bridge.js');
+    const engine = await mod.intelliCompletionHint(cm, explicit);
+    if (!engine || !engine.list || !engine.list.length) return inline;
+    if (!inline) return engine;
+
+    // Engine results first (they are more specific), then the inline ones.
+    const seen = new Set();
+    const list = [];
+    for (const item of [...engine.list, ...inline.list]) {
+      const key = item.text;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      list.push(item);
+    }
+    return { list: list.slice(0, 80), from: inline.from, to: inline.to };
+  } catch (e) {
+    console.warn('[Intelli] completion failed, using inline hints:', e);
+    return inline;
+  }
+}
+
 function triggerWordCompletion(cm, explicit) {
   if (!state.wordCompletion) return;
   if (!cm) return;
   cm.state._acExplicit = !!explicit;
   try {
     cm.showHint({
-      hint: hybridCompletionHint,
+      // Use the Intelli-aware source once the engine is available; it falls
+      // back to the inline keyword/builtin/word sources.
+      hint: window._intelliReady ? mergedCompletionHint : hybridCompletionHint,
       completeSingle: false,
       closeOnUnfocus: true,
       alignWithWord: true,
@@ -4927,8 +5060,16 @@ function runJS(code, targetEl = null) {
     const msgId  = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
     let   done   = false;
 
+    // The sandbox iframe is created first so the message handler can verify
+    // that a message really came from it (not just from a random msgId guess).
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;left:-9999px;top:-9999px';
+    // allow-scripts only → null origin → postMessage with parent origin
+    iframe.sandbox = 'allow-scripts';
+
     function handler(e) {
       if (!e.data || e.data.msgId !== msgId) return;
+      if (e.source !== iframe.contentWindow) return;   // ignore other senders
       if (e.data.done) {
         done = true;
         window.removeEventListener('message', handler);
@@ -4940,11 +5081,6 @@ function runJS(code, targetEl = null) {
       append(conLine((args || []).join(' '), type));
     }
     window.addEventListener('message', handler);
-
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;left:-9999px;top:-9999px';
-    // allow-scripts only → null origin → postMessage with parent origin
-    iframe.sandbox = 'allow-scripts';
 
     const esc4json  = JSON.stringify(code);
     const esc4msgId = JSON.stringify(msgId);
@@ -5128,8 +5264,6 @@ function savePistonSettings() {
   showToast('Piston settings saved', 'success');
 }
 
-function toggleExecEngine() { /* legacy no-op if old checkbox gone */ }
-
 function getPistonStdin() {
   return (document.getElementById('piston-stdin')?.value || '');
 }
@@ -5141,14 +5275,22 @@ function fetchWithTimeout(url, opts = {}, ms = 15000) {
 }
 
 async function fetchRetry(url, opts, retries = 2, baseDelay = 1000) {
-  for (let i = 0; i < retries; i++) {
+  // `retries` = number of RETRIES after the first attempt.
+  const maxAttempts = retries + 1;
+  for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await fetchWithTimeout(url, opts, 25000);
       if (res.ok) return res;
       if (res.status === 429 || res.status >= 500) {
-        appendToOutput(conLine(`Server ${res.status}, retry ${i + 1}/${retries}…`, 'warn'));
-        await new Promise(r => setTimeout(r, baseDelay * Math.pow(2, i)));
-        continue;
+        if (i < maxAttempts - 1) {
+          appendToOutput(conLine(`Server ${res.status}, retry ${i + 1}/${retries}…`, 'warn'));
+          await new Promise(r => setTimeout(r, baseDelay * Math.pow(2, i)));
+          continue;
+        }
+        // last attempt — surface the server error
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
       }
       let detail = '';
       try {
@@ -5160,8 +5302,8 @@ async function fetchRetry(url, opts, retries = 2, baseDelay = 1000) {
       err.detail = detail;
       throw err;
     } catch (err) {
-      if (err.status) throw err;
-      if (i === retries - 1) throw err;
+      if (err.status) throw err;                       // non-retryable
+      if (i === maxAttempts - 1) throw err;
       appendToOutput(conLine(`${err.message} — retrying…`, 'warn'));
       await new Promise(r => setTimeout(r, baseDelay * Math.pow(2, i)));
     }
@@ -5337,13 +5479,10 @@ async function runRemote(pistonKey, code) {
   if (mode === 'judge0') return runViaJudge0(pistonKey, code);
 
   // auto: try Judge0 first (public), then Piston (self-host / whitelist)
-  let r = await runViaJudge0(pistonKey, code);
+  const r = await runViaJudge0(pistonKey, code);
   if (r.ok) return r;
-  if (r.error || !r.ok) {
-    appendToOutput(conLine('Trying Piston…', 'system'));
-    r = await runViaPiston(pistonKey, code);
-  }
-  return r;
+  appendToOutput(conLine('Trying Piston…', 'system'));
+  return await runViaPiston(pistonKey, code);
 }
 
 async function runWithEngine(langName, code) {
@@ -5757,14 +5896,42 @@ async function loadSpellDict(manual = false) {
   if (statusEl) statusEl.textContent = 'Loading…';
   document.getElementById('row-spellcheck-lang').style.opacity = '1';
 
-  const BASE = 'https://cdn.jsdelivr.net/npm/dictionary-en@4';
+  // Local-first: the dictionary is vendored, so spell check works offline.
+  // Fall back to the CDN only if the vendored copy is missing.
+  const SOURCES = [
+    { base: './vendor/jsdelivr/dictionary-en@4', remote: false },
+    { base: 'https://cdn.jsdelivr.net/npm/dictionary-en@4', remote: true },
+  ];
+
+  let affText = null, dicText = null;
+  for (const src of SOURCES) {
+    try {
+      const [affRes, dicRes] = await Promise.all([
+        fetch(`${src.base}/index.aff`),
+        fetch(`${src.base}/index.dic`),
+      ]);
+      if (!affRes.ok || !dicRes.ok) throw new Error(`Fetch failed (${affRes.status}/${dicRes.status})`);
+      [affText, dicText] = await Promise.all([affRes.text(), dicRes.text()]);
+      break;
+    } catch (err) {
+      if (src.remote) {
+        _spellLoading = false;
+        if (statusEl) statusEl.textContent = 'Load failed';
+        showToast('Dict load failed – check connection', 'error');
+        return;
+      }
+      console.warn('[spell] local dictionary unavailable, trying CDN:', err);
+    }
+  }
+
+  if (!affText || !dicText) {
+    _spellLoading = false;
+    if (statusEl) statusEl.textContent = 'Load failed';
+    showToast('Dict load failed – check connection', 'error');
+    return;
+  }
+
   try {
-    const [affRes, dicRes] = await Promise.all([
-      fetch(`${BASE}/index.aff`),
-      fetch(`${BASE}/index.dic`),
-    ]);
-    if (!affRes.ok || !dicRes.ok) throw new Error('Fetch failed');
-    const [affText, dicText] = await Promise.all([affRes.text(), dicRes.text()]);
     _typo = new Typo('en_US', affText, dicText, { platform: 'any' });
     _spellLoading = false;
     if (statusEl) statusEl.textContent = 'en_US loaded ✓';
@@ -6389,6 +6556,9 @@ function renderDocMap() {
     default:  '#4a4a42',
   };
 
+  // Batch rectangles per colour and fill once per colour — one fillRect per
+  // line is thousands of draw calls on a big file.
+  const byColor = new Map();
   lines.forEach((line, i) => {
     const y = Math.floor(i * lineH);
     if (y >= H) return;
@@ -6405,8 +6575,19 @@ function renderDocMap() {
 
     const blockW = Math.min(W - 4, Math.max(2, (line.length - indent) * charW));
     const x      = 2 + indent * charW * 0.3;
+
+    let rects = byColor.get(color);
+    if (!rects) { rects = []; byColor.set(color, rects); }
+    rects.push(x, y, blockW, Math.max(1, lineH - 0.5));
+  });
+
+  byColor.forEach((rects, color) => {
     ctx.fillStyle = color;
-    ctx.fillRect(x, y, blockW, Math.max(1, lineH - 0.5));
+    ctx.beginPath();
+    for (let i = 0; i < rects.length; i += 4) {
+      ctx.rect(rects[i], rects[i + 1], rects[i + 2], rects[i + 3]);
+    }
+    ctx.fill();
   });
 
   updateDocMapViewport(tab.cm);
@@ -6734,12 +6915,16 @@ const LS_TABS     = 'npp_tabs';
 const LS_ACTIVE   = 'npp_active';
 const LS_SETTINGS = 'npp_settings';
 const LS_COUNTER  = 'npp_counter';
+const LS_SAVED_AT = 'npp_saved_at';
 const IDB_NAME    = 'npp-mobile';
 const IDB_STORE   = 'kv';
 const SAVE_DEBOUNCE = 800; // ms
 
 let _saveTimer = null;
 let _idb = null;
+let _lastSavedSig = null;   // fingerprint of the last persisted payload
+let _lsSavedAt = 0;         // savedAt of the localStorage snapshot we restored
+let _lsSettingsLoaded = false;
 
 function idbOpen() {
   if (_idb) return Promise.resolve(_idb);
@@ -6800,26 +6985,45 @@ function collectSettings() {
         acSnippets:            state.acSnippets !== false,
         acWords:               state.acWords !== false,
     spellCheck:            _spellEnabled,
-        execEngine:            state.execEngine || 'auto',
-        pistonBase:            state.pistonBase || 'https://emkc.org/api/v2/piston',
-        // SECURITY: pistonToken persists in localStorage/IndexedDB.
-        // Consider using sessionStorage for sensitive tokens on shared devices.
-        pistonToken:           state.pistonToken || '',
+    execEngine:            state.execEngine || 'auto',
+    pistonBase:            state.pistonBase || 'https://emkc.org/api/v2/piston',
+    // SECURITY: pistonToken persists in localStorage/IndexedDB.
+    // Consider using sessionStorage for sensitive tokens on shared devices.
+    pistonToken:           state.pistonToken || '',
     eol:                   state.eol || 'LF',
+    // SECURITY: the LLM API key is persisted in plaintext too. Prefer
+    // sessionStorage if you share this device.
     llm:                   state.llm || { enabled: false, provider: '', endpoint: '', apiKey: '', model: '' },
   };
 }
 
 function collectTabData() {
-  return state.tabs.map(t => ({
-    id:       t.id,
-    filename: t.filename,
-    langName: t.lang.name,
-    content:  t.cm.getValue(),
-    cursor:   t.cm.getCursor(),
-    scrollY:  t.cm.getScrollInfo().top,
-    modified: t.modified,
-  }));
+  return state.tabs.map(t => {
+    // Reuse the cached string when the content hasn't changed since the last
+    // capture — cm.getValue() is O(file size) and this runs on every save tick.
+    if (t._contentDirty !== false || typeof t._cachedContent !== 'string') {
+      t._cachedContent = t.cm.getValue();
+      t._contentDirty = false;
+    }
+    return {
+      id:       t.id,
+      filename: t.filename,
+      langName: t.lang.name,
+      content:  t._cachedContent,
+      cursor:   t.cm.getCursor(),
+      scrollY:  t.cm.getScrollInfo().top,
+      modified: t.modified,
+    };
+  });
+}
+
+/** Cheap fingerprint of the persisted payload — avoids a redundant write. */
+function sessionSignature(tabData, settings, active, counter) {
+  let s = active + '|' + counter + '|';
+  for (const t of tabData) {
+    s += `${t.id}:${t.content.length}:${t.modified ? 1 : 0}:${t.cursor.line},${t.cursor.ch};`;
+  }
+  return s + '|' + JSON.stringify(settings);
 }
 
 /** Serialize current session (IndexedDB preferred) */
@@ -6831,12 +7035,20 @@ function persistSession() {
     const active = state.activeTab || '';
     const counter = state.tabCounter;
 
+    const sig = sessionSignature(tabData, settings, active, counter);
+    if (sig === _lastSavedSig) return;      // nothing changed — skip the write
+    _lastSavedSig = sig;
+
+    const savedAt = Date.now();
+    _lsSavedAt = savedAt;
+
     const saveLS = () => {
       try {
         localStorage.setItem(LS_TABS, JSON.stringify(tabData));
         localStorage.setItem(LS_ACTIVE, active);
         localStorage.setItem(LS_COUNTER, counter);
         localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
+        localStorage.setItem(LS_SAVED_AT, String(savedAt));
         flashSaveIndicator();
       } catch (err) {
         console.warn('localStorage save failed:', err);
@@ -6847,6 +7059,7 @@ function persistSession() {
       .then(() => idbSet(LS_ACTIVE, active))
       .then(() => idbSet(LS_COUNTER, counter))
       .then(() => idbSet(LS_SETTINGS, settings))
+      .then(() => idbSet(LS_SAVED_AT, savedAt))
       .then(() => {
         // keep settings mirrored in LS for fast path
         try { localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)); } catch {}
@@ -6970,13 +7183,31 @@ function rebuildTabsFromData(tabData, savedActive) {
 
     cm.on('cursorActivity', updateStatus);
   wireMdLiveOnCm(cm);
-    cm.on('change', () => { markModified(td.id, true); updateStatus(); persistSession(); });
+    cm.on('change', () => {
+      markModified(td.id, true);
+      const t = getTab(td.id);
+      if (t) {
+        t._ver = (t._ver || 0) + 1;
+        t._contentDirty = true;
+      }
+      updateStatus();
+      persistSession();
+      applyLargeFileMode(cm, container);
+      scheduleDocMapUpdate();
+    });
 
     hookSpellPopup(cm);
     if (_spellEnabled && _typo) applySpellCheck(cm);
 
-    const tab = { id: td.id, filename: td.filename, lang, cm, modified: td.modified || false, container, fileHandle: null };
+    const tab = {
+      id: td.id, filename: td.filename, lang, cm, modified: td.modified || false, container,
+      fileHandle: null,
+      _ver: 0,
+      _contentDirty: false,
+      _cachedContent: td.content || '',
+    };
     state.tabs.push(tab);
+    applyLargeFileMode(cm, container);
 
     requestAnimationFrame(() => {
       if (td.cursor) cm.setCursor(td.cursor);
@@ -7009,7 +7240,7 @@ function restoreSession() {
   try {
     // Settings: LS first (sync), IDB will re-apply async if present
     const rawSettings = localStorage.getItem(LS_SETTINGS);
-    if (rawSettings) applySettingsObject(JSON.parse(rawSettings));
+    if (rawSettings) { applySettingsObject(JSON.parse(rawSettings)); _lsSettingsLoaded = true; }
 
     // Tabs from LS sync path (works even if IDB empty / first paint)
     const rawTabs = localStorage.getItem(LS_TABS);
@@ -7018,6 +7249,7 @@ function restoreSession() {
       if (tabData && tabData.length) {
         state.tabCounter = parseInt(localStorage.getItem(LS_COUNTER) || '0', 10);
         const savedActive = localStorage.getItem(LS_ACTIVE);
+        _lsSavedAt = Number(localStorage.getItem(LS_SAVED_AT) || '0') || 0;
         return rebuildTabsFromData(tabData, savedActive);
       }
     }
@@ -7028,20 +7260,40 @@ function restoreSession() {
   }
 }
 
+/** Tear down every open tab (used when a fresher session snapshot replaces one). */
+function disposeAllTabs() {
+  state.tabs.forEach(t => {
+    try { t.cm.getWrapperElement()?.remove(); } catch (e) {}
+  });
+  state.tabs.length = 0;
+  _acWordCache.clear();
+}
+
 /** Prefer IndexedDB when available; migrate into memory if LS empty */
 async function restoreSessionAsync() {
   try {
-    const settings = await idbGet(LS_SETTINGS);
-    if (settings) applySettingsObject(settings);
+    const idbSettings = await idbGet(LS_SETTINGS);
+    const idbTabs = await idbGet(LS_TABS);
+    const idbSavedAt = Number(await idbGet(LS_SAVED_AT)) || 0;
 
-    const tabData = await idbGet(LS_TABS);
-    if (tabData && tabData.length) {
-      // if tabs already restored from LS with same content, skip rebuild
-      if (state.tabs.length) return true;
-      const counter = await idbGet(LS_COUNTER);
-      state.tabCounter = parseInt(counter || '0', 10);
-      const savedActive = await idbGet(LS_ACTIVE);
-      return rebuildTabsFromData(tabData, savedActive);
+    // IndexedDB only wins when it is genuinely newer than the localStorage
+    // snapshot we already restored — otherwise we'd overwrite fresh data with
+    // a stale copy (or vice-versa).
+    const idbIsNewer = idbSavedAt > _lsSavedAt;
+
+    if (idbSettings && (idbIsNewer || !_lsSettingsLoaded)) {
+      applySettingsObject(idbSettings);
+      _lsSettingsLoaded = true;
+    }
+
+    if (idbTabs && idbTabs.length) {
+      if (!state.tabs.length || idbIsNewer) {
+        if (state.tabs.length) disposeAllTabs();
+        const counter = await idbGet(LS_COUNTER);
+        state.tabCounter = parseInt(counter || '0', 10);
+        const savedActive = await idbGet(LS_ACTIVE);
+        return rebuildTabsFromData(idbTabs, savedActive);
+      }
     }
   } catch (e) {
     console.warn('IDB restore skipped', e);
@@ -7056,7 +7308,10 @@ function clearSession() {
   localStorage.removeItem(LS_ACTIVE);
   localStorage.removeItem(LS_SETTINGS);
   localStorage.removeItem(LS_COUNTER);
-  idbDel(LS_TABS); idbDel(LS_ACTIVE); idbDel(LS_SETTINGS); idbDel(LS_COUNTER);
+  localStorage.removeItem(LS_SAVED_AT);
+  idbDel(LS_TABS); idbDel(LS_ACTIVE); idbDel(LS_SETTINGS); idbDel(LS_COUNTER); idbDel(LS_SAVED_AT);
+  _lastSavedSig = null;
+  _lsSavedAt = 0;
   location.reload();
 }
 
@@ -7489,12 +7744,17 @@ async function assistantSendLlm(mod, text) {
   let out = '';
   let failed = false;
 
+  // An in-flight request can be cancelled (new question asked, panel closed).
+  if (_llmAbort) { try { _llmAbort.abort(); } catch {} }
+  _llmAbort = new AbortController();
+
   try {
     const stream = mod.streamCompletion(state.llm, {
       history: _assistantHistory,
       input: text,
       code,
       lang,
+      signal: _llmAbort.signal,
     });
     for await (const chunk of stream) {
       out += chunk;
@@ -7503,10 +7763,19 @@ async function assistantSendLlm(mod, text) {
     }
   } catch (err) {
     failed = true;
-    const msg = err && err.message ? err.message : 'LLM request failed.';
-    out = out ? `${out}\n\n**Request failed:** ${msg}` : `**Request failed:** ${msg}`;
-    target.innerHTML = formatAssistantResponse(out);
-    showToast(msg, 'error');
+    if (err && err.name === 'AbortError') {
+      // Cancelled deliberately — don't show an error.
+      failed = false;
+      out = out || '_Request cancelled._';
+      target.innerHTML = formatAssistantResponse(out);
+    } else {
+      const msg = err && err.message ? err.message : 'LLM request failed.';
+      out = out ? `${out}\n\n**Request failed:** ${msg}` : `**Request failed:** ${msg}`;
+      target.innerHTML = formatAssistantResponse(out);
+      showToast(msg, 'error');
+    }
+  } finally {
+    _llmAbort = null;
   }
 
   if (!failed && !out.trim()) {
@@ -7569,14 +7838,10 @@ function assistantInsertCode(btn) {
   }
 }
 
-function generateAssistantResponse(input) {
-  const intent = NLP.classifyIntent(input);
-  const lang = NLP.detectLanguage(input);
-  const tab = getActiveTab();
-  const code = tab ? tab.cm.getValue() : '';
-  const analysis = NLP.analyzeCode(code);
-
-  // Expose handlers for enhanced assistant engine
+// Expose handlers for the enhanced assistant engine. These must be installed
+// unconditionally — the engine delegates to them, and they were previously
+// only registered on the path that called generateAssistantResponse().
+(function installAssistantHandlers() {
   window._ppExplainHandler = handleExplain;
   window._ppBugHandler = handleBugFind;
   window._ppRefactorHandler = handleRefactor;
@@ -7586,6 +7851,14 @@ function generateAssistantResponse(input) {
   window._ppConvertHandler = handleConvert;
   window._ppComplexityHandler = handleComplexity;
   window._ppSecurityHandler = handleSecurity;
+})();
+
+function generateAssistantResponse(input) {
+  const intent = NLP.classifyIntent(input);
+  const lang = NLP.detectLanguage(input);
+  const tab = getActiveTab();
+  const code = tab ? tab.cm.getValue() : '';
+  const analysis = NLP.analyzeCode(code);
 
   // Use enhanced assistant engine if available
   if (window._intelliReady && window._intelliAssistant) {
@@ -7888,6 +8161,7 @@ function handleGeneral(input, code, analysis, lang) {
 
 // ===================== LLM ASSISTANT =====================
 let _llmModule = null;
+let _llmAbort = null;
 
 function loadLlmModule() {
   if (!_llmModule) _llmModule = import('./lib/intelli/llm.js');
@@ -8861,7 +9135,13 @@ function trimTrailing() {
   });
 })();
 
-(async function init() {
+async function init() {
+  // Expose state for the Intelli bridge FIRST — if anything below throws, the
+  // bridge still has a valid handle on the app state.
+  window._ppState = state;
+  window._ppGetActiveTab = getActiveTab;
+  window._ppSwitchTab = typeof switchTab === 'function' ? switchTab : null;
+
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -8898,11 +9178,6 @@ function trimTrailing() {
   }
   renderFileTree();
 
-  // Expose state for Intelli bridge
-  window._ppState = state;
-  window._ppGetActiveTab = getActiveTab;
-  window._ppSwitchTab = typeof switchTab === 'function' ? switchTab : null;
-
   // Lazy-load Intelli engine on first user interaction
   let _intelliTriggered = false;
   function triggerIntelli() {
@@ -8911,15 +9186,34 @@ function trimTrailing() {
     document.removeEventListener('keydown', triggerIntelli);
     document.removeEventListener('click', triggerIntelli);
     import('./lib/intelli/bridge.js').then(mod => {
-      mod.installIntelli();
+      return mod.installIntelli();
+    }).then(() => {
       showToast('PocketPad Intelli loaded', 'success');
     }).catch(err => {
       console.warn('[Intelli] Failed to load:', err);
+      showToast('Intelli engine failed to load', 'error');
     });
   }
   document.addEventListener('keydown', triggerIntelli, { once: false });
   document.addEventListener('click', triggerIntelli, { once: false });
-})();
+}
+
+// Boot the app only once every vendor library is present. If a local vendor
+// asset was missing, __ppLoadFallback pulls it from the CDN asynchronously —
+// booting before that settles would hit "CodeMirror is not defined".
+window.__ppWhenLibsReady(function () {
+  if (typeof CodeMirror === 'undefined') {
+    console.error('[PocketPad] Editor library failed to load (vendor + CDN both unavailable).');
+    document.body.insertAdjacentHTML('beforeend',
+      '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;' +
+      'background:#1e1f1b;color:#f92672;font:15px/1.6 system-ui,sans-serif;padding:24px;text-align:center;z-index:9999">' +
+      'PocketPad could not load the editor library.<br>' +
+      '<span style="color:#75715e;font-size:13px">Check your connection and reload.</span></div>');
+    return;
+  }
+  registerCustomModes();
+  init().catch(err => console.error('[PocketPad] init failed:', err));
+});
 </script>
 </body>
 </html>
