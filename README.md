@@ -16,11 +16,32 @@ A **mobile-first code editor** that runs entirely in the browser — multi-tab e
 | **Editor** | Multi-tab CodeMirror, 20+ languages, find/replace, **hybrid autocomplete** (keywords · builtins · snippets · doc words), themes |
 | **Files** | File tree with filter, drag-and-drop open, open folder (Chromium), save via File System Access, export ZIP |
 | **Run** | Remote code execution via **Judge0 CE** (default) + **Piston API** (custom URL/token) · local JS/Python fallback · HTML & Markdown preview |
+| **Assistant** | Offline NLP assistant, or an LLM (Anthropic / OpenAI / Google AI Studio / Groq / OpenRouter / custom) with **tool calling** — it can create files, insert and replace code, rename symbols, and run the program |
 | **GitHub** | Browse repos, open files, commit & push, simple diff |
 | **Shell** | xterm + WebSocket (Termux + `ttyd`) |
 | **Extras** | Document map, snippets, spell check, command palette, keyboard shortcuts sheet |
 | **Session** | Auto-save to IndexedDB (localStorage fallback) |
 | **Install** | PWA — Add to Home Screen on HTTPS |
+
+### Assistant tools
+
+With an LLM provider configured, the assistant can drive the editor instead of
+only printing code. Turn it on with **Settings → LLM Assistant → Let the
+assistant edit your files**.
+
+| Tool | What it does |
+|------|--------------|
+| `list_tabs` / `read_file` / `create_file` | See and create files |
+| `switch_tab` / `close_tab` | Move between files |
+| `insert_code` / `replace_text` / `replace_selection` | Write code into a file |
+| `rename_symbol` / `set_language` / `format_code` | Restructure and tidy up |
+| `undo` / `redo` | Step changes back |
+| `get_selection` / `list_symbols` / `find_definition` / `find_references` / `get_diagnostics` | Inspect the code |
+| `search_files` / `run_code` | Find things and run the program |
+
+Every edit goes through the normal editor, so it is undoable and is saved with
+the session. The agent loop runs for up to 8 rounds per message.
+
 
 ### Keyboard shortcuts
 
@@ -102,7 +123,9 @@ logo.svg                # App icon
 vercel.json             # Vercel headers / rewrites
 404.html                # SPA-style fallback
 landing/                # Separate landing page project (pocketpad-landing.vercel.app)
-lib/                    # ES modules (Intelli engine, language analyzers)
+lib/                    # ES modules
+  intelli/              #   core engine · bridge · nlp · assistant · llm · tools · agent
+  lang/                 #   per-language analyzers (JS, Python, Go, Rust, C++, HTML/CSS)
 vendor/                 # Vendored editor libs (local-first, CDN fallback)
 scripts/fetch-vendor.py # Optional: refresh vendor/ from CDN
 scripts/gen-sw-cache.py # Regenerate sw-cache.js after changing local assets

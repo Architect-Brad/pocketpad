@@ -1807,6 +1807,37 @@ body.theme-light #piston-stdin { color: #222; }
   font-size: 12.5px; line-height: 1.5; color: #f8f8f2;
 }
 .assistant-msg.user .msg-body { background: #0f3460; }
+/* Tool activity — what the assistant actually did in the editor */
+.assistant-tool-log {
+  display: flex; flex-direction: column; gap: 3px; margin-bottom: 5px;
+}
+.assistant-tool-log:empty { display: none; }
+.assistant-tool {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(166,226,46,0.07);
+  border: 1px solid rgba(166,226,46,0.18);
+  border-radius: 6px; padding: 4px 8px;
+  font-size: 11px; line-height: 1.4; color: #d8d8c8;
+}
+.assistant-tool .tool-icon {
+  flex: 0 0 auto; width: 13px; text-align: center;
+  color: #a6e22e; font-weight: 700;
+}
+.assistant-tool .tool-name {
+  font-family: 'Courier New', ui-monospace, monospace;
+  color: #a6e22e; font-weight: 600; flex: 0 0 auto;
+}
+.assistant-tool .tool-detail {
+  color: #8a8a76; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.assistant-tool.tool-running { opacity: 0.65; }
+.assistant-tool.tool-running .tool-icon { color: #66d9e8; }
+.assistant-tool.tool-error {
+  background: rgba(249,38,114,0.08);
+  border-color: rgba(249,38,114,0.25);
+}
+.assistant-tool.tool-error .tool-icon { color: #f92672; }
+.assistant-tool.tool-error .tool-name { color: #f92672; }
 .msg-body pre {
   background: #0a0a1a; border: 1px solid #2a2a4a; border-radius: 6px;
   padding: 8px; margin: 6px 0; overflow-x: auto; font-size: 11.5px;
@@ -2585,6 +2616,17 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
         <datalist id="llm-model-list"></datalist>
         <button class="menu-item" onclick="refreshLlmModels(this)" style="align-self:flex-start;padding:6px 12px">Load available models</button>
         <div class="settings-sublabel" id="llm-hint">Stored in this browser only. Never sent anywhere except your chosen provider.</div>
+        <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:6px;padding:8px 0 0;border-top:1px solid var(--npp-border)">
+          <div>
+            <div class="settings-label">Let the assistant edit your files</div>
+            <div class="settings-sublabel">Gives the model tools to create files, insert and replace code, rename symbols and run the program. Every change is undoable.</div>
+          </div>
+          <label class="toggle" style="align-self:flex-start">
+            <input type="checkbox" id="toggle-llm-tools" onchange="toggleLlmTools()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
       </div>
       <div class="settings-row">
         <div>
@@ -2825,22 +2867,22 @@ body.theme-light .ft-inline-input { background: #fff; color: #222; }
     <div class="assistant-msg assistant">
       <div class="msg-avatar">P</div>
       <div>
-        <div class="msg-body">Hi! I'm <strong>PocketPad Intelli</strong> — your NLP-powered code assistant. I can explain code, find bugs, suggest refactors, generate code from natural language, and more. What can I help with?</div>
+        <div class="msg-body">Hi! I'm <strong>PocketPad Intelli</strong> — your coding assistant. I can explain code, find bugs, suggest refactors, generate code, and — if you enable <strong>editor tools</strong> in Settings — actually <strong>edit your files</strong>: create them, insert and replace code, rename symbols, and run the program.</div>
         <div class="msg-time">just now</div>
       </div>
     </div>
   </div>
   <div id="assistant-suggestions">
+    <div class="suggestion-chip" onclick="assistantQuick('Create a new file called utils.js with a debounce helper')">Create file</div>
     <div class="suggestion-chip" onclick="assistantQuick('Explain this code')">Explain code</div>
     <div class="suggestion-chip" onclick="assistantQuick('Find bugs')">Find bugs</div>
     <div class="suggestion-chip" onclick="assistantQuick('Refactor this')">Refactor</div>
     <div class="suggestion-chip" onclick="assistantQuick('Write tests')">Write tests</div>
+    <div class="suggestion-chip" onclick="assistantQuick('Run the code and fix any errors')">Run &amp; fix</div>
     <div class="suggestion-chip" onclick="assistantQuick('Optimize')">Optimize</div>
     <div class="suggestion-chip" onclick="assistantQuick('Add documentation')">Document</div>
     <div class="suggestion-chip" onclick="assistantQuick('Review code')">Review</div>
     <div class="suggestion-chip" onclick="assistantQuick('Security scan')">Security</div>
-    <div class="suggestion-chip" onclick="assistantQuick('Generate a class')">Generate class</div>
-    <div class="suggestion-chip" onclick="assistantQuick('Generate API endpoint')">Generate API</div>
   </div>
   <div id="assistant-input-wrap">
     <textarea id="assistant-input" rows="1" placeholder="Ask about your code…"
@@ -3037,7 +3079,7 @@ const state = {
   judge0Base: 'https://ce.judge0.com',
   eol: 'LF',
   fileTreeFilter: '',
-  llm: { enabled: false, provider: '', endpoint: '', apiKey: '', model: '' },
+  llm: { enabled: false, provider: '', endpoint: '', apiKey: '', model: '', tools: true },
 };
 
 // ===================== LANGUAGE CONFIG =====================
@@ -4978,7 +5020,8 @@ function getConsoleLang() {
   return tab.lang.name;
 }
 
-function toggleConsole() {
+function toggleConsole(opts = {}) {
+  const autoRun = opts.autoRun !== false;
   const panel = document.getElementById('console-panel');
   state.consoleOpen = !state.consoleOpen;
   if (!state.consoleOpen) {
@@ -4988,7 +5031,7 @@ function toggleConsole() {
     panel.classList.add('open');
     const lang = getConsoleLang();
     updateConsoleForLang(lang);
-    if (lang === 'JavaScript' || lang === 'Python' || lang === 'HTML' || lang === 'Markdown') runCode();
+    if (autoRun && (lang === 'JavaScript' || lang === 'Python' || lang === 'HTML' || lang === 'Markdown')) runCode();
   }
   document.getElementById('btn-run').classList.toggle('active', state.consoleOpen);
   updatePistonUi();
@@ -5761,9 +5804,15 @@ function resetPyGlobals() { _pyGlobals = null; }
 
 // ---- Main run dispatcher ----
 function runCode() {
-  const tab = getActiveTab();
-  if (!tab) return;
-  if (!state.consoleOpen) { toggleConsole(); return; }
+  return runCodeFor(getActiveTab());
+}
+
+/** Run a specific tab's code. Resolves when the run finishes. */
+function runCodeFor(tab) {
+  if (!tab) return Promise.resolve('');
+  // Opening the console must not auto-run: that would run the *active* file
+  // a second time while we are about to run this one.
+  if (!state.consoleOpen) toggleConsole({ autoRun: false });
 
   const lang = tab.lang.name;
   const code = tab.cm.getValue();
@@ -5776,24 +5825,27 @@ function runCode() {
   const engine = engineLabelFor(lang);
   appendToOutput(conLine(`▶ ${lang} · ${engine}`, 'system'));
 
-  setTimeout(async () => {
-    try {
-      if (lang === 'HTML') {
-        runHTML(code);
-      } else if (lang === 'Markdown') {
-        runMarkdown(code);
-      } else if (isPistonLanguage(lang) || lang === 'JavaScript' || lang === 'TypeScript' || lang === 'Python') {
-        await runWithEngine(lang, code);
-      } else {
-        appendToOutput(conLine(`"${lang}" has no runner. Switch language or use Markdown/HTML preview.`, 'info'));
-        appendToOutput(conLine('Piston: JS, TS, Python, C/C++/C#, Go, Rust, Java, Kotlin, Ruby, PHP, Lua, …', 'info'));
+  return new Promise((resolve) => {
+    setTimeout(async () => {
+      try {
+        if (lang === 'HTML') {
+          runHTML(code);
+        } else if (lang === 'Markdown') {
+          runMarkdown(code);
+        } else if (isPistonLanguage(lang) || lang === 'JavaScript' || lang === 'TypeScript' || lang === 'Python') {
+          await runWithEngine(lang, code);
+        } else {
+          appendToOutput(conLine(`"${lang}" has no runner. Switch language or use Markdown/HTML preview.`, 'info'));
+          appendToOutput(conLine('Piston: JS, TS, Python, C/C++/C#, Go, Rust, Java, Kotlin, Ruby, PHP, Lua, …', 'info'));
+        }
+      } catch (e) {
+        appendToOutput(conLine(`Runner error: ${e.message}`, 'error'));
+      } finally {
+        runBtn.classList.remove('running');
+        resolve('');
       }
-    } catch (e) {
-      appendToOutput(conLine(`Runner error: ${e.message}`, 'error'));
-    } finally {
-      runBtn.classList.remove('running');
-    }
-  }, 20);
+    }, 20);
+  });
 }
 
 // ---- REPL ----
@@ -6996,7 +7048,6 @@ function collectSettings() {
     llm:                   state.llm || { enabled: false, provider: '', endpoint: '', apiKey: '', model: '' },
   };
 }
-
 function collectTabData() {
   return state.tabs.map(t => {
     // Reuse the cached string when the content hasn't changed since the last
@@ -7132,6 +7183,8 @@ function applySettingsObject(s) {
       endpoint: typeof s.llm.endpoint === 'string' ? s.llm.endpoint : '',
       apiKey: typeof s.llm.apiKey === 'string' ? s.llm.apiKey : '',
       model: typeof s.llm.model === 'string' ? s.llm.model : '',
+      // Editor tools are opt-in but default ON for existing installs.
+      tools: s.llm.tools !== false,
     };
   }
 }
@@ -7733,6 +7786,7 @@ async function assistantSendLlm(mod, text) {
   bubble.innerHTML = `
     <div class="msg-avatar">P</div>
     <div>
+      <div class="assistant-tool-log"></div>
       <div class="msg-body" id="llm-stream-target"><span style="opacity:.6">Thinking…</span></div>
       <div class="msg-time">${new Date().getHours().toString().padStart(2,'0')}:${new Date().getMinutes().toString().padStart(2,'0')}</div>
     </div>`;
@@ -7741,6 +7795,7 @@ async function assistantSendLlm(mod, text) {
   container.scrollTop = container.scrollHeight;
 
   const target = bubble.querySelector('#llm-stream-target');
+  const toolLog = bubble.querySelector('.assistant-tool-log');
   let out = '';
   let failed = false;
 
@@ -7749,18 +7804,40 @@ async function assistantSendLlm(mod, text) {
   _llmAbort = new AbortController();
 
   try {
-    const stream = mod.streamCompletion(state.llm, {
-      history: _assistantHistory,
-      input: text,
-      code,
-      lang,
+    // The agent loop lives in lib/intelli/agent.js — it streams the reply,
+    // runs any editor tools the model asks for, and feeds the results back.
+    const agent = await import('./lib/intelli/agent.js');
+
+    // The conversation the agent loop works with. Turns are provider-neutral
+    // and are converted to each API's shape by lib/intelli/llm.js.
+    const turns = mod.buildTurns(_assistantHistory, text, code, lang);
+
+    const result = await agent.runAgentTurn({
+      mod,
+      cfg: state.llm,
+      turns,
+      useTools: state.llm.tools !== false,
       signal: _llmAbort.signal,
+      onText: (allText) => {
+        out = allText;
+        target.innerHTML = formatAssistantResponse(out);
+        container.scrollTop = container.scrollHeight;
+      },
+      onToolStart: (call, label) => {
+        if (toolLog) toolLog.appendChild(assistantToolRow(call.name, label, 'running'));
+        container.scrollTop = container.scrollHeight;
+      },
+      onToolEnd: (call, res) => {
+        if (!toolLog) return;
+        const last = toolLog.lastElementChild;
+        if (!last) return;
+        const row = assistantToolRow(call.name, agent.describeTool(call.name, call.arguments),
+                                    res?.ok === false ? 'error' : 'done', res);
+        toolLog.replaceChild(row, last);
+        container.scrollTop = container.scrollHeight;
+      },
     });
-    for await (const chunk of stream) {
-      out += chunk;
-      target.innerHTML = formatAssistantResponse(out);
-      container.scrollTop = container.scrollHeight;
-    }
+    out = result.text;
   } catch (err) {
     failed = true;
     if (err && err.name === 'AbortError') {
@@ -7784,6 +7861,19 @@ async function assistantSendLlm(mod, text) {
   }
 
   _assistantHistory.push({ role: 'assistant', text: out });
+}
+
+/** One row of tool activity in the chat. */
+function assistantToolRow(name, label, status, result) {
+  const row = document.createElement('div');
+  row.className = 'assistant-tool tool-' + status;
+  const icon = status === 'error' ? '✕' : status === 'running' ? '⋯' : '✓';
+  const detail = status === 'error' && result ? (result.error || 'failed') : label;
+  row.innerHTML =
+    `<span class="tool-icon">${icon}</span>` +
+    `<span class="tool-name">${escapeHtml(name)}</span>` +
+    `<span class="tool-detail">${escapeHtml(String(detail))}</span>`;
+  return row;
 }
 
 function appendAssistantMsg(role, text) {
@@ -8174,8 +8264,16 @@ function saveLlmSettings() {
   state.llm.endpoint = document.getElementById('llm-endpoint-input').value.trim();
   state.llm.apiKey = document.getElementById('llm-key-input').value.trim();
   state.llm.model = document.getElementById('llm-model-input').value.trim();
+  const toolsToggle = document.getElementById('toggle-llm-tools');
+  if (toolsToggle) state.llm.tools = toolsToggle.checked;
   persistSession();
   updateLlmHint();
+}
+
+/** Enable/disable the editor tools the LLM may call. */
+function toggleLlmTools() {
+  saveLlmSettings();
+  showToast(state.llm.tools ? 'Assistant can edit your files' : 'Assistant is read-only');
 }
 
 function onLlmProviderChange() {
@@ -8254,6 +8352,8 @@ function hydrateLlmSettings() {
   document.getElementById('llm-key-input').value = cfg.apiKey || '';
   document.getElementById('llm-model-input').value = cfg.model || '';
   document.getElementById('llm-endpoint-input').style.display = cfg.provider === 'custom' ? '' : 'none';
+  const toolsToggle = document.getElementById('toggle-llm-tools');
+  if (toolsToggle) toolsToggle.checked = cfg.tools !== false;
   updateLlmHint();
 }
 
@@ -8872,39 +8972,46 @@ function renameSymbol() {
 
 // ===================== CODE FORMATTING =====================
 function formatCurrentCode() {
-  const tab = getActiveTab();
-  if (!tab) return;
+  return formatCodeIn(getActiveTab());
+}
+
+/**
+ * Format a tab's code. Returns true when the file was reformatted.
+ * `tab.lang` is a language OBJECT, so the name must be read from it.
+ */
+function formatCodeIn(tab, opts = {}) {
+  const silent = !!opts.silent;
+  if (!tab) return false;
   const cm = tab.cm;
   const code = cm.getValue();
-  const lang = tab.lang?.toLowerCase() || '';
+  const lang = (tab.lang?.name || '').toLowerCase();
 
   if (lang === 'json') {
     try {
       cm.setValue(JSON.stringify(JSON.parse(code), null, state.tabSize || 2));
-      showToast('JSON formatted', 'success');
+      if (!silent) showToast('JSON formatted', 'success');
+      return true;
     } catch (e) {
-      showToast(`Invalid JSON: ${e.message}`, 'error');
+      if (!silent) showToast(`Invalid JSON: ${e.message}`, 'error');
+      return false;
     }
-    return;
   }
 
   if (lang === 'css' || lang === 'scss' || lang === 'less') {
-    const formatted = formatCSS(code, state.tabSize || 2);
-    cm.setValue(formatted);
-    showToast('CSS formatted', 'success');
-    return;
+    cm.setValue(formatCSS(code, state.tabSize || 2));
+    if (!silent) showToast('CSS formatted', 'success');
+    return true;
   }
 
   if (lang === 'html' || lang === 'xml') {
-    const formatted = formatHTML(code, state.tabSize || 2);
-    cm.setValue(formatted);
-    showToast('HTML formatted', 'success');
-    return;
+    cm.setValue(formatHTML(code, state.tabSize || 2));
+    if (!silent) showToast('HTML formatted', 'success');
+    return true;
   }
 
-  const formatted = formatGeneric(code, state.tabSize || 2);
-  cm.setValue(formatted);
-  showToast('Code formatted (basic)', 'success');
+  cm.setValue(formatGeneric(code, state.tabSize || 2));
+  if (!silent) showToast('Code formatted (basic)', 'success');
+  return true;
 }
 
 function formatCSS(code, indent) {
@@ -9135,12 +9242,80 @@ function trimTrailing() {
   });
 })();
 
+// ===================== EDITOR API FOR LLM TOOLS =====================
+/**
+ * The surface the LLM editor tools (lib/intelli/tools.js) act on.
+ * Keeping it explicit means the tool layer never reaches into app internals
+ * directly, and every mutation goes through a normal editor operation so
+ * undo, persistence and the file tree stay in sync.
+ */
+function buildEditorApi() {
+  return {
+    getState: () => state,
+    getActiveTab,
+    getTab: (id) => getTab(id),
+    languageNames: () => LANGUAGES.map(l => l.name),
+
+    listTabs: () => state.tabs.map(t => ({
+      id: t.id,
+      filename: t.filename,
+      language: t.lang?.name || 'Plain Text',
+      modified: !!t.modified,
+      lines: t.cm.lineCount(),
+      active: t.id === state.activeTab,
+    })),
+
+    newTab: (filename, content, language) => {
+      const name = String(filename || 'untitled.txt');
+      const langName = language || getLangForExt(name.split('.').pop())?.name || 'Plain Text';
+      const tab = newTab(name, String(content ?? ''), langName);
+      return { id: tab.id, filename: tab.filename, language: tab.lang?.name, cm: tab.cm };
+    },
+
+    switchTab: (id) => { switchTab(id); return true; },
+    closeTab: (id) => { closeTab(id); return true; },
+
+    setLanguage: (tabId, language) => {
+      const tab = getTab(tabId);
+      if (!tab) return null;
+      const wanted = String(language || '').trim().toLowerCase();
+      const lang = LANGUAGES.find(l => l.name.toLowerCase() === wanted)
+                || LANGUAGES.find(l => l.name.toLowerCase() === wanted.replace(/\+$/, 'plus'))
+                || LANGUAGES.find(l => l.pistonLang === wanted);
+      if (!lang) return null;
+      tab.lang = lang;
+      tab.cm.setOption('mode', lang.mode);
+      updateLangStatus();
+      if (state.consoleOpen) updateConsoleForLang(lang.name);
+      persistSession();
+      return lang.name;
+    },
+
+    formatCode: (tabId) => {
+      const tab = getTab(tabId);
+      if (!tab) return false;
+      const r = formatCodeIn(tab, { silent: true });
+      if (r) { markModified(tab.id, true); persistSession(); }
+      return r;
+    },
+
+    runAndCapture: async (tabId) => {
+      const tab = getTab(tabId) || getActiveTab();
+      if (!tab) return '';
+      await runCodeFor(tab);
+      const pane = document.getElementById('pane-output');
+      return pane ? (pane.textContent || '').trim() : '';
+    },
+  };
+}
+
 async function init() {
   // Expose state for the Intelli bridge FIRST — if anything below throws, the
   // bridge still has a valid handle on the app state.
   window._ppState = state;
   window._ppGetActiveTab = getActiveTab;
   window._ppSwitchTab = typeof switchTab === 'function' ? switchTab : null;
+  window._ppEditor = buildEditorApi();
 
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
